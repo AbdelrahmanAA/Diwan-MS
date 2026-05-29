@@ -1,0 +1,32 @@
+# Maven build outputs
+**/target/
+**/target/**
+
+# JAR/WAR artifacts
+*.jar
+*.war
+*.ear
+
+# IntelliJ / Eclipse
+.idea/
+*.iml
+.classpath
+.project
+.settings/
+*.class
+
+# Spring Boot
+**/application-prod.properties
+**/application-local.properties
+**/application-secret.properties
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Docker
+docker-compose.override.yml
