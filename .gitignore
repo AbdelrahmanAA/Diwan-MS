@@ -30,3 +30,6 @@ logs/
 
 # Docker
 docker-compose.override.yml
+
+# Local DB files
+data/

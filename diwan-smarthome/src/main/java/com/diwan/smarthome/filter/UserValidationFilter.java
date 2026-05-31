@@ -25,6 +25,12 @@ public class UserValidationFilter implements Filter {
             return;
         }
 
+        // Alexa directives come from Lambda directly and use their own auth checks.
+        if (request.getRequestURI().startsWith("/api/smart-home/alexa")) {
+            chain.doFilter(req, res);
+            return;
+        }
+
         String validated   = request.getHeader("X-Gateway-Validated");
         String userIdHeader = request.getHeader("X-User-Id");
 

@@ -1,0 +1,161 @@
+{
+  "info": {
+    "name": "Diwan SmartHome Alexa",
+    "description": "Login + Alexa Discovery + PowerController directives for diwan-smarthome.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1) Users Login",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"your-password\"\n}"
+        },
+        "url": {
+          "raw": "{{usersBaseUrl}}/api/users/login",
+          "host": [
+            "{{usersBaseUrl}}"
+          ],
+          "path": [
+            "api",
+            "users",
+            "login"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const json = pm.response.json();",
+              "if (json && json.data && json.data.token) {",
+              "  pm.environment.set('accessToken', json.data.token);",
+              "}",
+              "if (json && json.data && json.data.userId) {",
+              "  pm.environment.set('userId', String(json.data.userId));",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "2) Alexa Discovery",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}"
+          },
+          {
+            "key": "X-Alexa-Lambda-Secret",
+            "value": "{{lambdaSecret}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"directive\": {\n    \"header\": {\n      \"namespace\": \"Alexa.Discovery\",\n      \"name\": \"Discover\",\n      \"payloadVersion\": \"3\",\n      \"messageId\": \"msg-discover-001\"\n    },\n    \"payload\": {}\n  }\n}"
+        },
+        "url": {
+          "raw": "{{smarthomeBaseUrl}}/api/smart-home/alexa/directive",
+          "host": [
+            "{{smarthomeBaseUrl}}"
+          ],
+          "path": [
+            "api",
+            "smart-home",
+            "alexa",
+            "directive"
+          ]
+        }
+      }
+    },
+    {
+      "name": "3) Alexa TurnOn",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}"
+          },
+          {
+            "key": "X-Alexa-Lambda-Secret",
+            "value": "{{lambdaSecret}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"directive\": {\n    \"header\": {\n      \"namespace\": \"Alexa.PowerController\",\n      \"name\": \"TurnOn\",\n      \"payloadVersion\": \"3\",\n      \"messageId\": \"msg-turnon-001\",\n      \"correlationToken\": \"corr-turnon-001\"\n    },\n    \"endpoint\": {\n      \"endpointId\": \"{{deviceId}}\"\n    },\n    \"payload\": {}\n  }\n}"
+        },
+        "url": {
+          "raw": "{{smarthomeBaseUrl}}/api/smart-home/alexa/directive",
+          "host": [
+            "{{smarthomeBaseUrl}}"
+          ],
+          "path": [
+            "api",
+            "smart-home",
+            "alexa",
+            "directive"
+          ]
+        }
+      }
+    },
+    {
+      "name": "4) Alexa TurnOff",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}"
+          },
+          {
+            "key": "X-Alexa-Lambda-Secret",
+            "value": "{{lambdaSecret}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"directive\": {\n    \"header\": {\n      \"namespace\": \"Alexa.PowerController\",\n      \"name\": \"TurnOff\",\n      \"payloadVersion\": \"3\",\n      \"messageId\": \"msg-turnoff-001\",\n      \"correlationToken\": \"corr-turnoff-001\"\n    },\n    \"endpoint\": {\n      \"endpointId\": \"{{deviceId}}\"\n    },\n    \"payload\": {}\n  }\n}"
+        },
+        "url": {
+          "raw": "{{smarthomeBaseUrl}}/api/smart-home/alexa/directive",
+          "host": [
+            "{{smarthomeBaseUrl}}"
+          ],
+          "path": [
+            "api",
+            "smart-home",
+            "alexa",
+            "directive"
+          ]
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,2 @@
+-- Placeholder baseline for diwan-gateway.
+-- Replace with real schema baseline extracted from MySQL.

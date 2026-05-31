@@ -12,4 +12,6 @@ public interface SmartDeviceRepository extends JpaRepository<SmartDevice, Long> 
     Optional<SmartDevice> findByIdAndUserId(Long id, Long userId);
 
     Optional<SmartDevice> findByDeviceIdAndUserId(String deviceId, Long userId);
+
+    Optional<SmartDevice> findByDeviceIdAndUserIdAndActiveTrue(String deviceId, Long userId);
 }

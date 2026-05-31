@@ -20,7 +20,11 @@ public class JwtAuthFilter implements WebFilter, Ordered {
     private final StringRedisTemplate redis;
 
     private static final List<String> PUBLIC_PATHS = List.of(
-        "/api/users/login", "/api/users/register", "/actuator/health", "/h2-console"
+        "/api/users/login",
+        "/api/users/register",
+        "/api/features",
+        "/actuator/health",
+        "/h2-console"
     );
 
     public JwtAuthFilter(JwtUtil jwtUtil, StringRedisTemplate redis) {

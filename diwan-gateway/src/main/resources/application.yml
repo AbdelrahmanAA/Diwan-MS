@@ -1,38 +1,43 @@
 server:
-  port: 8080
+  port: 8087
 
 spring:
   application:
     name: diwan-gateway
+  profiles:
+    active: DEV
   datasource:
-    url: jdbc:mysql://localhost:3306/diwan_gateway?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    # Connection configured per profile: application-DEV.yml / application-SIT.yml
     driver-class-name: com.mysql.cj.jdbc.Driver
-    username: root
-    password:
   jpa:
     database-platform: org.hibernate.dialect.MySQLDialect
     hibernate:
-      ddl-auto: update
+      ddl-auto: ${JPA_DDL_AUTO:update}
     show-sql: false
+  flyway:
+    enabled: ${FLYWAY_ENABLED:false}
+    locations: classpath:db/migration
+    baseline-on-migrate: ${FLYWAY_BASELINE_ON_MIGRATE:true}
+    baseline-version: ${FLYWAY_BASELINE_VERSION:1}
   cloud:
     gateway:
       discovery:
         locator:
           enabled: false
   cache:
-    type: caffeine
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
     caffeine:
       spec: maximumSize=500,expireAfterWrite=300s
   kafka:
     bootstrap-servers: localhost:9092
     producer:
-      key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
   data:
     redis:
       host: localhost
       port: 6379
-      timeout: 2000ms
+    secret: ${JWT_SECRET:CHANGE_ME_USE_ENV_SECRET_AT_LEAST_32_CHARS_LONG}
 
 diwan:
   jwt:

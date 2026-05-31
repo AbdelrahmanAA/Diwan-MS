@@ -1,0 +1,2 @@
+-- Placeholder baseline for diwan-users.
+-- Replace with real schema baseline extracted from MySQL.

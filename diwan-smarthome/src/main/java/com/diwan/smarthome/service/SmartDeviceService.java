@@ -17,9 +17,11 @@ public class SmartDeviceService {
     private static final String TOPIC_PREFIX = "myhome/SmartLamp_";
 
     private final SmartDeviceRepository repo;
+    private final MqttCommandPublisher mqttCommandPublisher;
 
-    public SmartDeviceService(SmartDeviceRepository repo) {
+    public SmartDeviceService(SmartDeviceRepository repo, MqttCommandPublisher mqttCommandPublisher) {
         this.repo = repo;
+        this.mqttCommandPublisher = mqttCommandPublisher;
     }
 
     /** Register a new device for this user. */
@@ -68,6 +70,9 @@ public class SmartDeviceService {
 
     /** Update the last-known state (called when MQTT state message received). */
     public DeviceResponse updateState(Long userId, Long deviceId, String state) {
+        if (state == null || state.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "state is required");
+        }
         String normalized = state.toUpperCase();
         if (!normalized.equals("ON") && !normalized.equals("OFF") && !normalized.equals("UNKNOWN"))
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "state must be ON, OFF or UNKNOWN");
@@ -76,5 +81,28 @@ public class SmartDeviceService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Device not found"));
         d.setState(normalized);
         return DeviceResponse.from(repo.save(d));
+    }
+
+    /** Resolve active device by external ID, persist state and publish command to MQTT. */
+    public DeviceResponse controlByExternalDeviceId(Long userId, String externalDeviceId, String state) {
+        if (externalDeviceId == null || externalDeviceId.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "endpointId/deviceId is required");
+        }
+        if (state == null || state.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "state is required");
+        }
+
+        String normalized = state.trim().toUpperCase();
+        if (!normalized.equals("ON") && !normalized.equals("OFF")) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "state must be ON or OFF");
+        }
+
+        SmartDevice device = repo.findByDeviceIdAndUserIdAndActiveTrue(externalDeviceId.trim(), userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Device not found"));
+
+        device.setState(normalized);
+        SmartDevice saved = repo.save(device);
+        mqttCommandPublisher.publishCommand(saved.getMqttTopic(), normalized);
+        return DeviceResponse.from(saved);
     }
 }

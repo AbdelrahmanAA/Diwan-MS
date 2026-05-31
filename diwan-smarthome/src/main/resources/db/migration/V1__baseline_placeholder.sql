@@ -1,0 +1,2 @@
+-- Placeholder baseline for diwan-smarthome.
+-- Replace with real schema baseline extracted from MySQL.
