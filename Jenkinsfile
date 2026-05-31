@@ -7,6 +7,9 @@ pipeline {
     }
 
     stages {
+        // -----------------------------------------------------------------
+        // مرحلة خدمة الـ SMART HOME (اللمبة وأليكسيا)
+        // -----------------------------------------------------------------
         stage('Deploy: diwan-smarthome') {
             when {
                 changeset "diwan-smarthome/**"
@@ -14,8 +17,10 @@ pipeline {
             steps {
                 echo "🔄 Detecting changes in diwan-smarthome. Executing Build..."
                 script {
+                    // بناء الـ Image باستخدام الـ Multi-stage Dockerfile الداخلي
                     sh "docker build -t diwan-smarthome-api:new ./diwan-smarthome"
                     
+                    // الـ Zero-Downtime Deployment والفحص الطبي الأول
                     sh "docker rm -f diwan-smarthome-api-staging || true"
                     sh """
                     docker run -d \
@@ -61,6 +66,9 @@ pipeline {
         }
     }
 
+    // -----------------------------------------------------------------
+    // الـ Post Actions للتنظيف والتنبيهات
+    // -----------------------------------------------------------------
     post {
         always {
             echo "🧹 Cleaning up dangling docker images..."
@@ -68,22 +76,17 @@ pipeline {
         }
         
         success {
-            // [تعديل إجباري للـ Gmail صراحة لتفادي خطأ بورت 25]
-            mail to: "${env.NOTIFICATION_EMAIL}",
-                 replyTo: "${env.NOTIFICATION_EMAIL}",
-                 server: "://gmail.com",
-                 port: "465",
-                 subject: "✅ SUCCESS: Diwan SmartHome Is Live - Job #${env.BUILD_NUMBER}",
-                 body: "يا باشا، التعديل الجديد متاح الآن والخدمة صحية ومستقرة تماماً (Healthy).\nرابط التفاصيل: ${env.BUILD_URL}"
+            echo "Sending Success Email via emailext..."
+            emailext to: "${env.NOTIFICATION_EMAIL}",
+                     subject: "✅ SUCCESS: Diwan SmartHome Is Live - Job #${env.BUILD_NUMBER}",
+                     body: "يا باشا، التعديل الجديد متاح الآن والخدمة صحية ومستقرة تماماً (Healthy).\nرابط التفاصيل: ${env.BUILD_URL}"
         }
         
         failure {
-            mail to: "${env.NOTIFICATION_EMAIL}",
-                 replyTo: "${env.NOTIFICATION_EMAIL}",
-                 server: "://gmail.com",
-                 port: "465",
-                 subject: "❌ CRITICAL FAILURE: Jenkins Deployment - Job #${env.BUILD_NUMBER}",
-                 body: "الحق يا باشا، الـ Deployment فشل والنسخة الجديدة اترفضت لأنها سقطت في الـ Health Check.\nرابط اللوجز: ${env.BUILD_URL}"
+            echo "Sending Failure Email via emailext..."
+            emailext to: "${env.NOTIFICATION_EMAIL}",
+                     subject: "❌ CRITICAL FAILURE: Jenkins Deployment - Job #${env.BUILD_NUMBER}",
+                     body: "الحق يا باشا، الـ Deployment فشل والنسخة الجديدة اترفضت لأنها سقطت في الـ Health Check.\nرابط اللوجز: ${env.BUILD_URL}"
         }
     }
 }
