@@ -17,7 +17,7 @@ pipeline {
             steps {
                 echo "🔄 Detecting changes in diwan-smarthome. Executing Build..."
                 script {
-                    // بناء الـ Image باستخدام الـ Multi-stage Dockerfile الداخلي
+                    // بناء الـ Image بنجاح
                     sh "docker build -t diwan-smarthome-api:new ./diwan-smarthome"
                     
                     // الـ Zero-Downtime Deployment والفحص الطبي الأول
@@ -27,7 +27,7 @@ pipeline {
                       --name diwan-smarthome-api-staging \
                       --network nginx-proxy \
                       -p 8085:8080 \
-                      --extra-hosts="host.docker.internal:host-gateway" \
+                      --extra-host="host.docker.internal:host-gateway" \
                       diwan-smarthome-api:new
                     """
                     
@@ -40,7 +40,7 @@ pipeline {
                             isHealthy = true
                             break
                         }
-                        echo "⚠️ Health check attempt ${i+1} failed. Retrying..."
+                        echo "⚠️ Health check attempt ${i+1} failed (Code: ${responseCode}). Retrying..."
                     }
                     
                     if (isHealthy) {
@@ -53,7 +53,7 @@ pipeline {
                           -e VIRTUAL_HOST=smarthome.${env.VIRTUAL_DOMAIN} \
                           -e VIRTUAL_PORT=8080 \
                           -e LETSENCRYPT_HOST=smarthome.${env.VIRTUAL_DOMAIN} \
-                          --extra-hosts="host.docker.internal:host-gateway" \
+                          --extra-host="host.docker.internal:host-gateway" \
                           diwan-smarthome-api:new
                         """
                         sh "docker rm -f diwan-smarthome-api-staging || true"
@@ -66,9 +66,6 @@ pipeline {
         }
     }
 
-    // -----------------------------------------------------------------
-    // الـ Post Actions للتنظيف والتنبيهات
-    // -----------------------------------------------------------------
     post {
         always {
             echo "🧹 Cleaning up dangling docker images..."

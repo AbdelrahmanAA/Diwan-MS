@@ -13,7 +13,7 @@ FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
 COPY --from=builder /app/target/*.jar app.jar
 
-# تشغيل التطبيق بمستخدم غير روت (Non-root user) لأقصى درجات الأمان في السيرفرات 
+# تشغيل التطبيق بمستخدم غير روت (Non-root user) لأقصى درجات الأمان في السيرفرات
 RUN addgroup -S spring && adduser -S spring -G spring
 USER spring:spring
 
