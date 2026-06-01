@@ -4,47 +4,41 @@ pipeline {
     environment {
         VIRTUAL_DOMAIN = "devxgroup.ddns.net"
         NOTIFICATION_EMAIL = "abdelrhman20075@gmail.com"
+        IMAGE_NAME = "diwan-smarthome-api"
     }
 
     stages {
-        stage('Deploy: diwan-smarthome') {
-            when {
-                changeset "diwan-smarthome/**"
-            }
+        // 1. سحب الكود دائماً بدون شروط
+        stage('Checkout Code') {
             steps {
-                echo "🔄 Detecting changes in diwan-smarthome. Executing Clean Build..."
+                checkout scm
+            }
+        }
+
+        // 2. البناء والتشغيل الفوري للميكروسيرفيس
+        stage('Deploy SmartHome to Production') {
+            steps {
+                echo "🚀 Starting Full Automated Build for diwan-smarthome..."
                 script {
-                    // بناء الـ Image بنجاح
-                    sh "docker build -t diwan-smarthome-api:new ./diwan-smarthome"
+                    // بناء الـ Image
+                    sh "docker build -t ${env.IMAGE_NAME}:latest ./diwan-smarthome"
                     
-                    // تشغيل الـ Staging بدون أي فلاجات إضافية معقدة
-                    sh "docker rm -f diwan-smarthome-api-staging || true"
-                    sh "docker run -d --name diwan-smarthome-api-staging --network nginx-proxy -p 8085:8080 diwan-smarthome-api:new"
+                    // مسح الـ Container القديم إن وُجد
+                    sh "docker rm -f ${env.IMAGE_NAME} || true"
                     
-                    echo "⏳ Waiting for the new container to warm up..."
-                    sleep time: 15, unit: 'SECONDS' // وقت كافٍ لقيام الجافا
+                    // تشغيل الـ Container الرسمي للإنتاج مباشرة
+                    sh """
+                    docker run -d \
+                      --name ${env.IMAGE_NAME} \
+                      --network nginx-proxy \
+                      -e VIRTUAL_HOST=smarthome.${env.VIRTUAL_DOMAIN} \
+                      -e VIRTUAL_PORT=8080 \
+                      -e LETSENCRYPT_HOST=smarthome.${env.VIRTUAL_DOMAIN} \
+                      ${env.IMAGE_NAME}:latest
+                    """
                     
-                    // فحص الحالة مباشرة داخلياً عبر شبكة الـ Proxy
-                    def responseCode = sh(script: "curl -s -o /dev/null -w '%{http_code}' http://diwan-smarthome-api-staging:8080/lamp || true", returnStdout: true).trim()
-                    
-                    if (responseCode == "200" || responseCode == "405") {
-                        echo "✅ Health Check Passed! Code: ${responseCode}. Deploying to Production..."
-                        
-                        sh "docker rm -f diwan-smarthome-api || true"
-                        sh """
-                        docker run -d \
-                          --name diwan-smarthome-api \
-                          --network nginx-proxy \
-                          -e VIRTUAL_HOST=smarthome.${env.VIRTUAL_DOMAIN} \
-                          -e VIRTUAL_PORT=8080 \
-                          -e LETSENCRYPT_HOST=smarthome.${env.VIRTUAL_DOMAIN} \
-                          diwan-smarthome-api:new
-                        """
-                        sh "docker rm -f diwan-smarthome-api-staging || true"
-                    } else {
-                        sh "docker rm -f diwan-smarthome-api-staging || true"
-                        error "❌ Deployment aborted! Failed Health Check with code: ${responseCode}"
-                    }
+                    echo "⏳ Giving the application 30 seconds to fully initialize and connect to DB..."
+                    sleep time: 30, unit: 'SECONDS'
                 }
             }
         }
@@ -52,12 +46,21 @@ pipeline {
 
     post {
         always {
+            // تنظيف مساحة السيرفر دائماً بعد البناء
             echo "🧹 Cleaning up dangling docker images..."
             sh "docker image prune -f || true"
         }
-        
         success {
-            echo "Pipeline finished successfully!"
+            echo "Sending Success Email..."
+            emailext to: "${env.NOTIFICATION_EMAIL}",
+                     subject: "✅ SUCCESS: Diwan SmartHome Automated Deployment - Job #${env.BUILD_NUMBER}",
+                     body: "يا باشا، الـ Deployment الآلي خلص بنجاح والتطبيق شغال دلوقتي خلف البروكسي!\nرابط جينكينز: ${env.BUILD_URL}"
+        }
+        failure {
+            echo "Sending Failure Email..."
+            emailext to: "${env.NOTIFICATION_EMAIL}",
+                     subject: "❌ FAILURE: Diwan SmartHome Deployment Failed - Job #${env.BUILD_NUMBER}",
+                     body: "الحق يا باشا، حصلت مشكلة أثناء الـ Docker Build والـ Pipeline فشل.\nرابط اللوجز: ${env.BUILD_URL}"
         }
     }
 }
