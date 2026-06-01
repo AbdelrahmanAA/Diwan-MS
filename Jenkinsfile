@@ -28,15 +28,11 @@ pipeline {
                     
                     // تشغيل الـ Container الرسمي للإنتاج مباشرة
                     sh """
-			docker run -d \
-			  --name ${env.IMAGE_NAME} \
-			  --network nginx-proxy \
-			  -e VIRTUAL_HOST=smarthome.${env.VIRTUAL_DOMAIN} \
-			  -e VIRTUAL_PORT=8080 \
-			  -e LETSENCRYPT_HOST=smarthome.${env.VIRTUAL_DOMAIN} \
-			  --add-host=database-host:host-gateway \
-			  ${env.IMAGE_NAME}:latest
-                    """
+docker run -d \
+  --name ${env.IMAGE_NAME} \
+  --network host \
+  ${env.IMAGE_NAME}:latest
+"""
                     
                     echo "⏳ Giving the application 30 seconds to fully initialize and connect to DB..."
                     sleep time: 30, unit: 'SECONDS'
