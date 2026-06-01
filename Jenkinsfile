@@ -6,83 +6,69 @@ pipeline {
     }
 
     stages {
-        // -----------------------------------------------------------------
-        // 1. مرحلة جلب الكود من جيت هاب
-        // -----------------------------------------------------------------
+        // 1. جلب الكود بالكامل من جيت هاب
         stage('Checkout Monorepo') {
             steps {
                 checkout scm
             }
         }
 
-        // -----------------------------------------------------------------
-        // 2. بناء وتشغيل خدمة الـ SMART HOME (بورت 8086 الحاري)
-        // -----------------------------------------------------------------
-        stage('Deploy: diwan-smarthome') {
+        // 2. مرحلة البحث والبناء الديناميكي لكل الميكروسيرفيسز أوتوماتيكياً
+        stage('Dynamic Build & Deploy') {
             steps {
-                echo "🚀 Building and Deploying: diwan-smarthome..."
                 script {
-                    sh "docker build -t diwan-smarthome-api:latest ./diwan-smarthome"
-                    sh "docker rm -f diwan-smarthome-api || true"
-                    sh "docker run -d --name diwan-smarthome-api --network host diwan-smarthome-api:latest"
-                }
-            }
-        }
+                    // أمر لينكس للبحث عن كل المجلدات اللي بتبدأ بـ diwan- وجواها ملف Dockerfile
+                    def findCommand = "find . -maxdepth 2 -type d -name 'diwan-*' -exec test -f {}/Dockerfile \\; -print"
+                    def output = sh(script: findCommand, returnStdout: true).trim()
+                    
+                    if (output.isEmpty()) {
+                        echo "⚠️ No microservices found with prefix 'diwan-' and a Dockerfile!"
+                        return
+                    }
 
-        // -----------------------------------------------------------------
-        // 3. بناء وتشغيل خدمة الـ USERS (مثال: بورت 8081 أو المتسيت جواه)
-        // -----------------------------------------------------------------
-        stage('Deploy: diwan-users') {
-            steps {
-                echo "🚀 Building and Deploying: diwan-users..."
-                script {
-                    sh "docker build -t diwan-users-api:latest ./diwan-users"
-                    sh "docker rm -f diwan-users-api || true"
-                    sh "docker run -d --name diwan-users-api --network host diwan-users-api:latest"
-                }
-            }
-        }
+                    // تقسيم المخرجات إلى قائمة من أسماء المجلدات
+                    def microservices = output.split("\n")
+                    echo "🔍 Found ${microservices.size()} Microservices to deploy: ${microservices}"
 
-        // -----------------------------------------------------------------
-        // 4. بناء وتشغيل خدمة الـ GATEWAY (مثال: بورت 8000)
-        // -----------------------------------------------------------------
-        stage('Deploy: diwan-gateway') {
-            steps {
-                echo "🚀 Building and Deploying: diwan-gateway..."
-                script {
-                    sh "docker build -t diwan-gateway:latest ./diwan-gateway"
-                    sh "docker rm -f diwan-gateway || true"
-                    sh "docker run -d --name diwan-gateway --network host diwan-gateway:latest"
+                    // اللفة الذكية لبناء وتشغيل كل خدمة ورا تانية أوتوماتيك
+                    for (int i = 0; i < microservices.size(); i++) {
+                        // تنظيف المسار (مثال: تحويل ./diwan-smarthome إلى diwan-smarthome)
+                        def msDir = microservices[i].replace("./", "").trim()
+                        def containerName = "${msDir}-api"
+
+                        echo "🏗️ Starting Deployment for: ${msDir} (Container: ${containerName})"
+
+                        // 1. بناء الـ Docker Image الخاصة بالخدمة الحالية
+                        sh "docker build -t ${containerName}:latest ./${msDir}"
+
+                        // 2. مسح الـ Container القديم للخدمة إن وُجد لتفادي تعارض الأسماء
+                        sh "docker rm -f ${containerName} || true"
+
+                        // 3. تشغيل الـ Container الجديد بنظام الـ Host Mode المستقر
+                        sh "docker run -d --name ${containerName} --network host ${containerName}:latest"
+                        
+                        echo "✅ Successfully deployed ${containerName}"
+                    }
                 }
             }
         }
     }
 
-    // -----------------------------------------------------------------
-    // الـ Post Actions للتنظيف والتنبيهات النهائية
-    // -----------------------------------------------------------------
     post {
         always {
+            // تنظيف مساحة السيرفر دائماً بعد انتهاء بناء كل الخدمات
             echo "🧹 Cleaning up dangling docker images to save space..."
             sh "docker image prune -f || true"
         }
-        
         success {
-            echo "Sending Global Success Email..."
             emailext to: "${env.NOTIFICATION_EMAIL}",
-                     subject: "✅ SUCCESS: All Diwan Microservices Are Live - Job #${env.BUILD_NUMBER}",
-                     body: """يا باشا، الـ Pipeline الشامل خلص بنجاح!
-                     
-                     كل الميكروسيرفيسز (smarthome, users, gateway) حصل لها Deploy وهي شغالة ومستقرة دلوقتي على السيرفر بنظام الـ Host Mode.
-                     
-                     تفاصيل البناء بالكامل: ${env.BUILD_URL}"""
+                     subject: "✅ SUCCESS: Diwan Monorepo Automated Deployment - Job #${env.BUILD_NUMBER}",
+                     body: "يا باشا، الـ Pipeline الديناميكي خلص بنجاح! تم فحص السيرفر وبناء وتشغيل جميع الميكروسيرفيسز التي تبدأ بـ diwan- أوتوماتيكياً بنظام الـ Host Mode.\nرابط جينكينز: ${env.BUILD_URL}"
         }
-        
         failure {
-            echo "Sending Failure Email..."
             emailext to: "${env.NOTIFICATION_EMAIL}",
-                     subject: "❌ CRITICAL: Diwan Deployment Pipeline Failed - Job #${env.BUILD_NUMBER}",
-                     body: "الحق يا باشا، حصلت مشكلة في بناء أو تشغيل أحد الخدمات والـ Pipeline سقط.\nادخل فوراً شوف اللوجز من هنا: ${env.BUILD_URL}"
+                     subject: "❌ CRITICAL: Diwan Dynamic Pipeline Failed - Job #${env.BUILD_NUMBER}",
+                     body: "الحق يا باشا، حصلت مشكلة أثناء البناء الآلي للخدمات والـ Pipeline سقط.\nادخل شوف اللوجز من هنا: ${env.BUILD_URL}"
         }
     }
 }
