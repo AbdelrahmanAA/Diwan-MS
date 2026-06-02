@@ -5,7 +5,7 @@ spring:
   application:
     name: diwan-gateway
   profiles:
-    active: DEV
+    active: ٍSIT
   datasource:
     # Connection configured per profile: application-DEV.yml / application-SIT.yml
     driver-class-name: com.mysql.cj.jdbc.Driver
