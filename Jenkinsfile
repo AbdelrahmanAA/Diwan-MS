@@ -55,31 +55,25 @@ pipeline {
 
                                 if (msDir == "gateway") {
                                     sh """
-                                    docker run -d \
-                                      --name ${containerName} \
-                                      --network nginx-proxy \
-                                                                            -p ${externalPort}:8087 \
-                                      -e VIRTUAL_HOST=${env.VIRTUAL_DOMAIN} \
-                                                                            -e VIRTUAL_PORT=8087 \
-                                      -e LETSENCRYPT_HOST=${env.VIRTUAL_DOMAIN} \
-                                                                            -e SPRING_PROFILES_ACTIVE=SIT \
-                                                                            -e DB_URL=${env.GATEWAY_DB_URL} \
-                                                                            -e DB_USERNAME=${env.GATEWAY_DB_USERNAME} \
-                                                                            -e DB_PASSWORD=${env.GATEWAY_DB_PASSWORD} \
-                                                                            -e REDIS_HOST=${env.GATEWAY_REDIS_HOST} \
-                                                                            -e KAFKA_BOOTSTRAP_SERVERS=${env.GATEWAY_KAFKA_BOOTSTRAP_SERVERS} \
-                                      --add-host="localhost:host-gateway" \
-                                      ${containerName}:latest
-                                    """
+docker run -d \
+  --name ${containerName} \
+  --network nginx-proxy \
+  -p ${externalPort}:8080 \
+  -e VIRTUAL_HOST=${env.VIRTUAL_DOMAIN} \
+  -e VIRTUAL_PORT=8080 \
+  -e LETSENCRYPT_HOST=${env.VIRTUAL_DOMAIN} \
+  --add-host="host.docker.internal:host-gateway" \
+  ${containerName}:latest
+"""
                                 } else {
                                     sh """
-                                    docker run -d \
-                                      --name ${containerName} \
-                                      --network nginx-proxy \
-                                      -p ${externalPort}:8080 \
-                                      --add-host="localhost:host-gateway" \
-                                      ${containerName}:latest
-                                    """
+docker run -d \
+  --name ${containerName} \
+  --network nginx-proxy \
+  -p ${externalPort}:8080 \
+  --add-host="host.docker.internal:host-gateway" \
+  ${containerName}:latest
+"""
                                 }
                                 echo "✅ [Bridge Mode] Successfully deployed ${containerName}"
                             }
