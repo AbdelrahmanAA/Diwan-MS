@@ -4,11 +4,6 @@ pipeline {
     environment {
         VIRTUAL_DOMAIN = "developerxgroup.ddns.net"
         NOTIFICATION_EMAIL = "abdelrhman20075@gmail.com"
-        GATEWAY_DB_URL = "jdbc:mysql://localhost:3306/diwan_gateway?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
-        GATEWAY_DB_USERNAME = "Dev_user"
-        GATEWAY_DB_PASSWORD = "Dev@1234"
-        GATEWAY_REDIS_HOST = "localhost"
-        GATEWAY_KAFKA_BOOTSTRAP_SERVERS = "localhost:9092"
     }
 
     stages {
@@ -48,36 +43,33 @@ pipeline {
 
                         parallelBranches["Deploy-${msDir}"] = {
                             stage("Sub-Stage: ${msDir}") {
-                                echo "🏗️ [Bridge Mode] Deploying ${msDir}..."
+                                echo "🏗️ Deploying ${msDir} on network proxy..."
                                 
                                 sh "docker build -t ${containerName}:latest ./${msDir}"
                                 sh "docker rm -f ${containerName} || true"
 
                                 if (msDir == "gateway") {
-    // 🌟 التعديل السحري: إعلام الـ Nginx بالبورت الداخلي 8080 لتوليد الشهادة فوراً
-    sh """
-    docker run -d \
-      --name ${containerName} \
-      --network nginx-proxy \
-      -p ${externalPort}:8080 \
-      -e VIRTUAL_HOST=${env.VIRTUAL_DOMAIN} \
-      -e VIRTUAL_PORT=8080 \
-      -e LETSENCRYPT_HOST=${env.VIRTUAL_DOMAIN} \
-      --add-host="host.docker.internal:host-gateway" \
-      ${containerName}:latest
-    """
-} else {
-    // باقي الـ 5 ميكروسيرفيسز يقوموا Bridge ومحميين زي ما هما تمام
-    sh """
-    docker run -d \
-      --name ${containerName} \
-      --network nginx-proxy \
-      -p ${externalPort}:8080 \
-      --add-host="host.docker.internal:host-gateway" \
-      ${containerName}:latest
-    """
-}
-                                echo "✅ [Bridge Mode] Successfully deployed ${containerName}"
+                                    sh """
+                                    docker run -d \
+                                      --name ${containerName} \
+                                      --network nginx-proxy \
+                                      -p ${externalPort}:8080 \
+                                      -e VIRTUAL_HOST=${env.VIRTUAL_DOMAIN} \
+                                      -e VIRTUAL_PORT=8080 \
+                                      -e LETSENCRYPT_HOST=${env.VIRTUAL_DOMAIN} \
+                                      --add-host="host.docker.internal:host-gateway" \
+                                      ${containerName}:latest
+                                    """
+                                } else {
+                                    sh """
+                                    docker run -d \
+                                      --name ${containerName} \
+                                      --network nginx-proxy \
+                                      -p ${externalPort}:8080 \
+                                      --add-host="host.docker.internal:host-gateway" \
+                                      ${containerName}:latest
+                                    """
+                                }
                             }
                         }
                     }
