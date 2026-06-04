@@ -37,23 +37,43 @@ pipeline {
                     ]
 
                     for (int i = 0; i < microservices.size(); i++) {
-    def msDir = microservices[i].replace("./", "").trim()
-    def containerName = (msDir == "gateway") ? "diwan-gateway-api" : "${msDir}-api"
-    
-    parallelBranches["Deploy-${msDir}"] = {
-        stage("Sub-Stage: ${msDir}") {
-            echo "🏗️ [Host Mode] Deploying ${msDir}..."
-            
-            sh "docker build -t ${containerName}:latest ./${msDir}"
-            sh "docker rm -f ${containerName} || true"
+                        def msDir = microservices[i].replace("./", "").trim()
+                        def containerName = (msDir == "gateway") ? "diwan-gateway-api" : "${msDir}-api"
+                        def externalPort = portMap[msDir] ?: (8090 + i)
 
-            // 🌟 التشغيل بنظام الـ Host Mode لتقرأ الـ localhost لكل الخدمات بره وجوه
-            sh "docker run -d --name ${containerName} --network host ${containerName}:latest"
-            
-            echo "✅ [Host Mode] Successfully deployed ${containerName}"
-        }
-    }
-}
+                        parallelBranches["Deploy-${msDir}"] = {
+                            stage("Sub-Stage: ${msDir}") {
+                                echo "🏗️ [Bridge Mode] Deploying ${msDir}..."
+                                
+                                sh "docker build -t ${containerName}:latest ./${msDir}"
+                                sh "docker rm -f ${containerName} || true"
+
+                                if (msDir == "gateway") {
+                                    sh """
+                                    docker run -d \
+                                      --name ${containerName} \
+                                      --network nginx-proxy \
+                                      -p ${externalPort}:8080 \
+                                      -e VIRTUAL_HOST=${env.VIRTUAL_DOMAIN} \
+                                      -e VIRTUAL_PORT=8080 \
+                                      -e LETSENCRYPT_HOST=${env.VIRTUAL_DOMAIN} \
+                                      --add-host="localhost:host-gateway" \
+                                      ${containerName}:latest
+                                    """
+                                } else {
+                                    sh """
+                                    docker run -d \
+                                      --name ${containerName} \
+                                      --network nginx-proxy \
+                                      -p ${externalPort}:8080 \
+                                      --add-host="localhost:host-gateway" \
+                                      ${containerName}:latest
+                                    """
+                                }
+                                echo "✅ [Bridge Mode] Successfully deployed ${containerName}"
+                            }
+                        }
+                    }
                     parallel parallelBranches
                 }
             }
