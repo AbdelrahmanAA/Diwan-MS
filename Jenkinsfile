@@ -36,44 +36,54 @@ pipeline {
                         "diwan-smarthome": 8085
                     ]
 
-                    for (int i = 0; i < microservices.size(); i++) {
-                        def msDir = microservices[i].replace("./", "").trim()
-                        def containerName = (msDir == "gateway") ? "diwan-gateway-api" : "${msDir}-api"
-                        def externalPort = portMap[msDir] ?: (8090 + i)
+                    // انسخ الجزء ده وحطه مكان الـ Loop القديمة جوه الـ Jenkinsfile:
 
-                        parallelBranches["Deploy-${msDir}"] = {
-                            stage("Sub-Stage: ${msDir}") {
-                                echo "🏗️ [Bridge Mode] Deploying ${msDir} on external port ${externalPort}..."
-                                
-                                sh "docker build -t ${containerName}:latest ./${msDir}"
-                                sh "docker rm -f ${containerName} || true"
+for (int i = 0; i < microservices.size(); i++) {
+    def msDir = microservices[i].replace("./", "").trim()
+    def containerName = (msDir == "gateway") ? "diwan-gateway-api" : "${msDir}-api"
+    def externalPort = portMap[msDir] ?: (8090 + i)
+    
+    // 🌟 المتغير السحري: إعطاء كل خدمة دور وتأخير تصاعدي (0 ثانية، 3 ثواني، 6 ثواني، إلخ)
+    def delayTime = i * 3 
 
-                                if (msDir == "gateway") {
-                                    sh """
-                                    docker run -d \
-                                      --name ${containerName} \
-                                      --network nginx-proxy \
-                                      -p ${externalPort}:8080 \
-                                      -e VIRTUAL_HOST=${env.VIRTUAL_DOMAIN} \
-                                      -e VIRTUAL_PORT=8080 \
-                                      -e LETSENCRYPT_HOST=${env.VIRTUAL_DOMAIN} \
-                                      --add-host="host.docker.internal:host-gateway" \
-                                      ${containerName}:latest
-                                    """
-                                } else {
-                                    sh """
-                                    docker run -d \
-                                      --name ${containerName} \
-                                      --network nginx-proxy \
-                                      -p ${externalPort}:8080 \
-                                      --add-host="host.docker.internal:host-gateway" \
-                                      ${containerName}:latest
-                                    """
-                                }
-                                echo "✅ [Bridge Mode] Successfully deployed ${containerName}"
-                            }
-                        }
-                    }
+    parallelBranches["Deploy-${msDir}"] = {
+        stage("Sub-Stage: ${msDir}") {
+            echo "🏗️ [Parallel Bridge] Building ${msDir}..."
+            
+            sh "docker build -t ${containerName}:latest ./${msDir}"
+            sh "docker rm -f ${containerName} || true"
+
+            // ⏳ انتظام الدور لمنع خنق الـ MySQL
+            echo "⏳ Warming up: Waiting ${delayTime} seconds before running ${containerName}..."
+            sleep time: delayTime, unit: 'SECONDS'
+
+            if (msDir == "gateway") {
+                sh """
+                docker run -d \
+                  --name ${containerName} \
+                  --network nginx-proxy \
+                  -p ${externalPort}:8080 \
+                  -e VIRTUAL_HOST=${env.VIRTUAL_DOMAIN} \
+                  -e VIRTUAL_PORT=8080 \
+                  -e LETSENCRYPT_HOST=${env.VIRTUAL_DOMAIN} \
+                  --add-host="host.docker.internal:host-gateway" \
+                  ${containerName}:latest
+                """
+            } else {
+                sh """
+                docker run -d \
+                  --name ${containerName} \
+                  --network nginx-proxy \
+                  -p ${externalPort}:8080 \
+                  --add-host="host.docker.internal:host-gateway" \
+                  ${containerName}:latest
+                """
+            }
+            echo "✅ [Bridge Mode] Successfully deployed ${containerName}"
+        }
+    }
+}
+
                     parallel parallelBranches
                 }
             }
