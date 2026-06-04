@@ -4,6 +4,11 @@ pipeline {
     environment {
         VIRTUAL_DOMAIN = "developerxgroup.ddns.net"
         NOTIFICATION_EMAIL = "abdelrhman20075@gmail.com"
+        GATEWAY_DB_URL = "jdbc:mysql://localhost:3306/diwan_gateway?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
+        GATEWAY_DB_USERNAME = "Dev_user"
+        GATEWAY_DB_PASSWORD = "Dev@1234"
+        GATEWAY_REDIS_HOST = "localhost"
+        GATEWAY_KAFKA_BOOTSTRAP_SERVERS = "localhost:9092"
     }
 
     stages {
@@ -53,10 +58,16 @@ pipeline {
                                     docker run -d \
                                       --name ${containerName} \
                                       --network nginx-proxy \
-                                      -p ${externalPort}:8080 \
+                                                                            -p ${externalPort}:8087 \
                                       -e VIRTUAL_HOST=${env.VIRTUAL_DOMAIN} \
-                                      -e VIRTUAL_PORT=8080 \
+                                                                            -e VIRTUAL_PORT=8087 \
                                       -e LETSENCRYPT_HOST=${env.VIRTUAL_DOMAIN} \
+                                                                            -e SPRING_PROFILES_ACTIVE=SIT \
+                                                                            -e DB_URL=${env.GATEWAY_DB_URL} \
+                                                                            -e DB_USERNAME=${env.GATEWAY_DB_USERNAME} \
+                                                                            -e DB_PASSWORD=${env.GATEWAY_DB_PASSWORD} \
+                                                                            -e REDIS_HOST=${env.GATEWAY_REDIS_HOST} \
+                                                                            -e KAFKA_BOOTSTRAP_SERVERS=${env.GATEWAY_KAFKA_BOOTSTRAP_SERVERS} \
                                       --add-host="localhost:host-gateway" \
                                       ${containerName}:latest
                                     """
