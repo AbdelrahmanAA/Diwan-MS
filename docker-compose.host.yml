@@ -1,0 +1,83 @@
+services:
+  mysql:
+    network_mode: host
+    networks: []
+    ports: []
+
+  redis:
+    network_mode: host
+    networks: []
+    ports: []
+
+  zookeeper:
+    network_mode: host
+    networks: []
+    ports: []
+
+  kafka:
+    network_mode: host
+    networks: []
+    ports: []
+    environment:
+      KAFKA_ZOOKEEPER_CONNECT: localhost:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+
+  diwan-users:
+    network_mode: host
+    networks: []
+    ports: []
+    environment:
+      SPRING_PROFILES_ACTIVE: DEV
+      DB_URL: jdbc:mysql://localhost:3306/diwan_users?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      REDIS_HOST: localhost
+      KAFKA_BOOTSTRAP_SERVERS: localhost:9092
+
+  diwan-transactions:
+    network_mode: host
+    networks: []
+    ports: []
+    environment:
+      SPRING_PROFILES_ACTIVE: DEV
+      DB_URL: jdbc:mysql://localhost:3306/diwan_transactions?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      REDIS_HOST: localhost
+      KAFKA_BOOTSTRAP_SERVERS: localhost:9092
+      USERS_SERVICE_URL: http://localhost:8083
+
+  diwan-medical:
+    network_mode: host
+    networks: []
+    ports: []
+    environment:
+      SPRING_PROFILES_ACTIVE: DEV
+      DB_URL: jdbc:mysql://localhost:3306/diwan_medical?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      REDIS_HOST: localhost
+      KAFKA_BOOTSTRAP_SERVERS: localhost:9092
+      USERS_SERVICE_URL: http://localhost:8083
+
+  diwan-logging:
+    network_mode: host
+    networks: []
+    ports: []
+    environment:
+      SPRING_PROFILES_ACTIVE: DEV
+      DB_URL: jdbc:mysql://localhost:3306/diwan_logging?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      KAFKA_BOOTSTRAP_SERVERS: localhost:9092
+
+  diwan-smarthome:
+    network_mode: host
+    networks: []
+    ports: []
+    environment:
+      SPRING_PROFILES_ACTIVE: DEV
+      DB_URL: jdbc:mysql://localhost:3306/diwan_smarthome?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8
+      REDIS_HOST: localhost
+
+  diwan-gateway:
+    network_mode: host
+    networks: []
+    ports: []
+    environment:
+      SPRING_PROFILES_ACTIVE: DEV
+      DB_URL: jdbc:mysql://localhost:3306/diwan_gateway?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      REDIS_HOST: localhost
+      KAFKA_BOOTSTRAP_SERVERS: localhost:9092
