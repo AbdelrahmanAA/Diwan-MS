@@ -54,27 +54,29 @@ pipeline {
                                 sh "docker rm -f ${containerName} || true"
 
                                 if (msDir == "gateway") {
-                                    sh """
-docker run -d \
-  --name ${containerName} \
-  --network nginx-proxy \
-  -p ${externalPort}:8080 \
-  -e VIRTUAL_HOST=${env.VIRTUAL_DOMAIN} \
-  -e VIRTUAL_PORT=8080 \
-  -e LETSENCRYPT_HOST=${env.VIRTUAL_DOMAIN} \
-  --add-host="host.docker.internal:host-gateway" \
-  ${containerName}:latest
-"""
-                                } else {
-                                    sh """
-docker run -d \
-  --name ${containerName} \
-  --network nginx-proxy \
-  -p ${externalPort}:8080 \
-  --add-host="host.docker.internal:host-gateway" \
-  ${containerName}:latest
-"""
-                                }
+    // 🌟 التعديل السحري: إعلام الـ Nginx بالبورت الداخلي 8080 لتوليد الشهادة فوراً
+    sh """
+    docker run -d \
+      --name ${containerName} \
+      --network nginx-proxy \
+      -p ${externalPort}:8080 \
+      -e VIRTUAL_HOST=${env.VIRTUAL_DOMAIN} \
+      -e VIRTUAL_PORT=8080 \
+      -e LETSENCRYPT_HOST=${env.VIRTUAL_DOMAIN} \
+      --add-host="host.docker.internal:host-gateway" \
+      ${containerName}:latest
+    """
+} else {
+    // باقي الـ 5 ميكروسيرفيسز يقوموا Bridge ومحميين زي ما هما تمام
+    sh """
+    docker run -d \
+      --name ${containerName} \
+      --network nginx-proxy \
+      -p ${externalPort}:8080 \
+      --add-host="host.docker.internal:host-gateway" \
+      ${containerName}:latest
+    """
+}
                                 echo "✅ [Bridge Mode] Successfully deployed ${containerName}"
                             }
                         }
