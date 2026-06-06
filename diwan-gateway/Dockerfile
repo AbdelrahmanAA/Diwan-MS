@@ -1,13 +1,8 @@
-FROM maven:3.9-eclipse-temurin-17-alpine AS builder
+FROM eclipse-temurin:17-jdk-alpine
 WORKDIR /app
-COPY pom.xml .
-RUN mvn dependency:go-offline
+COPY target/*.jar app.jar
 
-COPY src ./src
-RUN mvn clean package -DskipTests
-
-FROM eclipse-temurin:17-jre-alpine
-WORKDIR /app
-COPY --from=builder /app/target/*.jar app.jar
+# 🌟 التعديل الحاسم: إعلام الدوكر بأن البوابة تفتح داخلياً على بورت 8087 للـ Netty
 EXPOSE 8087
-ENTRYPOINT ["java", "-jar", "app.jar"]
+
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]
