@@ -15,13 +15,22 @@ pipeline {
         }
 
         // 2. 🌟 المرحلة السحرية: بناء ملفات الـ JAR لجميع الخدمات لمنع سقوط الـ COPY
-        stage('Maven Compile & Package') {
-            steps {
-                echo "📦 Compiling and Packaging Spring Boot apps..."
-                // تنفيذ بناء المافن وتخطي الـ Unit Tests لتوفير الوقت والرام
-                sh "mvn clean package -DskipTests"
-            }
+       // 🌟 استبدل مرحلة الـ 'Maven Compile & Package' جوه الـ Jenkinsfile بالبلوك الذكي ده واعمل Push:
+stage('Maven Compile & Package') {
+    steps {
+        echo "📦 Compiling and Packaging Spring Boot apps using Wrapper..."
+        script {
+            // إعطاء صلاحية التنفيذ للـ wrapper ثم تشغيل البناء لكل ميكروسيرفيس
+            sh "chmod +x ./diwan-gateway/mvnw && cd ./diwan-gateway && ./mvnw clean package -DskipTests"
+            sh "chmod +x ./diwan-users/mvnw && cd ./diwan-users && ./mvnw clean package -DskipTests"
+            sh "chmod +x ./diwan-smarthome/mvnw && cd ./diwan-smarthome && ./mvnw clean package -DskipTests"
+            sh "chmod +x ./diwan-medical/mvnw && cd ./diwan-medical && ./mvnw clean package -DskipTests"
+            sh "chmod +x ./diwan-transactions/mvnw && cd ./diwan-transactions && ./mvnw clean package -DskipTests"
+            sh "chmod +x ./diwan-logging/mvnw && cd ./diwan-logging && ./mvnw clean package -DskipTests"
         }
+    }
+}
+
 
         // 3. مرحلة البناء الإعصاري الموازي للـ 6 خدمات والـ Gateway ⚡
         stage('Parallel Build & Deploy') {
