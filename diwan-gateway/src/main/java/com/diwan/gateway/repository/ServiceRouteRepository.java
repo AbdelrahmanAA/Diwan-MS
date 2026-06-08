@@ -7,4 +7,5 @@ import java.util.Optional;
 public interface ServiceRouteRepository extends JpaRepository<ServiceRoute, Long> {
     List<ServiceRoute> findByActiveTrue();
     Optional<ServiceRoute> findByServiceNameAndActiveTrue(String serviceName);
+    Optional<ServiceRoute> findByServiceName(String serviceName);
 }

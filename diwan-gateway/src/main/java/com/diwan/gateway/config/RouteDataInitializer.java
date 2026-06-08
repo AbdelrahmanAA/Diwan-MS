@@ -4,6 +4,7 @@ import com.diwan.gateway.entity.AppFeature;
 import com.diwan.gateway.repository.AppFeatureRepository;
 import com.diwan.gateway.service.FeaturesCacheService;
 import com.diwan.gateway.service.RouteService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
@@ -13,13 +14,25 @@ public class RouteDataInitializer implements CommandLineRunner {
     private final RouteService routeService;
     private final AppFeatureRepository featureRepository;
     private final FeaturesCacheService cacheService;
+    private final String usersServiceUrl;
+    private final String transactionsServiceUrl;
+    private final String medicalServiceUrl;
+    private final String loggingServiceUrl;
 
     public RouteDataInitializer(RouteService routeService,
                                 AppFeatureRepository featureRepository,
-                                FeaturesCacheService cacheService) {
+                                FeaturesCacheService cacheService,
+                                @Value("${USERS_SERVICE_URL:http://localhost:8083}") String usersServiceUrl,
+                                @Value("${TRANSACTIONS_SERVICE_URL:http://localhost:8085}") String transactionsServiceUrl,
+                                @Value("${MEDICAL_SERVICE_URL:http://localhost:8082}") String medicalServiceUrl,
+                                @Value("${LOGGING_SERVICE_URL:http://localhost:8084}") String loggingServiceUrl) {
         this.routeService = routeService;
         this.featureRepository = featureRepository;
         this.cacheService = cacheService;
+        this.usersServiceUrl = usersServiceUrl;
+        this.transactionsServiceUrl = transactionsServiceUrl;
+        this.medicalServiceUrl = medicalServiceUrl;
+        this.loggingServiceUrl = loggingServiceUrl;
     }
 
     @Override
@@ -27,10 +40,10 @@ public class RouteDataInitializer implements CommandLineRunner {
 
         // ── 1. Seed service_routes (routing only) ──────────────────────────
         routeService.deactivate("auth");
-        routeService.seedIfAbsent("users",        "http://localhost:8083", "/api/users",        "Users and Auth service");
-        routeService.seedIfAbsent("transactions", "http://localhost:8085", "/api/transactions", "Financial transactions service");
-        routeService.seedIfAbsent("medical",      "http://localhost:8082", "/api/medical",      "Medical records service");
-        routeService.seedIfAbsent("logging",      "http://localhost:8084", "/api/logs",         "Centralized request logging service");
+        routeService.seedOrUpdate("users",        usersServiceUrl,        "/api/users",        "Users and Auth service");
+        routeService.seedOrUpdate("transactions", transactionsServiceUrl, "/api/transactions", "Financial transactions service");
+        routeService.seedOrUpdate("medical",      medicalServiceUrl,      "/api/medical",      "Medical records service");
+        routeService.seedOrUpdate("logging",      loggingServiceUrl,      "/api/logs",         "Centralized request logging service");
 
         // ── 2. Seed app_features (dashboard cards) ─────────────────────────
         seedFeatureIfAbsent("transactions",

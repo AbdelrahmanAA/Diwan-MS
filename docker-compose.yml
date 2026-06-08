@@ -14,7 +14,6 @@ services:
       MYSQL_DATABASE: ${MYSQL_DEFAULT_DB:-diwan_users}
     ports:
       - "3306:3306"
-    command: ["--default-authentication-plugin=mysql_native_password"]
     volumes:
       - mysql_data:/var/lib/mysql
     networks:
@@ -263,6 +262,13 @@ services:
       DB_URL: jdbc:mysql://diwan-mysql:3306/diwan_gateway?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
       DB_USERNAME: ${MYSQL_ROOT_USERNAME:-root}
       DB_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+      USERS_SERVICE_URL: http://diwan-users:8083
+      TRANSACTIONS_SERVICE_URL: http://diwan-transactions:8085
+      MEDICAL_SERVICE_URL: http://diwan-medical:8082
+      LOGGING_SERVICE_URL: http://diwan-logging:8084
+      SPRING_DATA_REDIS_HOST: diwan-redis
+      SPRING_DATA_REDIS_PORT: 6379
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       REDIS_HOST: diwan-redis
       REDIS_PORT: 6379
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092

@@ -40,4 +40,44 @@ public class RouteService {
         }
         return false;
     }
+
+    public boolean seedOrUpdate(String name, String baseUrl, String pathPrefix, String description) {
+        Optional<ServiceRoute> existing = repo.findByServiceName(name);
+        if (existing.isEmpty()) {
+            ServiceRoute r = new ServiceRoute();
+            r.setServiceName(name);
+            r.setBaseUrl(baseUrl);
+            r.setPathPrefix(pathPrefix);
+            r.setDescription(description);
+            r.setActive(true);
+            repo.save(r);
+            return true;
+        }
+
+        ServiceRoute route = existing.get();
+        boolean changed = false;
+
+        if (!baseUrl.equals(route.getBaseUrl())) {
+            route.setBaseUrl(baseUrl);
+            changed = true;
+        }
+        if (!pathPrefix.equals(route.getPathPrefix())) {
+            route.setPathPrefix(pathPrefix);
+            changed = true;
+        }
+        if (description != null && !description.equals(route.getDescription())) {
+            route.setDescription(description);
+            changed = true;
+        }
+        if (!route.isActive()) {
+            route.setActive(true);
+            changed = true;
+        }
+
+        if (changed) {
+            repo.save(route);
+            cacheService.refreshCache();
+        }
+        return changed;
+    }
 }
