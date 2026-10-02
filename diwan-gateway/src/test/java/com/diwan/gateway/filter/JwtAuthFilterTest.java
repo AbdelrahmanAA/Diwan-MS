@@ -40,7 +40,7 @@ class JwtAuthFilterTest {
 
     private JwtAuthFilter filter() {
         when(redis.hasKey(anyString())).thenReturn(false);
-        return new JwtAuthFilter(new JwtService(SECRET, 60_000), redis, GatewaySigner.fromSecret(SECRET), List.of("/admin", "/api/logs", "/actuator"), 18111);
+        return new JwtAuthFilter(new JwtService(SECRET, 60_000), redis, GatewaySigner.fromSecret(SECRET), List.of("/admin", "/api/logs", "/api/features", "/actuator"), 18111);
     }
 
     private String token(Long userId, String role) {
@@ -123,6 +123,38 @@ class JwtAuthFilterTest {
         filter().filter(app, chain).block();
         assertEquals(HttpStatus.UNAUTHORIZED, app.getResponse().getStatusCode());
         assertNull(forwarded.get());
+    }
+
+    @Test
+    void onlyReadingTheFeatureCardsIsPublic() {
+        MockServerWebExchange read = MockServerWebExchange.from(MockServerHttpRequest.get("/api/features").build());
+        filter().filter(read, chain).block();
+        assertNotNull(forwarded.get()); // reached the handler without a token
+
+        for (MockServerHttpRequest.BaseBuilder<?> req : List.of(
+                MockServerHttpRequest.post("/api/features"), MockServerHttpRequest.put("/api/features/1"),
+                MockServerHttpRequest.patch("/api/features/1/toggle"), MockServerHttpRequest.delete("/api/features/1"),
+                MockServerHttpRequest.get("/api/features/all"))) {
+            forwarded.set(null);
+            MockServerWebExchange ex = MockServerWebExchange.from(req.build());
+            filter().filter(ex, chain).block();
+            assertEquals(HttpStatus.UNAUTHORIZED, ex.getResponse().getStatusCode(), req.toString());
+            assertNull(forwarded.get());
+        }
+    }
+
+    @Test
+    void featureAdministrationNeedsAnAdminToken() {
+        MockServerWebExchange user = MockServerWebExchange.from(MockServerHttpRequest.post("/api/features")
+                .header("Authorization", "Bearer " + token(7L, null)).build());
+        filter().filter(user, chain).block();
+        assertEquals(HttpStatus.FORBIDDEN, user.getResponse().getStatusCode());
+        assertNull(forwarded.get());
+
+        MockServerWebExchange admin = MockServerWebExchange.from(MockServerHttpRequest.post("/api/features")
+                .header("Authorization", "Bearer " + token(1L, "ADMIN")).build());
+        filter().filter(admin, chain).block();
+        assertNotNull(forwarded.get());
     }
 
     @Test

@@ -37,3 +37,9 @@ data/
 # JVM crash dumps
 hs_err_pid*
 replay_pid*
+
+# Local environment (secrets)
+.env
+
+# Postman environment with the real local secret
+*.local.postman_environment.json

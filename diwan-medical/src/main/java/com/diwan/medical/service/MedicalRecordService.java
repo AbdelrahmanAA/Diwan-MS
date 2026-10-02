@@ -4,9 +4,13 @@ import com.diwan.medical.dto.MedicalRecordRequest;
 import com.diwan.medical.dto.MedicalRecordResponse;
 import com.diwan.medical.entity.*;
 import com.diwan.medical.repository.*;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 
 @Service
 public class MedicalRecordService {
@@ -106,47 +110,57 @@ public class MedicalRecordService {
         return list;
     }
 
-    public MedicalRecordResponse update(Long id, String category, MedicalRecordRequest req) {
+    /**
+     * A record can only be read for change by its owner. A foreign or missing id gives the same 404, so the
+     * response does not reveal whether someone else's record exists.
+     */
+    private <T> T owned(JpaRepository<T, Long> repo, Long id, Long userId, Function<T, Long> ownerOf) {
+        return repo.findById(id)
+                .filter(e -> userId != null && userId.equals(ownerOf.apply(e)))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Record not found"));
+    }
+
+    public MedicalRecordResponse update(Long id, Long userId, String category, MedicalRecordRequest req) {
         if ("medications".equals(category)) {
-            MedicalMedication e = medications.findById(id).orElseThrow();
+            MedicalMedication e = owned(medications, id, userId, MedicalMedication::getUserId);
             if(req.getName()!=null) e.setName(req.getName()); if(req.getDosage()!=null) e.setDosage(req.getDosage());
             if(req.getFrequency()!=null) e.setFrequency(req.getFrequency()); if(req.getStartDate()!=null) e.setStartDate(req.getStartDate());
             if(req.getEndDate()!=null) e.setEndDate(req.getEndDate()); if(req.getNotes()!=null) e.setNotes(req.getNotes());
             return toResponse(medications.save(e));
         } else if ("allergies".equals(category)) {
-            MedicalAllergy e = allergies.findById(id).orElseThrow();
+            MedicalAllergy e = owned(allergies, id, userId, MedicalAllergy::getUserId);
             if(req.getAllergen()!=null) e.setAllergen(req.getAllergen()); if(req.getSeverity()!=null) e.setSeverity(req.getSeverity());
             if(req.getReaction()!=null) e.setReaction(req.getReaction()); if(req.getNotes()!=null) e.setNotes(req.getNotes());
             return toResponse(allergies.save(e));
         } else if ("bloodType".equals(category)) {
-            MedicalBloodType e = bloodTypes.findById(id).orElseThrow();
+            MedicalBloodType e = owned(bloodTypes, id, userId, MedicalBloodType::getUserId);
             if(req.getBloodType()!=null) e.setBloodType(req.getBloodType()); if(req.getNotes()!=null) e.setNotes(req.getNotes());
             return toResponse(bloodTypes.save(e));
         } else if ("surgeries".equals(category)) {
-            MedicalSurgery e = surgeries.findById(id).orElseThrow();
+            MedicalSurgery e = owned(surgeries, id, userId, MedicalSurgery::getUserId);
             if(req.getSurgeryName()!=null) e.setSurgeryName(req.getSurgeryName()); if(req.getSurgeryDate()!=null) e.setSurgeryDate(req.getSurgeryDate());
             if(req.getHospital()!=null) e.setHospital(req.getHospital()); if(req.getSurgeon()!=null) e.setSurgeon(req.getSurgeon());
             if(req.getNotes()!=null) e.setNotes(req.getNotes());
             return toResponse(surgeries.save(e));
         } else if ("chronicDiseases".equals(category)) {
-            MedicalChronicDisease e = chronicDiseases.findById(id).orElseThrow();
+            MedicalChronicDisease e = owned(chronicDiseases, id, userId, MedicalChronicDisease::getUserId);
             if(req.getDiseaseName()!=null) e.setDiseaseName(req.getDiseaseName()); if(req.getDiagnosedAt()!=null) e.setDiagnosedAt(req.getDiagnosedAt());
             if(req.getCurrentTreatment()!=null) e.setCurrentTreatment(req.getCurrentTreatment()); if(req.getNotes()!=null) e.setNotes(req.getNotes());
             return toResponse(chronicDiseases.save(e));
         } else if ("labResults".equals(category)) {
-            MedicalLabResult e = labResults.findById(id).orElseThrow();
+            MedicalLabResult e = owned(labResults, id, userId, MedicalLabResult::getUserId);
             if(req.getTestName()!=null) e.setTestName(req.getTestName()); if(req.getResult()!=null) e.setResult(req.getResult());
             if(req.getUnit()!=null) e.setUnit(req.getUnit()); if(req.getReferenceRange()!=null) e.setReferenceRange(req.getReferenceRange());
             if(req.getTestDate()!=null) e.setTestDate(req.getTestDate()); if(req.getNotes()!=null) e.setNotes(req.getNotes());
             return toResponse(labResults.save(e));
         } else if ("vaccines".equals(category)) {
-            MedicalVaccine e = vaccines.findById(id).orElseThrow();
+            MedicalVaccine e = owned(vaccines, id, userId, MedicalVaccine::getUserId);
             if(req.getVaccineName()!=null) e.setVaccineName(req.getVaccineName()); if(req.getDoseNumber()!=null) e.setDoseNumber(req.getDoseNumber());
             if(req.getVaccinationDate()!=null) e.setVaccinationDate(req.getVaccinationDate()); if(req.getNextDoseDate()!=null) e.setNextDoseDate(req.getNextDoseDate());
             if(req.getNotes()!=null) e.setNotes(req.getNotes());
             return toResponse(vaccines.save(e));
         } else if ("familyHistory".equals(category)) {
-            MedicalFamilyHistory e = familyHistory.findById(id).orElseThrow();
+            MedicalFamilyHistory e = owned(familyHistory, id, userId, MedicalFamilyHistory::getUserId);
             if(req.getCondition()!=null) e.setCondition(req.getCondition()); if(req.getRelation()!=null) e.setRelation(req.getRelation());
             if(req.getNotes()!=null) e.setNotes(req.getNotes());
             return toResponse(familyHistory.save(e));
@@ -154,16 +168,16 @@ public class MedicalRecordService {
         throw new IllegalArgumentException("Unknown category: " + category);
     }
 
-    public void delete(Long id, String category) {
+    public void delete(Long id, Long userId, String category) {
         switch (category) {
-            case "medications": medications.deleteById(id); break;
-            case "allergies": allergies.deleteById(id); break;
-            case "bloodType": bloodTypes.deleteById(id); break;
-            case "surgeries": surgeries.deleteById(id); break;
-            case "chronicDiseases": chronicDiseases.deleteById(id); break;
-            case "labResults": labResults.deleteById(id); break;
-            case "vaccines": vaccines.deleteById(id); break;
-            case "familyHistory": familyHistory.deleteById(id); break;
+            case "medications": medications.delete(owned(medications, id, userId, MedicalMedication::getUserId)); break;
+            case "allergies": allergies.delete(owned(allergies, id, userId, MedicalAllergy::getUserId)); break;
+            case "bloodType": bloodTypes.delete(owned(bloodTypes, id, userId, MedicalBloodType::getUserId)); break;
+            case "surgeries": surgeries.delete(owned(surgeries, id, userId, MedicalSurgery::getUserId)); break;
+            case "chronicDiseases": chronicDiseases.delete(owned(chronicDiseases, id, userId, MedicalChronicDisease::getUserId)); break;
+            case "labResults": labResults.delete(owned(labResults, id, userId, MedicalLabResult::getUserId)); break;
+            case "vaccines": vaccines.delete(owned(vaccines, id, userId, MedicalVaccine::getUserId)); break;
+            case "familyHistory": familyHistory.delete(owned(familyHistory, id, userId, MedicalFamilyHistory::getUserId)); break;
             default: throw new IllegalArgumentException("Unknown category: " + category);
         }
     }

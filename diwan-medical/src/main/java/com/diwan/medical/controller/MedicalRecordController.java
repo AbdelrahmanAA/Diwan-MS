@@ -36,7 +36,7 @@ public class MedicalRecordController {
             @RequestHeader("X-User-Id") Long userId,
             @RequestBody MedicalRecordRequest req) {
         req.setUserId(userId);
-        return ResponseEntity.ok(service.update(id, req.getCategory(), req));
+        return ResponseEntity.ok(service.update(id, userId, req.getCategory(), req));
     }
 
     @DeleteMapping("/{id}")
@@ -44,7 +44,7 @@ public class MedicalRecordController {
             @PathVariable Long id,
             @RequestParam String category,
             @RequestHeader("X-User-Id") Long userId) {
-        service.delete(id, category);
+        service.delete(id, userId, category);
         return ResponseEntity.noContent().build();
     }
 }

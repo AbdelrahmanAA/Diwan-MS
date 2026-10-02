@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.Ordered;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
@@ -35,16 +36,21 @@ public class JwtAuthFilter implements WebFilter, Ordered {
 
     // Matched on a "/" boundary. The Alexa endpoint authenticates itself in diwan-smarthome
     // (lambda shared secret + user JWT), so the Lambda can call it through the gateway.
+    /** Reading the dashboard cards is public; any other method or sub-path under /api/features is admin-only. */
+    private static boolean isPublicFeaturesRead(ServerWebExchange exchange, String path) {
+        return HttpMethod.GET.equals(exchange.getRequest().getMethod())
+                && (path.equals("/api/features") || path.equals("/api/features/"));
+    }
+
     private static final List<String> PUBLIC_PATHS = List.of(
         "/api/users/login",
         "/api/users/register",
-        "/api/features",
         "/actuator/health",
         "/api/smart-home/alexa"
     );
 
     public JwtAuthFilter(JwtService jwtService, StringRedisTemplate redis, GatewaySigner signer,
-                         @Value("${diwan.gateway.admin-paths:/admin,/api/logs,/actuator}") List<String> adminPaths,
+                         @Value("${diwan.gateway.admin-paths:/admin,/api/logs,/api/features,/actuator}") List<String> adminPaths,
                          @Value("${management.server.port:-1}") int managementPort) {
         this.jwtService = jwtService;
         this.redis   = redis;
@@ -61,7 +67,8 @@ public class JwtAuthFilter implements WebFilter, Ordered {
             .build();
 
         String path = exchange.getRequest().getURI().getPath();
-        if (matchesAny(PUBLIC_PATHS, path) || ManagementPort.isManagementRequest(exchange, managementPort)) {
+        if (matchesAny(PUBLIC_PATHS, path) || isPublicFeaturesRead(exchange, path)
+                || ManagementPort.isManagementRequest(exchange, managementPort)) {
             return chain.filter(exchange);
         }
 
