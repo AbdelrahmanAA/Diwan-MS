@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
 
   # ─────────────────────────────────────────────
@@ -13,7 +11,7 @@ services:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
       MYSQL_DATABASE: ${MYSQL_DEFAULT_DB:-diwan_users}
     ports:
-      - "3306:3306"
+      - "127.0.0.1:3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
     networks:
@@ -29,7 +27,7 @@ services:
     image: redis:7.2-alpine
     container_name: diwan-redis
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"
     command: redis-server --appendonly yes
     volumes:
       - redis_data:/data
@@ -49,7 +47,7 @@ services:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
     ports:
-      - "2181:2181"
+      - "127.0.0.1:2181:2181"
     networks:
       - diwan-net
     restart: unless-stopped
@@ -60,7 +58,7 @@ services:
     depends_on:
       - zookeeper
     ports:
-      - "9092:9092"
+      - "127.0.0.1:9092:9092"
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
@@ -79,17 +77,21 @@ services:
       retries: 5
 
   # ─────────────────────────────────────────────
-  # MICROSERVICES
+  # MICROSERVICES  (only the gateway publishes a port; the rest are reachable on diwan-net only)
   # ─────────────────────────────────────────────
 
   diwan-users:
     build:
-      context: ./diwan-users
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: diwan-users/Dockerfile
+      args:
+        SKIP_TESTS: ${SKIP_TESTS:-true}
     image: diwan/diwan-users:${IMAGE_TAG:-latest}
     container_name: diwan-users
-    ports:
-      - "8083:8083"
+    mem_limit: ${SERVICE_MEMORY:-384m}
+    stop_grace_period: 30s
+    expose:
+      - "8080"
     environment:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-DEV}
       DB_URL: jdbc:mysql://diwan-mysql:3306/diwan_users?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
@@ -98,9 +100,9 @@ services:
       REDIS_HOST: diwan-redis
       REDIS_PORT: 6379
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
-      JWT_SECRET: ${JWT_SECRET:-CHANGE_ME_USE_A_LONG_RANDOM_SECRET}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env (min 32 chars)}
       JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS:-604800000}
-      JPA_DDL_AUTO: ${JPA_DDL_AUTO:-update}
+      JPA_DDL_AUTO: ${JPA_DDL_AUTO:-validate}
     depends_on:
       mysql:
         condition: service_healthy
@@ -112,19 +114,23 @@ services:
       - diwan-net
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:8083/actuator/health || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8081/actuator/health/readiness || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 5
 
   diwan-transactions:
     build:
-      context: ./diwan-transactions
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: diwan-transactions/Dockerfile
+      args:
+        SKIP_TESTS: ${SKIP_TESTS:-true}
     image: diwan/diwan-transactions:${IMAGE_TAG:-latest}
     container_name: diwan-transactions
-    ports:
-      - "8085:8085"
+    mem_limit: ${SERVICE_MEMORY:-384m}
+    stop_grace_period: 30s
+    expose:
+      - "8080"
     environment:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-DEV}
       DB_URL: jdbc:mysql://diwan-mysql:3306/diwan_transactions?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
@@ -133,10 +139,10 @@ services:
       REDIS_HOST: diwan-redis
       REDIS_PORT: 6379
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
-      JWT_SECRET: ${JWT_SECRET:-CHANGE_ME_USE_A_LONG_RANDOM_SECRET}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env (min 32 chars)}
       JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS:-604800000}
-      USERS_SERVICE_URL: http://diwan-users:8083
-      JPA_DDL_AUTO: ${JPA_DDL_AUTO:-update}
+      USERS_SERVICE_URL: http://diwan-users:8080
+      JPA_DDL_AUTO: ${JPA_DDL_AUTO:-validate}
     depends_on:
       mysql:
         condition: service_healthy
@@ -148,19 +154,23 @@ services:
       - diwan-net
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:8085/actuator/health || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8081/actuator/health/readiness || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 5
 
   diwan-medical:
     build:
-      context: ./diwan-medical
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: diwan-medical/Dockerfile
+      args:
+        SKIP_TESTS: ${SKIP_TESTS:-true}
     image: diwan/diwan-medical:${IMAGE_TAG:-latest}
     container_name: diwan-medical
-    ports:
-      - "8082:8082"
+    mem_limit: ${SERVICE_MEMORY:-384m}
+    stop_grace_period: 30s
+    expose:
+      - "8080"
     environment:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-DEV}
       DB_URL: jdbc:mysql://diwan-mysql:3306/diwan_medical?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
@@ -169,9 +179,9 @@ services:
       REDIS_HOST: diwan-redis
       REDIS_PORT: 6379
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
-      JWT_SECRET: ${JWT_SECRET:-CHANGE_ME_USE_A_LONG_RANDOM_SECRET}
-      USERS_SERVICE_URL: http://diwan-users:8083
-      JPA_DDL_AUTO: ${JPA_DDL_AUTO:-update}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env (min 32 chars)}
+      USERS_SERVICE_URL: http://diwan-users:8080
+      JPA_DDL_AUTO: ${JPA_DDL_AUTO:-validate}
     depends_on:
       mysql:
         condition: service_healthy
@@ -183,26 +193,31 @@ services:
       - diwan-net
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:8082/actuator/health || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8081/actuator/health/readiness || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 5
 
   diwan-logging:
     build:
-      context: ./diwan-logging
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: diwan-logging/Dockerfile
+      args:
+        SKIP_TESTS: ${SKIP_TESTS:-true}
     image: diwan/diwan-logging:${IMAGE_TAG:-latest}
     container_name: diwan-logging
-    ports:
-      - "8084:8084"
+    mem_limit: ${SERVICE_MEMORY:-384m}
+    stop_grace_period: 30s
+    expose:
+      - "8080"
     environment:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-DEV}
       DB_URL: jdbc:mysql://diwan-mysql:3306/diwan_logging?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
       DB_USERNAME: ${MYSQL_ROOT_USERNAME:-root}
       DB_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
-      JPA_DDL_AUTO: ${JPA_DDL_AUTO:-update}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env (min 32 chars)}
+      JPA_DDL_AUTO: ${JPA_DDL_AUTO:-validate}
     depends_on:
       mysql:
         condition: service_healthy
@@ -212,19 +227,23 @@ services:
       - diwan-net
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:8084/actuator/health || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8081/actuator/health/readiness || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 5
 
   diwan-smarthome:
     build:
-      context: ./diwan-smarthome
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: diwan-smarthome/Dockerfile
+      args:
+        SKIP_TESTS: ${SKIP_TESTS:-true}
     image: diwan/diwan-smarthome:${IMAGE_TAG:-latest}
     container_name: diwan-smarthome
-    ports:
-      - "8086:8086"
+    mem_limit: ${SERVICE_MEMORY:-384m}
+    stop_grace_period: 30s
+    expose:
+      - "8080"
     environment:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-DEV}
       DB_URL: jdbc:mysql://diwan-mysql:3306/diwan_smarthome?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8
@@ -232,11 +251,11 @@ services:
       DB_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
       REDIS_HOST: diwan-redis
       REDIS_PORT: 6379
-      JWT_SECRET: ${JWT_SECRET:-CHANGE_ME_USE_A_LONG_RANDOM_SECRET}
-      ALEXA_LAMBDA_SHARED_SECRET: ${ALEXA_LAMBDA_SHARED_SECRET:-CHANGE_ME_ALEXA_SHARED_SECRET}
-      MQTT_BROKER_URL: ${MQTT_BROKER_URL:-tcp://broker.hivemq.com:1883}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env (min 32 chars)}
+      ALEXA_LAMBDA_SHARED_SECRET: ${ALEXA_LAMBDA_SHARED_SECRET:?Set ALEXA_LAMBDA_SHARED_SECRET in .env}
+      MQTT_BROKER_URL: ${MQTT_BROKER_URL:?Set MQTT_BROKER_URL in .env}
       MQTT_CLIENT_PREFIX: ${MQTT_CLIENT_PREFIX:-diwan-smarthome-}
-      JPA_DDL_AUTO: ${JPA_DDL_AUTO:-update}
+      JPA_DDL_AUTO: ${JPA_DDL_AUTO:-validate}
     depends_on:
       mysql:
         condition: service_healthy
@@ -244,36 +263,38 @@ services:
       - diwan-net
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:8086/actuator/health || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8081/actuator/health/readiness || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 5
 
   diwan-gateway:
     build:
-      context: ./diwan-gateway
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: diwan-gateway/Dockerfile
+      args:
+        SKIP_TESTS: ${SKIP_TESTS:-true}
     image: diwan/diwan-gateway:${IMAGE_TAG:-latest}
     container_name: diwan-gateway
+    mem_limit: ${GATEWAY_MEMORY:-512m}
+    stop_grace_period: 30s
     ports:
-      - "8087:8087"
+      - "8087:8080"
     environment:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-DEV}
       DB_URL: jdbc:mysql://diwan-mysql:3306/diwan_gateway?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
       DB_USERNAME: ${MYSQL_ROOT_USERNAME:-root}
       DB_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
-      USERS_SERVICE_URL: http://diwan-users:8083
-      TRANSACTIONS_SERVICE_URL: http://diwan-transactions:8085
-      MEDICAL_SERVICE_URL: http://diwan-medical:8082
-      LOGGING_SERVICE_URL: http://diwan-logging:8084
-      SPRING_DATA_REDIS_HOST: diwan-redis
-      SPRING_DATA_REDIS_PORT: 6379
-      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      USERS_SERVICE_URL: http://diwan-users:8080
+      TRANSACTIONS_SERVICE_URL: http://diwan-transactions:8080
+      MEDICAL_SERVICE_URL: http://diwan-medical:8080
+      LOGGING_SERVICE_URL: http://diwan-logging:8080
+      SMARTHOME_SERVICE_URL: http://diwan-smarthome:8080
       REDIS_HOST: diwan-redis
       REDIS_PORT: 6379
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
-      JWT_SECRET: ${JWT_SECRET:-CHANGE_ME_USE_A_LONG_RANDOM_SECRET}
-      JPA_DDL_AUTO: ${JPA_DDL_AUTO:-update}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env (min 32 chars)}
+      JPA_DDL_AUTO: ${JPA_DDL_AUTO:-validate}
     depends_on:
       diwan-users:
         condition: service_healthy
@@ -289,10 +310,51 @@ services:
       - diwan-net
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:8087/actuator/health || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8081/actuator/health/readiness || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 5
+
+  # ─────────────────────────────────────────────
+  # OBSERVABILITY (optional): docker compose --profile observability up -d
+  # Prometheus scrapes each service's management port (8081, not published). Grafana: http://localhost:3000
+  # ─────────────────────────────────────────────
+
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    container_name: diwan-prometheus
+    profiles: ["observability"]
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.time=15d
+    ports:
+      - "127.0.0.1:9090:9090"
+    volumes:
+      - ./observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./observability/alerts.yml:/etc/prometheus/alerts.yml:ro
+      - prometheus_data:/prometheus
+    networks:
+      - diwan-net
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:11.2.0
+    container_name: diwan-grafana
+    profiles: ["observability"]
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    ports:
+      - "127.0.0.1:3000:3000"
+    volumes:
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    networks:
+      - diwan-net
+    restart: unless-stopped
 
 networks:
   diwan-net:
@@ -301,3 +363,5 @@ networks:
 volumes:
   mysql_data:
   redis_data:
+  prometheus_data:
+  grafana_data:

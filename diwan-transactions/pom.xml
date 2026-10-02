@@ -6,23 +6,21 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.2.5</version>
-        <relativePath/>
+        <groupId>com.diwan</groupId>
+        <artifactId>diwan-parent</artifactId>
+        <version>1.0.0</version>
+        <relativePath>../pom.xml</relativePath>
     </parent>
-
-    <groupId>com.voicetransactions</groupId>
     <artifactId>diwan-transactions</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
     <name>Diwan Transactions Service</name>
     <description>Diwan - Transactions and Auth Service</description>
 
-    <properties>
-        <java.version>17</java.version>
-    </properties>
-
     <dependencies>
+        <dependency><groupId>com.diwan</groupId><artifactId>diwan-common</artifactId><version>${project.version}</version></dependency>
+        <dependency><groupId>io.micrometer</groupId><artifactId>micrometer-registry-prometheus</artifactId></dependency>
+        <dependency><groupId>org.flywaydb</groupId><artifactId>flyway-core</artifactId></dependency>
+        <dependency><groupId>org.flywaydb</groupId><artifactId>flyway-mysql</artifactId></dependency>
+        <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-actuator</artifactId></dependency>
         <!-- Web -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -77,6 +75,11 @@
             <!-- Redis removed: auth is now centralized in Gateway -->
         <dependency><groupId>org.springframework.kafka</groupId><artifactId>spring-kafka</artifactId></dependency>
         <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-webflux</artifactId></dependency>
+
+        <!-- Integration tests (*IT): real MySQL via Testcontainers -->
+        <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-testcontainers</artifactId><scope>test</scope></dependency>
+        <dependency><groupId>org.testcontainers</groupId><artifactId>junit-jupiter</artifactId><scope>test</scope></dependency>
+        <dependency><groupId>org.testcontainers</groupId><artifactId>mysql</artifactId><scope>test</scope></dependency>
     </dependencies>
 
     <build>

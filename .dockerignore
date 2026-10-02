@@ -1,0 +1,9 @@
+.git
+.idea
+tools
+data
+logs
+postman
+*.log
+**/target
+**/*.iml

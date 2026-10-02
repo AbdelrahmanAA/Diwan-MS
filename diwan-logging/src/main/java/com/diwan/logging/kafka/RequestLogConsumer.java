@@ -2,6 +2,8 @@ package com.diwan.logging.kafka;
 
 import com.diwan.logging.entity.RequestLog;
 import com.diwan.logging.repository.RequestLogRepository;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.slf4j.Logger;
@@ -16,22 +18,23 @@ public class RequestLogConsumer {
 
     private final RequestLogRepository repository;
     private final ObjectMapper objectMapper = new ObjectMapper()
-            .registerModule(new JavaTimeModule());
+            .registerModule(new JavaTimeModule())
+            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false); // tolerate fields from newer gateways
 
     public RequestLogConsumer(RequestLogRepository repository) {
         this.repository = repository;
     }
 
-    @KafkaListener(topics = "request-logs", groupId = "logging-group")
-    public void consume(String message) {
-        try {
-            RequestLog logEntry = objectMapper.readValue(message, RequestLog.class);
-            repository.save(logEntry);
-            log.debug("[Logging] Saved log: {} {} -> {} {}ms",
-                    logEntry.getMethod(), logEntry.getPath(),
-                    logEntry.getStatusCode(), logEntry.getDurationMs());
-        } catch (Exception e) {
-            log.error("[Logging] Failed to parse log message: {}", e.getMessage());
-        }
+    /**
+     * Exceptions are deliberately NOT caught: the shared Kafka error handler (diwan-common) retries with
+     * backoff and then moves the record to request-logs.DLT, so a database outage no longer drops log entries.
+     */
+    @KafkaListener(topics = "${diwan.kafka.topics.request-logs:request-logs}", groupId = "${spring.kafka.consumer.group-id}")
+    public void consume(String message) throws JsonProcessingException {
+        RequestLog logEntry = objectMapper.readValue(message, RequestLog.class);
+        repository.save(logEntry);
+        log.debug("[Logging] Saved log: {} {} -> {} {}ms",
+                logEntry.getMethod(), logEntry.getPath(),
+                logEntry.getStatusCode(), logEntry.getDurationMs());
     }
 }

@@ -33,3 +33,7 @@ docker-compose.override.yml
 
 # Local DB files
 data/
+
+# JVM crash dumps
+hs_err_pid*
+replay_pid*

@@ -1,24 +1,17 @@
 package com.diwan.smarthome.security;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.security.Keys;
-import org.springframework.beans.factory.annotation.Value;
+import com.diwan.common.security.JwtService;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ResponseStatusException;
 
-import javax.crypto.SecretKey;
-import java.nio.charset.StandardCharsets;
-
 @Component
 public class JwtTokenService {
 
-    @Value("${diwan.jwt.secret}")
-    private String secret;
+    private final JwtService jwtService;
 
-    private SecretKey key() {
-        return Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+    public JwtTokenService(JwtService jwtService) {
+        this.jwtService = jwtService;
     }
 
     public Long extractUserIdFromAuthorizationHeader(String authorizationHeader) {
@@ -32,12 +25,7 @@ public class JwtTokenService {
         }
 
         try {
-            Claims claims = Jwts.parser()
-                    .verifyWith(key())
-                    .build()
-                    .parseSignedClaims(token)
-                    .getPayload();
-            Long userId = claims.get("userId", Long.class);
+            Long userId = jwtService.extractUserId(token);
             if (userId == null) {
                 throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Token does not include userId");
             }

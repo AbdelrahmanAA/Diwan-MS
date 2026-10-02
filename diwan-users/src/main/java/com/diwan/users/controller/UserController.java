@@ -46,14 +46,29 @@ public class UserController {
     }
 
     @DeleteMapping("/api/users/{userId}")
-    public ResponseEntity<?> delete(@PathVariable Long userId) {
+    public ResponseEntity<?> delete(@PathVariable Long userId,
+                                    @RequestHeader("X-User-Id") Long callerId,
+                                    @RequestHeader(value = "X-User-Role", required = false) String role) {
+        if (!canManage(callerId, role, userId)) return forbidden();
         service.deleteUser(userId);
         return ResponseEntity.ok(Map.of("success", true, "message", "User deleted"));
     }
 
     @PatchMapping("/api/users/{userId}/deactivate")
-    public ResponseEntity<?> deactivate(@PathVariable Long userId) {
+    public ResponseEntity<?> deactivate(@PathVariable Long userId,
+                                        @RequestHeader("X-User-Id") Long callerId,
+                                        @RequestHeader(value = "X-User-Role", required = false) String role) {
+        if (!canManage(callerId, role, userId)) return forbidden();
         service.deactivateUser(userId);
         return ResponseEntity.ok(Map.of("success", true, "message", "User deactivated"));
+    }
+
+    /** A user may only delete/deactivate their own account; ADMIN may manage anyone. */
+    private static boolean canManage(Long callerId, String role, Long targetId) {
+        return "ADMIN".equals(role) || callerId.equals(targetId);
+    }
+
+    private static ResponseEntity<?> forbidden() {
+        return ResponseEntity.status(403).body(Map.of("success", false, "message", "Forbidden"));
     }
 }

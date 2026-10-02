@@ -1,2 +1,0 @@
--- Placeholder baseline for diwan-transactions.
--- Replace with real schema baseline extracted from MySQL.

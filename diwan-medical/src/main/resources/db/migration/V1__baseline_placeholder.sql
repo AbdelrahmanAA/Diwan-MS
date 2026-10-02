@@ -1,2 +1,0 @@
--- Placeholder baseline for diwan-medical.
--- Replace with real schema baseline extracted from MySQL.

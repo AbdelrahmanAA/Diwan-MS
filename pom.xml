@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.2.5</version>
+        <relativePath/>
+    </parent>
+
+    <groupId>com.diwan</groupId>
+    <artifactId>diwan-parent</artifactId>
+    <version>1.0.0</version>
+    <packaging>pom</packaging>
+    <name>Diwan Parent</name>
+
+    <modules>
+        <module>diwan-common</module>
+        <module>diwan-gateway</module>
+        <module>diwan-users</module>
+        <module>diwan-transactions</module>
+        <module>diwan-medical</module>
+        <module>diwan-smarthome</module>
+        <module>diwan-logging</module>
+    </modules>
+
+    <properties>
+        <java.version>17</java.version>
+        <maven.compiler.release>17</maven.compiler.release>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <spring-cloud.version>2023.0.1</spring-cloud.version>
+        <jjwt.version>0.12.3</jjwt.version>
+        <!-- Boot 3.2.5 manages Flyway 9.22, which does not support MySQL 8.4 -->
+        <flyway.version>10.20.1</flyway.version>
+        <!-- Boot 3.2.5 manages Testcontainers 1.19, which cannot talk to Docker Engine 29 -->
+        <testcontainers.version>1.21.4</testcontainers.version>
+        <skipITs>false</skipITs>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>${spring-cloud.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <build>
+        <plugins>
+            <!-- *IT classes (Testcontainers: real MySQL/Kafka) run in `mvn verify`; `-DskipITs` skips them,
+                 `mvn package` / `mvn test` never run them. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <configuration>
+                    <skipITs>${skipITs}</skipITs>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>integration-test</goal>
+                            <goal>verify</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>

@@ -61,7 +61,9 @@ public class AlexaSmartHomeService {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
                     "Alexa lambda secret is not configured");
         }
-        if (lambdaSecretHeader == null || !lambdaSecret.equals(lambdaSecretHeader)) {
+        if (lambdaSecretHeader == null || !java.security.MessageDigest.isEqual(
+                lambdaSecret.getBytes(java.nio.charset.StandardCharsets.UTF_8),
+                lambdaSecretHeader.getBytes(java.nio.charset.StandardCharsets.UTF_8))) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,
                     "Invalid lambda secret");
         }

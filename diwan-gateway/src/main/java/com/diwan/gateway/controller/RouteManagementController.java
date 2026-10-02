@@ -5,6 +5,7 @@ import com.diwan.gateway.service.RouteService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/admin/routes")
@@ -19,8 +20,12 @@ public class RouteManagementController {
         return ResponseEntity.ok(routeService.getActiveRoutes());
     }
     @PostMapping
-    public ResponseEntity<ServiceRoute> create(@RequestBody ServiceRoute route) {
-        return ResponseEntity.ok(routeService.save(route));
+    public ResponseEntity<?> create(@RequestBody ServiceRoute route) {
+        try {
+            return ResponseEntity.ok(routeService.save(route));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "message", e.getMessage()));
+        }
     }
     @PostMapping("/refresh")
     public ResponseEntity<Void> refreshCache() {

@@ -17,6 +17,7 @@ public class RouteDataInitializer implements CommandLineRunner {
     private final String usersServiceUrl;
     private final String transactionsServiceUrl;
     private final String medicalServiceUrl;
+    private final String smartHomeServiceUrl;
     private final String loggingServiceUrl;
 
     public RouteDataInitializer(RouteService routeService,
@@ -25,6 +26,7 @@ public class RouteDataInitializer implements CommandLineRunner {
                                 @Value("${USERS_SERVICE_URL:http://localhost:8083}") String usersServiceUrl,
                                 @Value("${TRANSACTIONS_SERVICE_URL:http://localhost:8085}") String transactionsServiceUrl,
                                 @Value("${MEDICAL_SERVICE_URL:http://localhost:8082}") String medicalServiceUrl,
+                                @Value("${SMARTHOME_SERVICE_URL:http://localhost:8086}") String smartHomeServiceUrl,
                                 @Value("${LOGGING_SERVICE_URL:http://localhost:8084}") String loggingServiceUrl) {
         this.routeService = routeService;
         this.featureRepository = featureRepository;
@@ -32,6 +34,7 @@ public class RouteDataInitializer implements CommandLineRunner {
         this.usersServiceUrl = usersServiceUrl;
         this.transactionsServiceUrl = transactionsServiceUrl;
         this.medicalServiceUrl = medicalServiceUrl;
+        this.smartHomeServiceUrl = smartHomeServiceUrl;
         this.loggingServiceUrl = loggingServiceUrl;
     }
 
@@ -43,41 +46,49 @@ public class RouteDataInitializer implements CommandLineRunner {
         routeService.seedOrUpdate("users",        usersServiceUrl,        "/api/users",        "Users and Auth service");
         routeService.seedOrUpdate("transactions", transactionsServiceUrl, "/api/transactions", "Financial transactions service");
         routeService.seedOrUpdate("medical",      medicalServiceUrl,      "/api/medical",      "Medical records service");
+        routeService.seedOrUpdate("smarthome",    smartHomeServiceUrl,    "/api/smart-home",   "Smart Home devices service");
         routeService.seedOrUpdate("logging",      loggingServiceUrl,      "/api/logs",         "Centralized request logging service");
 
         // ── 2. Seed app_features (dashboard cards) ─────────────────────────
-        seedFeatureIfAbsent("transactions",
-            "\u0627\u0644\u0645\u0639\u0627\u0645\u0644\u0627\u062a \u0627\u0644\u0645\u0627\u0644\u064a\u0629",
-            "\uD83D\uDCB0", "#4CAF50", "TransactionJourney", "/api/transactions",
-            "\u0625\u062f\u0627\u0631\u0629 \u0627\u0644\u0645\u0639\u0627\u0645\u0644\u0627\u062a \u0648\u0627\u0644\u062a\u062d\u0648\u064a\u0644\u0627\u062a \u0627\u0644\u0645\u0627\u0644\u064a\u0629", 1);
+        seedFeatureUpsert("smarthome",
+            "Smart Home",
+            "\uD83C\uDFE0", "#0EA5E9", "SmartHome", "/api/smart-home",
+            "Control Smart Home devices through voice", 1);
 
-        seedFeatureIfAbsent("medical",
-            "\u0627\u0644\u0633\u062c\u0644 \u0627\u0644\u0637\u0628\u064a",
-            "\uD83C\uDFE5", "#F44336", "MedicalHistory", "/api/medical",
-            "\u0633\u062c\u0644\u0627\u062a \u0627\u0644\u0623\u062f\u0648\u064a\u0629 \u0648\u0627\u0644\u062a\u0634\u062e\u064a\u0635\u0627\u062a \u0627\u0644\u0637\u0628\u064a\u0629", 2);
+        seedFeatureUpsert("medical",
+            "Medical History",
+            "\uD83C\uDFE5", "#EF4444", "MedicalHistory", "/api/medical",
+            "Medical history and records", 2);
 
-        seedFeatureIfAbsent("users",
-            "\u0627\u0644\u062d\u0633\u0627\u0628",
-            "\uD83D\uDC64", "#2196F3", "Profile", "/api/users",
-            "\u0625\u062f\u0627\u0631\u0629 \u0628\u064a\u0627\u0646\u0627\u062a \u0627\u0644\u0645\u0633\u062a\u062e\u062f\u0645", 3);
+        seedFeatureUpsert("transactions",
+            "Financial History",
+            "\uD83D\uDCB0", "#16A34A", "Transactions", "/api/transactions",
+            "Financial transactions and insights", 3);
 
-        seedFeatureIfAbsent("logging",
-            "\u0633\u062c\u0644 \u0627\u0644\u0637\u0644\u0628\u0627\u062a",
-            "\uD83D\uDCCB", "#FF9800", "Logs", "/api/logs",
-            "\u0645\u0631\u0627\u0642\u0628\u0629 \u0637\u0644\u0628\u0627\u062a \u0627\u0644\u0646\u0638\u0627\u0645", 4);
+        seedFeatureUpsert("users",
+            "Update User Info",
+            "\uD83D\uDC64", "#2563EB", "UpdateUserInfo", "/api/users",
+            "Manage and update user profile", 4);
 
         // ── 3. Warm Redis cache ─────────────────────────────────────────────
         cacheService.refreshCache();
         System.out.println("[Gateway] app_features seeded and Redis cache warmed up");
     }
 
-    private void seedFeatureIfAbsent(String name, String displayName, String icon,
-                                     String color, String screenName, String path,
-                                     String description, int sortOrder) {
-        if (!featureRepository.existsByName(name)) {
-            featureRepository.save(new AppFeature(
-                name, displayName, icon, color, screenName, path, description, sortOrder));
-            System.out.println("[Gateway] Seeded feature: " + name);
-        }
+    private void seedFeatureUpsert(String name, String displayName, String icon,
+                                   String color, String screenName, String path,
+                                   String description, int sortOrder) {
+        AppFeature feature = featureRepository.findByName(name).orElseGet(AppFeature::new);
+        feature.setName(name);
+        feature.setDisplayName(displayName);
+        feature.setIcon(icon);
+        feature.setColor(color);
+        feature.setScreenName(screenName);
+        feature.setPath(path);
+        feature.setDescription(description);
+        feature.setSortOrder(sortOrder);
+        feature.setActive(true);
+        featureRepository.save(feature);
+        System.out.println("[Gateway] Upserted feature: " + name);
     }
 }

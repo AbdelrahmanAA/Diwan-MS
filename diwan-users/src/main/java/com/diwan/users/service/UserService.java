@@ -2,9 +2,10 @@ package com.diwan.users.service;
 
 import com.diwan.users.dto.*;
 import com.diwan.users.entity.User;
-import com.diwan.users.kafka.UserEventProducer;
+import com.diwan.users.outbox.OutboxService;
+import org.springframework.transaction.annotation.Transactional;
 import com.diwan.users.repository.UserRepository;
-import com.diwan.users.security.JwtUtil;
+import com.diwan.common.security.JwtService;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -15,15 +16,15 @@ import java.time.Duration;
 public class UserService {
 
     private final UserRepository      repo;
-    private final JwtUtil             jwtUtil;
+    private final JwtService          jwtService;
     private final PasswordEncoder     encoder;
-    private final UserEventProducer   producer;
+    private final OutboxService       outbox;
     private final StringRedisTemplate redis;
 
-    public UserService(UserRepository repo, JwtUtil jwtUtil, PasswordEncoder encoder,
-                       UserEventProducer producer, StringRedisTemplate redis) {
-        this.repo = repo; this.jwtUtil = jwtUtil; this.encoder = encoder;
-        this.producer = producer; this.redis = redis;
+    public UserService(UserRepository repo, JwtService jwtService, PasswordEncoder encoder,
+                       OutboxService outbox, StringRedisTemplate redis) {
+        this.repo = repo; this.jwtService = jwtService; this.encoder = encoder;
+        this.outbox = outbox; this.redis = redis;
     }
 
     // ── Auth ────────────────────────────────────────────────────────────────
@@ -36,7 +37,7 @@ public class UserService {
         u.setEmail(req.getEmail());
         u.setPassword(encoder.encode(req.getPassword()));
         repo.save(u);
-        String token = jwtUtil.generateToken(u.getId(), u.getEmail());
+        String token = jwtService.generateToken(u.getId(), u.getEmail());
         return new AuthResponse(token, u.getId(), u.getFullName(), u.getEmail());
     }
 
@@ -46,7 +47,7 @@ public class UserService {
         if (!u.isActive()) throw new RuntimeException("Account is deactivated");
         if (!encoder.matches(req.getPassword(), u.getPassword()))
             throw new RuntimeException("Invalid credentials");
-        String token = jwtUtil.generateToken(u.getId(), u.getEmail());
+        String token = jwtService.generateToken(u.getId(), u.getEmail());
         return new AuthResponse(token, u.getId(), u.getFullName(), u.getEmail());
     }
 
@@ -56,8 +57,8 @@ public class UserService {
      */
     public void logout(String token) {
         try {
-            String jti = jwtUtil.getTokenId(token);
-            Duration ttl = jwtUtil.getRemainingTtl(token);
+            String jti = jwtService.getTokenId(token);
+            Duration ttl = jwtService.getRemainingTtl(token);
             if (ttl.isZero() || ttl.isNegative()) return; // already expired - no need
             redis.opsForValue().set("blacklist:" + jti, "1", ttl);
         } catch (Exception e) {
@@ -71,16 +72,18 @@ public class UserService {
         return repo.findById(userId).map(User::isActive).orElse(false);
     }
 
+    @Transactional
     public void deleteUser(Long userId) {
         repo.deleteById(userId);
-        producer.publishInvalidated(userId, "DELETED");
+        outbox.userInvalidated(userId, "DELETED");
     }
 
+    @Transactional
     public void deactivateUser(Long userId) {
         repo.findById(userId).ifPresent(u -> {
             u.setActive(false);
             repo.save(u);
-            producer.publishInvalidated(userId, "DEACTIVATED");
+            outbox.userInvalidated(userId, "DEACTIVATED");
         });
     }
 }

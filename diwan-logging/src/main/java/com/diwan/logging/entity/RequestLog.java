@@ -30,6 +30,10 @@ public class RequestLog {
 
     private LocalDateTime requestTime;
 
+    /** X-Request-Id assigned by the gateway; the same id appears in every service's log lines for that request. */
+    @Column(length = 64)
+    private String requestId;
+
     // Getters & Setters
     public Long getId()                      { return id; }
     public String getMethod()                { return method; }
@@ -52,4 +56,6 @@ public class RequestLog {
     public void setErrorMessage(String v)    { this.errorMessage = v; }
     public LocalDateTime getRequestTime()    { return requestTime; }
     public void setRequestTime(LocalDateTime v) { this.requestTime = v; }
+    public String getRequestId()             { return requestId; }
+    public void setRequestId(String v)       { this.requestId = v; }
 }

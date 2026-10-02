@@ -1,0 +1,6 @@
+com.diwan.common.autoconfigure.DiwanSecurityAutoConfiguration
+com.diwan.common.autoconfigure.GatewayTrustAutoConfiguration
+com.diwan.common.autoconfigure.DiwanWebAutoConfiguration
+com.diwan.common.autoconfigure.StatelessSecurityAutoConfiguration
+com.diwan.common.autoconfigure.KafkaReliabilityAutoConfiguration
+com.diwan.common.autoconfigure.RequestIdAutoConfiguration

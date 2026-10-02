@@ -1,0 +1,40 @@
+groups:
+  - name: diwan
+    rules:
+      - alert: ServiceDown
+        expr: up{job="diwan"} == 0
+        for: 2m
+        labels: {severity: critical}
+        annotations:
+          summary: "{{ $labels.service }} is not reachable by Prometheus"
+
+      - alert: HighServerErrorRate
+        expr: |
+          sum by (application) (rate(http_server_requests_seconds_count{status=~"5.."}[5m]))
+            / sum by (application) (rate(http_server_requests_seconds_count[5m])) > 0.05
+        for: 5m
+        labels: {severity: warning}
+        annotations:
+          summary: "{{ $labels.application }}: more than 5% of requests fail with 5xx"
+
+      - alert: CircuitBreakerOpen
+        expr: resilience4j_circuitbreaker_state{state="open"} == 1
+        for: 1m
+        labels: {severity: critical}
+        annotations:
+          summary: "Gateway circuit breaker for {{ $labels.name }} is open (service failing)"
+
+      - alert: RequestLogsBeingDropped
+        expr: increase(gateway_request_log_dropped_total[10m]) > 0
+        labels: {severity: warning}
+        annotations:
+          summary: "Gateway is dropping request logs (Kafka slow or down)"
+
+      - alert: HeapAlmostFull
+        expr: |
+          sum by (application) (jvm_memory_used_bytes{area="heap"})
+            / sum by (application) (jvm_memory_max_bytes{area="heap"}) > 0.9
+        for: 10m
+        labels: {severity: warning}
+        annotations:
+          summary: "{{ $labels.application }}: JVM heap above 90% for 10 minutes"
