@@ -93,7 +93,7 @@ pipeline {
                               --add-host=host.docker.internal:host-gateway \\
                               -e TESTCONTAINERS_HOST_OVERRIDE=host.docker.internal \\
                               maven:3.9-eclipse-temurin-17 \\
-                              mvn -B -pl ${env.DEPLOY_MODULES} -am verify -DskipTests
+                              mvn -B -pl ${env.DEPLOY_MODULES} -am verify -Dtest=NoSuchTest -Dsurefire.failIfNoSpecifiedTests=false
                         """
                     } catch (err) {
                         if (params.INTEGRATION_TESTS == 'enforce') {
