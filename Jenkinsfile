@@ -61,18 +61,15 @@ pipeline {
             when { expression { env.DEPLOY_MODULES?.trim() } }
             steps {
                 script {
-                    def branches = [:]
+                    // One image at a time: every build runs Maven (~1 GB), and the server (8 GB, shared with
+                    // Jenkins, Kafka and the running services) cannot take six of them at once.
                     for (m in env.DEPLOY_MODULES.split(',')) {
-                        def module = m
-                        branches["build ${module}"] = {
-                            // Build context is the repo root (parent pom). Unit tests run in the image build,
-                            // so a failing test stops the pipeline before anything is deployed.
-                            sh "docker build --build-arg SKIP_TESTS=false " +
-                               "--label org.opencontainers.image.revision=${env.GIT_COMMIT} " +
-                               "-t ${module}:${env.IMAGE_TAG} -f ./${module}/Dockerfile ."
-                        }
+                        // Build context is the repo root (parent pom). Unit tests run in the image build,
+                        // so a failing test stops the pipeline before anything is deployed.
+                        sh "docker build --build-arg SKIP_TESTS=false " +
+                           "--label org.opencontainers.image.revision=${env.GIT_COMMIT} " +
+                           "-t ${m}:${env.IMAGE_TAG} -f ./${m}/Dockerfile ."
                     }
-                    parallel branches
                 }
             }
         }
