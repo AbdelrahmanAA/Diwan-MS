@@ -61,14 +61,20 @@ pipeline {
             when { expression { env.DEPLOY_MODULES?.trim() } }
             steps {
                 script {
-                    // One image at a time: every build runs Maven (~1 GB), and the server (8 GB, shared with
-                    // Jenkins, Kafka and the running services) cannot take six of them at once.
-                    for (m in env.DEPLOY_MODULES.split(',')) {
-                        // Build context is the repo root (parent pom). Unit tests run in the image build,
-                        // so a failing test stops the pipeline before anything is deployed.
-                        sh "docker build --build-arg SKIP_TESTS=false " +
-                           "--label org.opencontainers.image.revision=${env.GIT_COMMIT} " +
-                           "-t ${m}:${env.IMAGE_TAG} -f ./${m}/Dockerfile ."
+                    // All service Dockerfiles share one identical Maven builder stage that builds every module.
+                    // The first image runs that Maven build (once, ~1 GB, unit tests included); the others then
+                    // find it in Docker's layer cache, so they are cheap and can safely run in parallel.
+                    // Starting them all at once would run six Maven builds, which the 8 GB server cannot take.
+                    def modules = env.DEPLOY_MODULES.split(',').toList()
+                    buildImage(modules[0])
+                    def rest = modules.drop(1)
+                    if (rest) {
+                        def branches = [:]
+                        for (m in rest) {
+                            def module = m
+                            branches["build ${module}"] = { buildImage(module) }
+                        }
+                        parallel branches
                     }
                 }
             }
@@ -185,6 +191,14 @@ def selectModules(List all, boolean deployAll) {
         return all
     }
     return all.findAll { m -> files.any { it.startsWith("${m}/") } }
+}
+
+// Build context is the repo root (parent pom). Unit tests run in the image build, so a failing test stops the
+// pipeline before anything is deployed. The --label does not affect Docker's layer cache.
+def buildImage(String module) {
+    sh "docker build --build-arg SKIP_TESTS=false " +
+       "--label org.opencontainers.image.revision=${env.GIT_COMMIT} " +
+       "-t ${module}:${env.IMAGE_TAG} -f ./${module}/Dockerfile ."
 }
 
 // Start the new image, wait until it reports ready; on failure put the previous image back
