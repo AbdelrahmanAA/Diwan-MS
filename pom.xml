@@ -40,6 +40,8 @@
         <!-- Security overrides found by the Trivy scan (CRITICAL, fixed upstream); Boot 3.2.5 manages Netty 4.1.109 -->
         <netty.version>4.1.137.Final</netty.version>
         <bouncycastle.version>1.85</bouncycastle.version>
+        <tomcat.version>10.1.60</tomcat.version>
+        <spring-security.version>6.5.11</spring-security.version>
         <skipITs>false</skipITs>
     </properties>
 
