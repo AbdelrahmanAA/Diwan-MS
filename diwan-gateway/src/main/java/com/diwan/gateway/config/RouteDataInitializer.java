@@ -19,6 +19,7 @@ public class RouteDataInitializer implements CommandLineRunner {
     private final String medicalServiceUrl;
     private final String smartHomeServiceUrl;
     private final String loggingServiceUrl;
+    private final String portfolioServiceUrl;
 
     public RouteDataInitializer(RouteService routeService,
                                 AppFeatureRepository featureRepository,
@@ -27,7 +28,8 @@ public class RouteDataInitializer implements CommandLineRunner {
                                 @Value("${TRANSACTIONS_SERVICE_URL:http://localhost:8085}") String transactionsServiceUrl,
                                 @Value("${MEDICAL_SERVICE_URL:http://localhost:8082}") String medicalServiceUrl,
                                 @Value("${SMARTHOME_SERVICE_URL:http://localhost:8086}") String smartHomeServiceUrl,
-                                @Value("${LOGGING_SERVICE_URL:http://localhost:8084}") String loggingServiceUrl) {
+                                @Value("${LOGGING_SERVICE_URL:http://localhost:8084}") String loggingServiceUrl,
+                                @Value("${PORTFOLIO_SERVICE_URL:http://localhost:8088}") String portfolioServiceUrl) {
         this.routeService = routeService;
         this.featureRepository = featureRepository;
         this.cacheService = cacheService;
@@ -36,6 +38,7 @@ public class RouteDataInitializer implements CommandLineRunner {
         this.medicalServiceUrl = medicalServiceUrl;
         this.smartHomeServiceUrl = smartHomeServiceUrl;
         this.loggingServiceUrl = loggingServiceUrl;
+        this.portfolioServiceUrl = portfolioServiceUrl;
     }
 
     @Override
@@ -48,6 +51,7 @@ public class RouteDataInitializer implements CommandLineRunner {
         routeService.seedOrUpdate("medical",      medicalServiceUrl,      "/api/medical",      "Medical records service");
         routeService.seedOrUpdate("smarthome",    smartHomeServiceUrl,    "/api/smart-home",   "Smart Home devices service");
         routeService.seedOrUpdate("logging",      loggingServiceUrl,      "/api/logs",         "Centralized request logging service");
+        routeService.seedOrUpdate("portfolio",    portfolioServiceUrl,    "/api/portfolio",    "Investment portfolios, market data, alerts and news");
 
         // ── 2. Seed app_features (dashboard cards) ─────────────────────────
         seedFeatureUpsert("smarthome",
@@ -69,6 +73,11 @@ public class RouteDataInitializer implements CommandLineRunner {
             "Update User Info",
             "\uD83D\uDC64", "#2563EB", "UpdateUserInfo", "/api/users",
             "Manage and update user profile", 4);
+
+        seedFeatureUpsert("portfolio",
+            "Investments",
+            "\uD83D\uDCC8", "#7C3AED", "Portfolio", "/api/portfolio",
+            "Investment portfolios by country and type, live prices, alerts and news", 5);
 
         // ── 3. Warm Redis cache ─────────────────────────────────────────────
         cacheService.refreshCache();

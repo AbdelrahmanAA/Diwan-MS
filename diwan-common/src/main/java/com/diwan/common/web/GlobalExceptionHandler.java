@@ -2,6 +2,8 @@ package com.diwan.common.web;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -19,12 +21,31 @@ import java.util.stream.Collectors;
 /**
  * Uniform error body {@code {"success": false, "message": "..."}}.
  * Exceptions raised by Spring MVC itself keep their proper status (400/404/405/415...);
- * only unexpected exceptions become 500.
+ * only unexpected exceptions become 500. {@link ApiException}s also carry a {@code code} and are translated
+ * with the service's {@link MessageSource} into the request's language.
  */
 @RestControllerAdvice
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
+    private final MessageSource messages;
+
+    public GlobalExceptionHandler() {
+        this(null);
+    }
+
+    public GlobalExceptionHandler(MessageSource messages) {
+        this.messages = messages;
+    }
+
+    @ExceptionHandler(ApiException.class)
+    public ResponseEntity<Object> handleApi(ApiException ex) {
+        String text = messages == null ? ex.getCode()
+                : messages.getMessage(ex.getCode(), ex.getArgs(), ex.getCode(), LocaleContextHolder.getLocale());
+        return ResponseEntity.status(ex.getStatus())
+                .body(Map.of("success", false, "code", ex.getCode(), "message", text));
+    }
 
     @Override
     protected ResponseEntity<Object> handleMethodArgumentNotValid(
@@ -32,7 +53,8 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         String errors = ex.getBindingResult().getFieldErrors().stream()
                 .map(e -> e.getField() + ": " + e.getDefaultMessage())
                 .collect(Collectors.joining(", "));
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body(errors));
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(Map.of("success", false, "code", "validation.failed", "message", errors));
     }
 
     @Override

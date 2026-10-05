@@ -7,6 +7,8 @@
 // Jenkins credentials required (see README/CLAUDE.md):
 //   diwan-jwt-secret, diwan-alexa-secret, diwan-mqtt-broker-url  (Secret text)
 //   diwan-db                                                       (Username with password)
+//   diwan-data-key        (Secret text, portfolio only) column encryption key "v1:<base64 32 bytes>" - keep a copy!
+//   diwan-market-data-key (Secret text, portfolio only, optional) Finnhub API key; without it: demo prices
 
 pipeline {
     agent any
@@ -207,12 +209,18 @@ def deployService(String module, String tag) {
     def image = "${module}:${tag}"
     def previous = sh(script: "docker inspect --format '{{.Config.Image}}' ${name} 2>/dev/null || true", returnStdout: true).trim()
 
-    withCredentials([
+    def credentials = [
         string(credentialsId: 'diwan-jwt-secret', variable: 'JWT_SECRET'),
         string(credentialsId: 'diwan-alexa-secret', variable: 'ALEXA_LAMBDA_SHARED_SECRET'),
         string(credentialsId: 'diwan-mqtt-broker-url', variable: 'MQTT_BROKER_URL'),
         usernamePassword(credentialsId: 'diwan-db', usernameVariable: 'DB_USERNAME', passwordVariable: 'DB_PASSWORD')
-    ]) {
+    ]
+    if (module == 'diwan-portfolio') {
+        credentials << string(credentialsId: 'diwan-data-key', variable: 'DATA_ENCRYPTION_KEYS')
+        credentials += optionalSecret('diwan-market-data-key', 'FINNHUB_API_KEY')
+    }
+
+    withCredentials(credentials) {
         sh "docker rm -f ${name} || true"
         runContainer(module, name, image)
         if (waitUntilReady(name)) {
@@ -226,6 +234,17 @@ def deployService(String module, String tag) {
             runContainer(module, name, previous)
         }
         error("${image} failed its readiness check" + (previous ? " (rolled back to ${previous})" : ''))
+    }
+}
+
+// A Secret-text credential that may not exist yet: [] (variable left unset) instead of failing the deploy
+def optionalSecret(String id, String variable) {
+    try {
+        withCredentials([string(credentialsId: id, variable: 'PROBE')]) {}
+        return [string(credentialsId: id, variable: variable)]
+    } catch (err) {
+        echo "Credential ${id} not found: ${variable} is not set"
+        return []
     }
 }
 
@@ -243,7 +262,10 @@ def runContainer(String module, String name, String image) {
               -e MEDICAL_SERVICE_URL=http://diwan-medical-api:8080 \\
               -e SMARTHOME_SERVICE_URL=http://diwan-smarthome-api:8080 \\
               -e LOGGING_SERVICE_URL=http://diwan-logging-api:8080 \\
+              -e PORTFOLIO_SERVICE_URL=http://diwan-portfolio-api:8080 \\
               ${image}"""
+    } else if (module == 'diwan-portfolio') {
+        sh "${common} -e DATA_ENCRYPTION_KEYS -e FINNHUB_API_KEY ${image}"
     } else {
         sh "${common} -e ALEXA_LAMBDA_SHARED_SECRET -e MQTT_BROKER_URL ${image}"
     }

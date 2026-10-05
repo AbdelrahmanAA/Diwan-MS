@@ -282,6 +282,44 @@ services:
       timeout: 10s
       retries: 5
 
+  diwan-portfolio:
+    build:
+      context: .
+      dockerfile: diwan-portfolio/Dockerfile
+      args:
+        SKIP_TESTS: ${SKIP_TESTS:-true}
+    image: diwan/diwan-portfolio:${IMAGE_TAG:-latest}
+    container_name: diwan-portfolio
+    mem_limit: ${SERVICE_MEMORY:-384m}
+    stop_grace_period: 30s
+    expose:
+      - "8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-DEV}
+      DB_URL: jdbc:mysql://diwan-mysql:3306/diwan_portfolio?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8
+      DB_USERNAME: ${MYSQL_ROOT_USERNAME:-root}
+      DB_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env (min 32 chars)}
+      DATA_ENCRYPTION_KEYS: ${DATA_ENCRYPTION_KEYS:?Set DATA_ENCRYPTION_KEYS in .env (see .env.example)}
+      # Empty = built-in fake prices and news; set a free key from finnhub.io for real market data
+      FINNHUB_API_KEY: ${FINNHUB_API_KEY:-}
+      FX_PROVIDER: ${FX_PROVIDER:-open-er-api}
+      JPA_DDL_AUTO: ${JPA_DDL_AUTO:-validate}
+    depends_on:
+      mysql:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      - diwan-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8081/actuator/health/readiness || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
   diwan-gateway:
     build:
       context: .
@@ -304,6 +342,7 @@ services:
       MEDICAL_SERVICE_URL: http://diwan-medical:8080
       LOGGING_SERVICE_URL: http://diwan-logging:8080
       SMARTHOME_SERVICE_URL: http://diwan-smarthome:8080
+      PORTFOLIO_SERVICE_URL: http://diwan-portfolio:8080
       REDIS_HOST: diwan-redis
       REDIS_PORT: 6379
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
@@ -319,6 +358,8 @@ services:
       diwan-logging:
         condition: service_healthy
       diwan-smarthome:
+        condition: service_healthy
+      diwan-portfolio:
         condition: service_healthy
     networks:
       - diwan-net

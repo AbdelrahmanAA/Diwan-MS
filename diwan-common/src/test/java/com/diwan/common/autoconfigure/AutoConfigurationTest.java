@@ -1,13 +1,17 @@
 package com.diwan.common.autoconfigure;
 
+import com.diwan.common.crypto.FieldEncryptor;
 import com.diwan.common.security.GatewaySigner;
 import com.diwan.common.security.GatewayTrustFilter;
 import com.diwan.common.security.JwtService;
 import com.diwan.common.web.GlobalExceptionHandler;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
+import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.boot.test.context.runner.WebApplicationContextRunner;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
+
+import java.util.Base64;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -54,6 +58,16 @@ class AutoConfigurationTest {
             assertThat(reg.getUrlPatterns()).containsExactlyInAnyOrder("/api/x/*", "/api/x");
             assertThat(reg.getFilter()).isInstanceOf(GatewayTrustFilter.class);
         });
+    }
+
+    @Test
+    void fieldEncryptionIsConfiguredFromTheKeyAndRejectsBadKeys() {
+        ApplicationContextRunner crypto = new ApplicationContextRunner()
+                .withConfiguration(AutoConfigurations.of(FieldEncryptionAutoConfiguration.class));
+        crypto.run(ctx -> assertThat(ctx).doesNotHaveBean(FieldEncryptor.class));
+        crypto.withPropertyValues("diwan.crypto.keys=v1:" + Base64.getEncoder().encodeToString(new byte[32]))
+                .run(ctx -> assertThat(ctx).hasSingleBean(FieldEncryptor.class));
+        crypto.withPropertyValues("diwan.crypto.keys=v1:dG9vLXNob3J0").run(ctx -> assertThat(ctx).hasFailed());
     }
 
     @Test

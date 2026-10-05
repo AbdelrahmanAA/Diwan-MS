@@ -1,6 +1,8 @@
 package com.diwan.common.autoconfigure;
 
 import com.diwan.common.web.GlobalExceptionHandler;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.context.MessageSource;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -18,7 +20,7 @@ public class DiwanWebAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public GlobalExceptionHandler diwanGlobalExceptionHandler() {
-        return new GlobalExceptionHandler();
+    public GlobalExceptionHandler diwanGlobalExceptionHandler(ObjectProvider<MessageSource> messageSource) {
+        return new GlobalExceptionHandler(messageSource.getIfAvailable());
     }
 }

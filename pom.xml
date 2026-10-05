@@ -25,6 +25,7 @@
         <module>diwan-medical</module>
         <module>diwan-smarthome</module>
         <module>diwan-logging</module>
+        <module>diwan-portfolio</module>
     </modules>
 
     <properties>

@@ -1,8 +1,8 @@
 # Build context is the repository root (the parent pom lives there):
 #   docker build -f diwan-medical/Dockerfile -t diwan-medical .
 #
-# The builder stage is IDENTICAL in all six service Dockerfiles on purpose: it builds every module once, and
-# Docker's layer cache then reuses that result for the other five images (same context + same instructions).
+# The builder stage is IDENTICAL in all service Dockerfiles on purpose: it builds every module once, and
+# Docker's layer cache then reuses that result for the other images (same context + same instructions).
 # Build the first image on its own, then the rest can run in parallel (see the Jenkinsfile). Keep this stage
 # byte-for-byte the same in every Dockerfile, otherwise each image runs its own Maven build again.
 FROM maven:3.9-eclipse-temurin-17-alpine AS builder

@@ -4,3 +4,4 @@ com.diwan.common.autoconfigure.DiwanWebAutoConfiguration
 com.diwan.common.autoconfigure.StatelessSecurityAutoConfiguration
 com.diwan.common.autoconfigure.KafkaReliabilityAutoConfiguration
 com.diwan.common.autoconfigure.RequestIdAutoConfiguration
+com.diwan.common.autoconfigure.FieldEncryptionAutoConfiguration
