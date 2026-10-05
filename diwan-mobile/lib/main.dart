@@ -1,0 +1,71 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:provider/provider.dart';
+
+import 'l10n/app_localizations.dart';
+import 'state/session.dart';
+import 'ui/home_screen.dart';
+import 'ui/login_screen.dart';
+
+void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  final session = Session();
+  session.load(WidgetsBinding.instance.platformDispatcher.locale);
+  runApp(ChangeNotifierProvider.value(value: session, child: const DiwanApp()));
+}
+
+class DiwanApp extends StatelessWidget {
+  const DiwanApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final session = context.watch<Session>();
+    const seed = Color(0xFF7C3AED);
+    return MaterialApp(
+      onGenerateTitle: (c) => AppLocalizations.of(c).appTitle,
+      debugShowCheckedModeBanner: false,
+      locale: session.locale,
+      supportedLocales: AppLocalizations.supportedLocales,
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      theme: ThemeData(colorSchemeSeed: seed, useMaterial3: true),
+      darkTheme: ThemeData(colorSchemeSeed: seed, brightness: Brightness.dark, useMaterial3: true),
+      home: !session.ready
+          ? const Scaffold(body: Center(child: CircularProgressIndicator()))
+          : !session.signedIn
+              ? const LoginScreen()
+              : session.locked
+                  ? const LockScreen()
+                  // a new key per user so nothing of a previous session survives a sign-in
+                  : HomeScreen(key: ValueKey(session.user!.userId)),
+    );
+  }
+}
+
+class LockScreen extends StatelessWidget {
+  const LockScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
+    final session = context.read<Session>();
+    return Scaffold(
+      body: Center(
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          const Icon(Icons.lock_outline, size: 64),
+          const SizedBox(height: 16),
+          FilledButton.icon(
+            icon: const Icon(Icons.fingerprint),
+            label: Text(t.unlock),
+            onPressed: () => session.unlock(t.unlockReason),
+          ),
+          TextButton(onPressed: session.logout, child: Text(t.logout)),
+        ]),
+      ),
+    );
+  }
+}

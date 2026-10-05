@@ -1,0 +1,404 @@
+// ignore: unused_import
+import 'package:intl/intl.dart' as intl;
+
+import 'app_localizations.dart';
+
+// ignore_for_file: type=lint
+
+/// The translations for English (`en`).
+class AppLocalizationsEn extends AppLocalizations {
+  AppLocalizationsEn([String locale = 'en']) : super(locale);
+
+  @override
+  String get appTitle => 'Diwan Investments';
+
+  @override
+  String get signIn => 'Sign in';
+
+  @override
+  String get createAccount => 'Create account';
+
+  @override
+  String get fullName => 'Full name';
+
+  @override
+  String get email => 'Email';
+
+  @override
+  String get password => 'Password';
+
+  @override
+  String get passwordHint => 'At least 8 characters';
+
+  @override
+  String get noAccount => 'No account yet? Create one';
+
+  @override
+  String get haveAccount => 'Already have an account? Sign in';
+
+  @override
+  String get logout => 'Sign out';
+
+  @override
+  String get portfolios => 'Portfolios';
+
+  @override
+  String get watchlist => 'Watchlist';
+
+  @override
+  String get news => 'News';
+
+  @override
+  String get alerts => 'Alerts';
+
+  @override
+  String get settings => 'Settings';
+
+  @override
+  String get newPortfolio => 'New portfolio';
+
+  @override
+  String get editPortfolio => 'Edit portfolio';
+
+  @override
+  String get deletePortfolio => 'Delete portfolio';
+
+  @override
+  String deletePortfolioConfirm(String name) {
+    return 'Delete \"$name\" and all its investments? This cannot be undone.';
+  }
+
+  @override
+  String get name => 'Name';
+
+  @override
+  String get description => 'Description';
+
+  @override
+  String get baseCurrency => 'Base currency';
+
+  @override
+  String get save => 'Save';
+
+  @override
+  String get cancel => 'Cancel';
+
+  @override
+  String get delete => 'Delete';
+
+  @override
+  String get retry => 'Try again';
+
+  @override
+  String get required => 'Required';
+
+  @override
+  String get invalidNumber => 'Enter a valid number';
+
+  @override
+  String get networkError =>
+      'Cannot reach the server. Check your connection and try again.';
+
+  @override
+  String get sessionExpired => 'Your session has ended. Please sign in again.';
+
+  @override
+  String get totalValue => 'Total value';
+
+  @override
+  String get today => 'Today';
+
+  @override
+  String get unrealizedPnl => 'Unrealized P/L';
+
+  @override
+  String get realizedPnl => 'Realized P/L';
+
+  @override
+  String get totalReturn => 'Total return';
+
+  @override
+  String get income => 'Net income';
+
+  @override
+  String get costBasis => 'Cost';
+
+  @override
+  String holdingsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count investments',
+      one: '1 investment',
+      zero: 'No investments',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get overview => 'Overview';
+
+  @override
+  String get holdings => 'Investments';
+
+  @override
+  String get allocation => 'Allocation';
+
+  @override
+  String get goals => 'Goals';
+
+  @override
+  String get byCountry => 'By country';
+
+  @override
+  String get byType => 'By type';
+
+  @override
+  String get byCurrency => 'By currency';
+
+  @override
+  String get addInvestment => 'Add investment';
+
+  @override
+  String get editInvestment => 'Edit investment';
+
+  @override
+  String get assetType => 'Type';
+
+  @override
+  String get country => 'Country';
+
+  @override
+  String get currency => 'Currency';
+
+  @override
+  String get symbol => 'Market symbol';
+
+  @override
+  String get symbolHint => 'e.g. AAPL - search by name or symbol';
+
+  @override
+  String get search => 'Search';
+
+  @override
+  String get quantity => 'Quantity';
+
+  @override
+  String get price => 'Price per unit';
+
+  @override
+  String get amount => 'Amount';
+
+  @override
+  String get fees => 'Fees';
+
+  @override
+  String get date => 'Date';
+
+  @override
+  String get note => 'Note';
+
+  @override
+  String get notes => 'Notes';
+
+  @override
+  String get details => 'Details';
+
+  @override
+  String get address => 'Address';
+
+  @override
+  String get firstTransaction => 'First transaction (optional)';
+
+  @override
+  String get addTransaction => 'Add transaction';
+
+  @override
+  String get transactions => 'Transactions';
+
+  @override
+  String get valuations => 'Valuations';
+
+  @override
+  String get addValuation => 'Add valuation';
+
+  @override
+  String get value => 'Value';
+
+  @override
+  String get averageCost => 'Average cost';
+
+  @override
+  String get marketValue => 'Market value';
+
+  @override
+  String get weight => 'Weight';
+
+  @override
+  String priceFrom(String source) {
+    return 'Price: $source';
+  }
+
+  @override
+  String get sourceQuote => 'market quote';
+
+  @override
+  String get sourceValuation => 'your valuation';
+
+  @override
+  String get sourceCost => 'purchase cost';
+
+  @override
+  String get sourceCash => 'balance';
+
+  @override
+  String get closeHolding => 'Archive';
+
+  @override
+  String get reopenHolding => 'Restore';
+
+  @override
+  String get deleteHolding => 'Delete investment';
+
+  @override
+  String get confirmDelete => 'Delete this? This cannot be undone.';
+
+  @override
+  String get targets => 'Targets';
+
+  @override
+  String get editTargets => 'Set targets';
+
+  @override
+  String get targetsHint =>
+      'Percentages must add up to 100. Leave all empty to remove the targets.';
+
+  @override
+  String targetsSum(String sum) {
+    return 'Total: $sum%';
+  }
+
+  @override
+  String get current => 'Current';
+
+  @override
+  String get target => 'Target';
+
+  @override
+  String get drift => 'Drift';
+
+  @override
+  String buyMore(String amount) {
+    return 'Add $amount';
+  }
+
+  @override
+  String reduce(String amount) {
+    return 'Reduce $amount';
+  }
+
+  @override
+  String get noTargets =>
+      'No targets yet. Set a target allocation to see how far you are from it.';
+
+  @override
+  String get newGoal => 'New goal';
+
+  @override
+  String get targetAmount => 'Target amount';
+
+  @override
+  String get targetDate => 'Target date';
+
+  @override
+  String monthlyNeeded(String amount) {
+    return '$amount per month';
+  }
+
+  @override
+  String get goalReached => 'Reached';
+
+  @override
+  String get noPortfolios => 'No portfolios yet. Create your first one.';
+
+  @override
+  String get noHoldings => 'No investments yet.';
+
+  @override
+  String get noNews => 'No news yet for your investments.';
+
+  @override
+  String get noAlerts => 'No alerts.';
+
+  @override
+  String get noWatchlist => 'Follow a symbol to see its price here.';
+
+  @override
+  String get noRules => 'No alert rules.';
+
+  @override
+  String get alertRules => 'Alert rules';
+
+  @override
+  String get newAlertRule => 'New alert rule';
+
+  @override
+  String get threshold => 'Threshold';
+
+  @override
+  String get thresholdPercent => 'Threshold (%)';
+
+  @override
+  String get markAllRead => 'Mark all as read';
+
+  @override
+  String get addSymbol => 'Follow a symbol';
+
+  @override
+  String get investment => 'Investment';
+
+  @override
+  String get portfolio => 'Portfolio';
+
+  @override
+  String get language => 'Language';
+
+  @override
+  String get unlockWithBiometrics => 'Unlock with fingerprint / face';
+
+  @override
+  String get unlockReason => 'Unlock Diwan';
+
+  @override
+  String get unlock => 'Unlock';
+
+  @override
+  String get about => 'About';
+
+  @override
+  String get fxAttribution =>
+      'Exchange rates by ExchangeRate-API (exchangerate-api.com)';
+
+  @override
+  String get demoData =>
+      'Demo market data: the server has no market data key yet.';
+
+  @override
+  String marketData(String provider) {
+    return 'Market data: $provider';
+  }
+
+  @override
+  String missingRates(String currencies) {
+    return 'No exchange rate for $currencies; not included in totals.';
+  }
+
+  @override
+  String get history => 'Price history';
+
+  @override
+  String get noHistory => 'Price history builds up day by day.';
+
+  @override
+  String get readMore => 'Read article';
+}
