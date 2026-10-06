@@ -69,6 +69,10 @@ else
   fi
   echo "== 2. restart MySQL"
   run "systemctl restart mysql"
+  # Ubuntu's pre-start check runs mysqld as root and creates the keyring file owned by root, which the
+  # server (running as mysql) then cannot open: hand it to mysql and initialise the keyring again.
+  run "chown -R mysql:mysql $KEYRING_DIR && chmod 600 $KEYRING_DIR/* 2>/dev/null || true"
+  sql "ALTER INSTANCE RELOAD KEYRING"
   if [ "$APPLY" -eq 1 ]; then
     STATUS=$($MYSQL -N -e "SELECT STATUS_VALUE FROM performance_schema.keyring_component_status WHERE STATUS_KEY='Component_status'" || true)
     if [ "$STATUS" != "Active" ]; then
