@@ -1,0 +1,7 @@
+# Accepted Trivy findings. Used by the Jenkins "Scan images" stage (--ignorefile).
+# Every entry needs a reason and an expiry date; after the date Trivy reports it again and the build fails.
+
+# CVE-2026-47884 (spring-webmvc, XsltView path traversal -> SSRF/RCE). Only exploitable when the app renders
+# views with XsltView; no Diwan service uses XsltView or any view resolver (REST/JSON only). No open-source
+# 6.x fix exists (only Spring Framework 7.0.9, which needs Spring Boot 4). Remove when moving to Boot 4.
+CVE-2026-47884 exp:2027-01-31

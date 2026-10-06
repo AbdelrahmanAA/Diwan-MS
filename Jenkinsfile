@@ -114,8 +114,10 @@ pipeline {
             steps {
                 script {
                     for (m in env.DEPLOY_MODULES.split(',')) {
+                        // .trivyignore: accepted findings, each with a reason and an expiry date
                         sh "docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v trivy-cache:/root/.cache/ " +
-                           "aquasec/trivy:0.57.1 image --no-progress --ignore-unfixed " +
+                           "-v \"\$WORKSPACE/.trivyignore\":/.trivyignore:ro " +
+                           "aquasec/trivy:0.57.1 image --no-progress --ignore-unfixed --ignorefile /.trivyignore " +
                            "--severity ${params.SCAN_SEVERITY} --exit-code 1 ${m}:${env.IMAGE_TAG}"
                     }
                 }
