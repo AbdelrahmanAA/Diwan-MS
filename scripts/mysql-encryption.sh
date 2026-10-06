@@ -94,12 +94,14 @@ sql "SET PERSIST binlog_encryption = ON"
 echo "== 4. encrypt existing diwan_* tables"
 for db in $($MYSQL -N -e "SELECT SCHEMA_NAME FROM information_schema.SCHEMATA WHERE SCHEMA_NAME LIKE 'diwan\\_%'"); do
   sql "ALTER DATABASE \`$db\` DEFAULT ENCRYPTION = 'Y'"
-  for t in $($MYSQL -N -e "SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA='$db' AND TABLE_TYPE='BASE TABLE' AND (CREATE_OPTIONS NOT LIKE '%ENCRYPTION=\"Y\"%' OR CREATE_OPTIONS IS NULL)"); do
+  # InnoDB's tablespace list is the authoritative encryption flag (file-per-table: name = db/table)
+  for t in $($MYSQL -N -e "SELECT SUBSTRING_INDEX(NAME,'/',-1) FROM information_schema.INNODB_TABLESPACES WHERE NAME LIKE '$db/%' AND ENCRYPTION <> 'Y'"); do
     sql "ALTER TABLE \`$db\`.\`$t\` ENCRYPTION = 'Y'"
   done
 done
 
 echo "== check"
-$MYSQL -e "SELECT TABLE_SCHEMA, COUNT(*) tables, SUM(CREATE_OPTIONS LIKE '%ENCRYPTION=\"Y\"%') encrypted FROM information_schema.TABLES WHERE TABLE_SCHEMA LIKE 'diwan\\_%' AND TABLE_TYPE='BASE TABLE' GROUP BY TABLE_SCHEMA"
+$MYSQL -e "SELECT SUBSTRING_INDEX(NAME,'/',1) AS db, COUNT(*) AS tables, SUM(ENCRYPTION='Y') AS encrypted FROM information_schema.INNODB_TABLESPACES WHERE NAME LIKE 'diwan\\_%/%' GROUP BY db"
+$MYSQL -e "SHOW VARIABLES WHERE Variable_name IN ('default_table_encryption','innodb_redo_log_encrypt','innodb_undo_log_encrypt','binlog_encryption')"
 [ "$APPLY" -eq 1 ] || echo "dry run only - nothing was changed. Re-run with --apply."
 echo "BACK UP $KEYRING_DIR NOW (separately from the database backups)."
