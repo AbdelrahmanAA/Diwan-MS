@@ -46,6 +46,9 @@ sql() {
 [ "$(id -u)" -eq 0 ] || { echo "run as root (sudo)"; exit 1; }
 VERSION=$($MYSQL -N -e "SELECT VERSION()")
 PLUGIN_DIR=$($MYSQL -N -e "SELECT @@plugin_dir")
+PLUGIN_DIR=${PLUGIN_DIR%/}
+APPARMOR_PROFILE=/etc/apparmor.d/usr.sbin.mysqld
+APPARMOR_LOCAL=/etc/apparmor.d/local/usr.sbin.mysqld
 MYSQLD=$(command -v mysqld || echo /usr/sbin/mysqld)
 echo "MySQL $VERSION, plugin_dir=$PLUGIN_DIR, mysqld=$MYSQLD"
 
@@ -58,11 +61,22 @@ else
   run "printf '%s\n' '{ \"components\": \"file://component_keyring_file\" }' > ${MYSQLD}.my"
   run "printf '%s\n' '{ \"path\": \"$KEYRING_DIR/component_keyring_file\", \"read_only\": false }' > $PLUGIN_DIR/component_keyring_file.cnf"
   run "chmod 644 ${MYSQLD}.my $PLUGIN_DIR/component_keyring_file.cnf"
+  # Ubuntu confines mysqld with AppArmor: allow the manifest, the keyring config and the keyring directory
+  if [ -f "$APPARMOR_PROFILE" ]; then
+    echo "== 1b. AppArmor rules ($APPARMOR_LOCAL)"
+    run "grep -q 'diwan keyring' $APPARMOR_LOCAL 2>/dev/null || printf '%s\n' '# diwan keyring (scripts/mysql-encryption.sh)' '${MYSQLD}.my r,' '$PLUGIN_DIR/component_keyring_file.cnf r,' '$KEYRING_DIR/ rw,' '$KEYRING_DIR/** rwk,' >> $APPARMOR_LOCAL"
+    run "apparmor_parser -r $APPARMOR_PROFILE"
+  fi
   echo "== 2. restart MySQL"
   run "systemctl restart mysql"
   if [ "$APPLY" -eq 1 ]; then
-    STATUS=$($MYSQL -N -e "SELECT STATUS_VALUE FROM performance_schema.keyring_component_status WHERE STATUS_KEY='Component_status'")
-    [ "$STATUS" = "Active" ] || { echo "keyring did not load - check 'journalctl -u mysql' (AppArmor?)"; exit 1; }
+    STATUS=$($MYSQL -N -e "SELECT STATUS_VALUE FROM performance_schema.keyring_component_status WHERE STATUS_KEY='Component_status'" || true)
+    if [ "$STATUS" != "Active" ]; then
+      echo "keyring did not load. Recent MySQL errors and AppArmor denials:"
+      tail -20 /var/log/mysql/error.log 2>/dev/null | grep -iE 'keyring|component|error' || true
+      grep 'apparmor="DENIED"' /var/log/syslog 2>/dev/null | grep mysqld | tail -5 || true
+      exit 1
+    fi
     echo "keyring active"
   fi
 fi
