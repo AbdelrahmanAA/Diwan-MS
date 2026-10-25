@@ -74,7 +74,6 @@
         </dependency>
             <!-- Redis removed: auth is now centralized in Gateway -->
         <dependency><groupId>org.springframework.kafka</groupId><artifactId>spring-kafka</artifactId></dependency>
-        <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-webflux</artifactId></dependency>
 
         <!-- Integration tests (*IT): real MySQL via Testcontainers -->
         <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-testcontainers</artifactId><scope>test</scope></dependency>

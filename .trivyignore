@@ -5,3 +5,9 @@
 # views with XsltView; no Diwan service uses XsltView or any view resolver (REST/JSON only). No open-source
 # 6.x fix exists (only Spring Framework 7.0.9, which needs Spring Boot 4). Remove when moving to Boot 4.
 CVE-2026-47884 exp:2027-01-31
+
+# CVE-2026-47892 (spring-webflux, header predicate bypass in WebFlux functional endpoints). Only the gateway
+# ships WebFlux (Spring Cloud Gateway is built on it); its routes are Spring Cloud Gateway RouteLocator routes
+# and @RestController endpoints, no RouterFunction / RequestPredicates.headers(...). transactions and medical had
+# an unused spring-boot-starter-webflux, removed. Fix only in Spring Framework 7.0.9 (Boot 4); remove then.
+CVE-2026-47892 exp:2027-01-31
