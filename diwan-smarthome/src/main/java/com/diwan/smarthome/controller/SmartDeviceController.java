@@ -65,6 +65,16 @@ public class SmartDeviceController {
         return ResponseEntity.ok(service.updateState(userId, id, body.getState()));
     }
 
+    // ── POST /api/smart-home/devices/{id}/command  →  switch ON/OFF (MQTT) ───
+    @PostMapping("/{id}/command")
+    public ResponseEntity<DeviceResponse> command(
+            HttpServletRequest request,
+            @PathVariable Long id,
+            @RequestBody DeviceStateRequest body) {
+        Long userId = extractUserId(request);
+        return ResponseEntity.ok(service.control(userId, id, body.getState()));
+    }
+
     // ── Helper: extract user ID set by Gateway ────────────────────────────────
     private Long extractUserId(HttpServletRequest request) {
         String header = request.getHeader("X-User-Id");

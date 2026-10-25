@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 
 import 'l10n/app_localizations.dart';
 import 'state/session.dart';
-import 'ui/home_screen.dart';
+import 'ui/dashboard_screen.dart';
 import 'ui/login_screen.dart';
 
 void main() {
@@ -22,6 +22,8 @@ class DiwanApp extends StatelessWidget {
     final session = context.watch<Session>();
     const seed = Color(0xFF7C3AED);
     return MaterialApp(
+      // a new navigator when the user changes: pages opened from the dashboard do not survive a sign-out
+      key: ValueKey(session.user?.userId),
       onGenerateTitle: (c) => AppLocalizations.of(c).appTitle,
       debugShowCheckedModeBanner: false,
       locale: session.locale,
@@ -41,7 +43,7 @@ class DiwanApp extends StatelessWidget {
               : session.locked
                   ? const LockScreen()
                   // a new key per user so nothing of a previous session survives a sign-in
-                  : HomeScreen(key: ValueKey(session.user!.userId)),
+                  : DashboardScreen(key: ValueKey(session.user!.userId)),
     );
   }
 }

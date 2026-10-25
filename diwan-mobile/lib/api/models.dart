@@ -449,3 +449,119 @@ class ResultPage<T> {
   final int totalItems;
   final int totalPages;
 }
+
+// ---- dashboard (gateway /api/features) ----
+
+/// A dashboard tile. [screen] tells the app which page to open; [color] is "#RRGGBB".
+class Feature {
+  Feature({required this.id, required this.displayName, this.icon, this.color, this.description, this.screen, this.path});
+
+  factory Feature.fromJson(Map<String, dynamic> j) => Feature(
+        id: j['id'] as String,
+        displayName: (j['displayName'] ?? j['id']) as String,
+        icon: j['icon'] as String?,
+        color: j['color'] as String?,
+        description: j['description'] as String?,
+        screen: j['screen'] as String?,
+        path: j['path'] as String?,
+      );
+
+  final String id;
+  final String displayName;
+  final String? icon;
+  final String? color;
+  final String? description;
+  final String? screen;
+  final String? path;
+}
+
+// ---- financial transactions (diwan-transactions) ----
+
+class MoneyTransaction {
+  MoneyTransaction.fromJson(Map<String, dynamic> j)
+      : id = (j['id'] as num).toInt(),
+        type = (j['type'] ?? 'expense') as String,
+        category = (j['category'] ?? '') as String,
+        amount = _d(j['amount']) ?? 0,
+        currency = (j['currency'] ?? '') as String,
+        bank = j['bank'] as String?,
+        merchantName = j['merchantName'] as String?,
+        paymentMethod = j['paymentMethod'] as String?,
+        status = j['status'] as String?,
+        description = j['description'] as String?,
+        notes = j['notes'] as String?,
+        recordedAt = _t(j['recordedAt']);
+
+  final int id;
+  final String type; // expense | income
+  final String category;
+  final double amount;
+  final String currency;
+  final String? bank;
+  final String? merchantName;
+  final String? paymentMethod;
+  final String? status;
+  final String? description;
+  final String? notes;
+  final DateTime? recordedAt;
+
+  bool get isIncome => type.toLowerCase() == 'income';
+}
+
+/// Income and expense totals of one currency.
+class CurrencyTotals {
+  CurrencyTotals(this.currency, this.income, this.expense);
+
+  final String currency;
+  final double income;
+  final double expense;
+
+  double get net => income - expense;
+
+  /// {"EGP":{"income":100,"expense":40}, ...}
+  static List<CurrencyTotals> listFromJson(Map<String, dynamic> j) => j.entries.map((e) {
+        final m = e.value as Map<String, dynamic>;
+        return CurrencyTotals(e.key, _d(m['income']) ?? 0, _d(m['expense']) ?? 0);
+      }).toList()
+        ..sort((a, b) => a.currency.compareTo(b.currency));
+}
+
+// ---- medical records (diwan-medical) ----
+
+/// One record of any category; the category decides which [fields] are used (see medical_screen.dart).
+class MedicalRecord {
+  MedicalRecord.fromJson(Map<String, dynamic> j)
+      : id = (j['id'] as num).toInt(),
+        category = j['category'] as String,
+        notes = j['notes'] as String?,
+        recordedAt = _t(j['recordedAt'] ?? j['createdAt']),
+        fields = j;
+
+  final int id;
+  final String category;
+  final String? notes;
+  final DateTime? recordedAt;
+  final Map<String, dynamic> fields;
+
+  String? text(String key) {
+    final v = fields[key];
+    return v == null || v.toString().isEmpty ? null : v.toString();
+  }
+}
+
+// ---- smart home (diwan-smarthome) ----
+
+class SmartDevice {
+  SmartDevice.fromJson(Map<String, dynamic> j)
+      : id = (j['id'] as num).toInt(),
+        deviceId = (j['deviceId'] ?? '') as String,
+        name = (j['name'] ?? '') as String,
+        state = (j['state'] ?? 'UNKNOWN') as String;
+
+  final int id;
+  final String deviceId;
+  final String name;
+  final String state; // ON | OFF | UNKNOWN
+
+  bool get isOn => state == 'ON';
+}

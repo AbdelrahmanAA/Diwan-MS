@@ -3,9 +3,23 @@ import 'package:provider/provider.dart';
 
 import '../l10n/app_localizations.dart';
 import '../state/session.dart';
+import 'widgets.dart';
 
+/// Account and app settings (dashboard tile "My Account" and the settings button).
 class SettingsTab extends StatelessWidget {
   const SettingsTab({super.key});
+
+  Future<void> _closeAccount(BuildContext context, {required bool delete}) async {
+    final t = AppLocalizations.of(context);
+    final ok = await confirm(context, delete ? t.deleteAccountConfirm : t.deactivateConfirm,
+        action: delete ? t.deleteAccount : t.deactivate);
+    if (!ok || !context.mounted) return;
+    try {
+      await context.read<Session>().closeAccount(delete: delete);
+    } catch (e) {
+      if (context.mounted) showError(context, e);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -56,6 +70,17 @@ class SettingsTab extends StatelessWidget {
               t.fxAttribution,
             ].join('\n')),
           ),
+        ),
+        const Divider(),
+        ListTile(
+          leading: const Icon(Icons.person_off_outlined),
+          title: Text(t.deactivateAccount),
+          onTap: () => _closeAccount(context, delete: false),
+        ),
+        ListTile(
+          leading: Icon(Icons.delete_forever_outlined, color: Theme.of(context).colorScheme.error),
+          title: Text(t.deleteAccount, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+          onTap: () => _closeAccount(context, delete: true),
         ),
         const Divider(),
         ListTile(

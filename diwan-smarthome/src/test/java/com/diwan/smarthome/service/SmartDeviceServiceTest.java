@@ -15,6 +15,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -106,5 +107,22 @@ class SmartDeviceServiceTest {
         when(repo.findByDeviceIdAndUserIdAndActiveTrue("lamp1", 7L)).thenReturn(Optional.empty());
         assertEquals(HttpStatus.NOT_FOUND, statusOf(() -> service.controlByExternalDeviceId(7L, "lamp1", "ON")));
         verify(mqtt, never()).publishCommand(anyString(), anyString());
+    }
+
+    @Test
+    void controlFromTheAppPublishesForTheUsersOwnActiveDeviceOnly() {
+        SmartDevice d = device(7L, "lamp1");
+        when(repo.findByIdAndUserId(5L, 7L)).thenReturn(Optional.of(d));
+        when(repo.findByDeviceIdAndUserIdAndActiveTrue("lamp1", 7L)).thenReturn(Optional.of(d));
+        when(repo.save(d)).thenReturn(d);
+
+        assertEquals("ON", service.control(7L, 5L, "on").state);
+        verify(mqtt).publishCommand("myhome/SmartLamp_lamp1", "ON");
+
+        d.setActive(false);
+        assertEquals(HttpStatus.NOT_FOUND, statusOf(() -> service.control(7L, 5L, "OFF")));
+        when(repo.findByIdAndUserId(6L, 7L)).thenReturn(Optional.empty());
+        assertEquals(HttpStatus.NOT_FOUND, statusOf(() -> service.control(7L, 6L, "OFF")));
+        verify(mqtt, never()).publishCommand(anyString(), eq("OFF"));
     }
 }

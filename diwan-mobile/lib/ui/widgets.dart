@@ -147,7 +147,7 @@ class Metric extends StatelessWidget {
   }
 }
 
-Future<bool> confirm(BuildContext context, String message) async {
+Future<bool> confirm(BuildContext context, String message, {String? action}) async {
   final t = AppLocalizations.of(context);
   return await showDialog<bool>(
         context: context,
@@ -155,7 +155,7 @@ Future<bool> confirm(BuildContext context, String message) async {
           content: Text(message),
           actions: [
             TextButton(onPressed: () => Navigator.pop(c, false), child: Text(t.cancel)),
-            FilledButton(onPressed: () => Navigator.pop(c, true), child: Text(t.delete)),
+            FilledButton(onPressed: () => Navigator.pop(c, true), child: Text(action ?? t.delete)),
           ],
         ),
       ) ??

@@ -101,7 +101,7 @@ abstract class AppLocalizations {
   /// No description provided for @appTitle.
   ///
   /// In en, this message translates to:
-  /// **'Diwan Investments'**
+  /// **'Diwan'**
   String get appTitle;
 
   /// No description provided for @signIn.
@@ -823,6 +823,558 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Read article'**
   String get readMore;
+
+  /// No description provided for @dashboard.
+  ///
+  /// In en, this message translates to:
+  /// **'Home'**
+  String get dashboard;
+
+  /// No description provided for @hello.
+  ///
+  /// In en, this message translates to:
+  /// **'Hello, {name}'**
+  String hello(String name);
+
+  /// No description provided for @featureNotInApp.
+  ///
+  /// In en, this message translates to:
+  /// **'This section is not available in the app yet.'**
+  String get featureNotInApp;
+
+  /// No description provided for @featureSmartHome.
+  ///
+  /// In en, this message translates to:
+  /// **'Smart Home'**
+  String get featureSmartHome;
+
+  /// No description provided for @featureSmartHomeDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Your devices: switch them on and off'**
+  String get featureSmartHomeDesc;
+
+  /// No description provided for @featureMedical.
+  ///
+  /// In en, this message translates to:
+  /// **'Medical History'**
+  String get featureMedical;
+
+  /// No description provided for @featureMedicalDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Medications, allergies, lab results and more'**
+  String get featureMedicalDesc;
+
+  /// No description provided for @featureTransactions.
+  ///
+  /// In en, this message translates to:
+  /// **'Financial History'**
+  String get featureTransactions;
+
+  /// No description provided for @featureTransactionsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Income and expenses'**
+  String get featureTransactionsDesc;
+
+  /// No description provided for @featureAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'My Account'**
+  String get featureAccount;
+
+  /// No description provided for @featureAccountDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile, language and security'**
+  String get featureAccountDesc;
+
+  /// No description provided for @featurePortfolio.
+  ///
+  /// In en, this message translates to:
+  /// **'Investments'**
+  String get featurePortfolio;
+
+  /// No description provided for @featurePortfolioDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Portfolios, prices, alerts and news'**
+  String get featurePortfolioDesc;
+
+  /// No description provided for @all.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get all;
+
+  /// No description provided for @incomeType.
+  ///
+  /// In en, this message translates to:
+  /// **'Income'**
+  String get incomeType;
+
+  /// No description provided for @expenseType.
+  ///
+  /// In en, this message translates to:
+  /// **'Expense'**
+  String get expenseType;
+
+  /// No description provided for @net.
+  ///
+  /// In en, this message translates to:
+  /// **'Net'**
+  String get net;
+
+  /// No description provided for @newTransaction.
+  ///
+  /// In en, this message translates to:
+  /// **'New transaction'**
+  String get newTransaction;
+
+  /// No description provided for @editTransaction.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit transaction'**
+  String get editTransaction;
+
+  /// No description provided for @noMoneyTransactions.
+  ///
+  /// In en, this message translates to:
+  /// **'No transactions yet.'**
+  String get noMoneyTransactions;
+
+  /// No description provided for @category.
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get category;
+
+  /// No description provided for @merchant.
+  ///
+  /// In en, this message translates to:
+  /// **'Merchant'**
+  String get merchant;
+
+  /// No description provided for @bank.
+  ///
+  /// In en, this message translates to:
+  /// **'Bank'**
+  String get bank;
+
+  /// No description provided for @paymentMethod.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment method'**
+  String get paymentMethod;
+
+  /// No description provided for @status.
+  ///
+  /// In en, this message translates to:
+  /// **'Status'**
+  String get status;
+
+  /// No description provided for @notEditable.
+  ///
+  /// In en, this message translates to:
+  /// **'Cannot be changed after saving'**
+  String get notEditable;
+
+  /// No description provided for @catFood.
+  ///
+  /// In en, this message translates to:
+  /// **'Food'**
+  String get catFood;
+
+  /// No description provided for @catTransport.
+  ///
+  /// In en, this message translates to:
+  /// **'Transport'**
+  String get catTransport;
+
+  /// No description provided for @catBills.
+  ///
+  /// In en, this message translates to:
+  /// **'Bills'**
+  String get catBills;
+
+  /// No description provided for @catHealth.
+  ///
+  /// In en, this message translates to:
+  /// **'Health'**
+  String get catHealth;
+
+  /// No description provided for @catShopping.
+  ///
+  /// In en, this message translates to:
+  /// **'Shopping'**
+  String get catShopping;
+
+  /// No description provided for @catEntertainment.
+  ///
+  /// In en, this message translates to:
+  /// **'Entertainment'**
+  String get catEntertainment;
+
+  /// No description provided for @catSalary.
+  ///
+  /// In en, this message translates to:
+  /// **'Salary'**
+  String get catSalary;
+
+  /// No description provided for @catGeneral.
+  ///
+  /// In en, this message translates to:
+  /// **'General'**
+  String get catGeneral;
+
+  /// No description provided for @payCash.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash'**
+  String get payCash;
+
+  /// No description provided for @payCard.
+  ///
+  /// In en, this message translates to:
+  /// **'Card'**
+  String get payCard;
+
+  /// No description provided for @payTransfer.
+  ///
+  /// In en, this message translates to:
+  /// **'Transfer'**
+  String get payTransfer;
+
+  /// No description provided for @payWallet.
+  ///
+  /// In en, this message translates to:
+  /// **'Wallet'**
+  String get payWallet;
+
+  /// No description provided for @payCheque.
+  ///
+  /// In en, this message translates to:
+  /// **'Cheque'**
+  String get payCheque;
+
+  /// No description provided for @statusCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed'**
+  String get statusCompleted;
+
+  /// No description provided for @statusPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending'**
+  String get statusPending;
+
+  /// No description provided for @statusCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelled'**
+  String get statusCancelled;
+
+  /// No description provided for @newRecord.
+  ///
+  /// In en, this message translates to:
+  /// **'New record'**
+  String get newRecord;
+
+  /// No description provided for @editRecord.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit record'**
+  String get editRecord;
+
+  /// No description provided for @noMedicalRecords.
+  ///
+  /// In en, this message translates to:
+  /// **'No records in this section yet.'**
+  String get noMedicalRecords;
+
+  /// No description provided for @medMedications.
+  ///
+  /// In en, this message translates to:
+  /// **'Medications'**
+  String get medMedications;
+
+  /// No description provided for @medAllergies.
+  ///
+  /// In en, this message translates to:
+  /// **'Allergies'**
+  String get medAllergies;
+
+  /// No description provided for @medBloodType.
+  ///
+  /// In en, this message translates to:
+  /// **'Blood type'**
+  String get medBloodType;
+
+  /// No description provided for @medSurgeries.
+  ///
+  /// In en, this message translates to:
+  /// **'Surgeries'**
+  String get medSurgeries;
+
+  /// No description provided for @medChronicDiseases.
+  ///
+  /// In en, this message translates to:
+  /// **'Chronic diseases'**
+  String get medChronicDiseases;
+
+  /// No description provided for @medLabResults.
+  ///
+  /// In en, this message translates to:
+  /// **'Lab results'**
+  String get medLabResults;
+
+  /// No description provided for @medVaccines.
+  ///
+  /// In en, this message translates to:
+  /// **'Vaccines'**
+  String get medVaccines;
+
+  /// No description provided for @medFamilyHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Family history'**
+  String get medFamilyHistory;
+
+  /// No description provided for @fDosage.
+  ///
+  /// In en, this message translates to:
+  /// **'Dosage'**
+  String get fDosage;
+
+  /// No description provided for @fFrequency.
+  ///
+  /// In en, this message translates to:
+  /// **'Frequency'**
+  String get fFrequency;
+
+  /// No description provided for @fStartDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Start date'**
+  String get fStartDate;
+
+  /// No description provided for @fEndDate.
+  ///
+  /// In en, this message translates to:
+  /// **'End date'**
+  String get fEndDate;
+
+  /// No description provided for @fAllergen.
+  ///
+  /// In en, this message translates to:
+  /// **'Allergen'**
+  String get fAllergen;
+
+  /// No description provided for @fSeverity.
+  ///
+  /// In en, this message translates to:
+  /// **'Severity'**
+  String get fSeverity;
+
+  /// No description provided for @fReaction.
+  ///
+  /// In en, this message translates to:
+  /// **'Reaction'**
+  String get fReaction;
+
+  /// No description provided for @fSurgery.
+  ///
+  /// In en, this message translates to:
+  /// **'Surgery'**
+  String get fSurgery;
+
+  /// No description provided for @fHospital.
+  ///
+  /// In en, this message translates to:
+  /// **'Hospital'**
+  String get fHospital;
+
+  /// No description provided for @fSurgeon.
+  ///
+  /// In en, this message translates to:
+  /// **'Surgeon'**
+  String get fSurgeon;
+
+  /// No description provided for @fDisease.
+  ///
+  /// In en, this message translates to:
+  /// **'Disease'**
+  String get fDisease;
+
+  /// No description provided for @fDiagnosedAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Diagnosed on'**
+  String get fDiagnosedAt;
+
+  /// No description provided for @fTreatment.
+  ///
+  /// In en, this message translates to:
+  /// **'Current treatment'**
+  String get fTreatment;
+
+  /// No description provided for @fTest.
+  ///
+  /// In en, this message translates to:
+  /// **'Test'**
+  String get fTest;
+
+  /// No description provided for @fResult.
+  ///
+  /// In en, this message translates to:
+  /// **'Result'**
+  String get fResult;
+
+  /// No description provided for @fUnit.
+  ///
+  /// In en, this message translates to:
+  /// **'Unit'**
+  String get fUnit;
+
+  /// No description provided for @fReferenceRange.
+  ///
+  /// In en, this message translates to:
+  /// **'Reference range'**
+  String get fReferenceRange;
+
+  /// No description provided for @fVaccine.
+  ///
+  /// In en, this message translates to:
+  /// **'Vaccine'**
+  String get fVaccine;
+
+  /// No description provided for @fDose.
+  ///
+  /// In en, this message translates to:
+  /// **'Dose number'**
+  String get fDose;
+
+  /// No description provided for @fNextDose.
+  ///
+  /// In en, this message translates to:
+  /// **'Next dose'**
+  String get fNextDose;
+
+  /// No description provided for @fCondition.
+  ///
+  /// In en, this message translates to:
+  /// **'Condition'**
+  String get fCondition;
+
+  /// No description provided for @fRelation.
+  ///
+  /// In en, this message translates to:
+  /// **'Relation'**
+  String get fRelation;
+
+  /// No description provided for @devices.
+  ///
+  /// In en, this message translates to:
+  /// **'Devices'**
+  String get devices;
+
+  /// No description provided for @addDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'Add device'**
+  String get addDevice;
+
+  /// No description provided for @deviceId.
+  ///
+  /// In en, this message translates to:
+  /// **'Device ID'**
+  String get deviceId;
+
+  /// No description provided for @deviceIdHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Printed on the device / its QR code'**
+  String get deviceIdHint;
+
+  /// No description provided for @rename.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename'**
+  String get rename;
+
+  /// No description provided for @remove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get remove;
+
+  /// No description provided for @noDevices.
+  ///
+  /// In en, this message translates to:
+  /// **'No devices yet. Add one with the ID printed on it.'**
+  String get noDevices;
+
+  /// No description provided for @deviceOn.
+  ///
+  /// In en, this message translates to:
+  /// **'On'**
+  String get deviceOn;
+
+  /// No description provided for @deviceOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Off'**
+  String get deviceOff;
+
+  /// No description provided for @deviceUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown'**
+  String get deviceUnknown;
+
+  /// No description provided for @alexaHint.
+  ///
+  /// In en, this message translates to:
+  /// **'You can also control these devices with Alexa.'**
+  String get alexaHint;
+
+  /// No description provided for @account.
+  ///
+  /// In en, this message translates to:
+  /// **'Account'**
+  String get account;
+
+  /// No description provided for @deactivateAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Deactivate account'**
+  String get deactivateAccount;
+
+  /// No description provided for @deactivateConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Deactivate your account? You will be signed out and cannot sign in until it is reactivated.'**
+  String get deactivateConfirm;
+
+  /// No description provided for @deleteAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete account'**
+  String get deleteAccount;
+
+  /// No description provided for @deleteAccountConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete your account and all your data (investments, transactions, medical records)? This cannot be undone.'**
+  String get deleteAccountConfirm;
+
+  /// No description provided for @deactivate.
+  ///
+  /// In en, this message translates to:
+  /// **'Deactivate'**
+  String get deactivate;
 }
 
 class _AppLocalizationsDelegate

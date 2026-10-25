@@ -1,8 +1,20 @@
 # Diwan mobile app (Flutter)
 
-Android and iOS app for the Diwan platform. The first version covers sign-in/registration and the investment
-portfolio service (`/api/portfolio` through the gateway); transactions, medical and smart-home sections can be
-added as further tabs.
+Android and iOS app for the Diwan platform. After sign-in it opens a **dashboard** with one tile per feature
+of the gateway's `GET /api/features` (the `app_features` table, so tiles can be added, reordered or switched off
+on the server without a new app release). Each tile opens its section by the feature's `screen`:
+
+| `screen` | Section | Service |
+|---|---|---|
+| `Portfolio` | Investments: portfolios, watchlist, news, alerts (bottom tabs) | `/api/portfolio` |
+| `Transactions` | Financial history: income/expense totals per currency, list, add/edit/delete | `/api/transactions` |
+| `MedicalHistory` | Medical history: a tab per category (medications, allergies, blood type, surgeries, chronic diseases, lab results, vaccines, family history) | `/api/medical` |
+| `SmartHome` | Devices with an on/off switch (the server sends the MQTT command), add/rename/remove | `/api/smart-home/devices` |
+| `UpdateUserInfo` | My account: profile, language, fingerprint lock, sign out, deactivate/delete account | `/api/users` |
+
+Tile titles and descriptions come from the app's translations; a tile with a `screen` the app does not know yet
+shows the server's texts and a "not available in the app yet" page. The mapping is `featureScreens` in
+`lib/ui/dashboard_screen.dart`.
 
 - **Languages:** Arabic and English, chosen on the login screen or in Settings (default: the phone's language).
   Arabic switches the whole UI to right-to-left. Server texts (errors, labels of asset types, countries,
@@ -11,7 +23,7 @@ added as further tabs.
 - **Security:** the login token is kept in the platform secure storage (Android Keystore / iOS Keychain), never in
   plain preferences; optional fingerprint/face unlock (Settings); signing out revokes the token at the gateway.
   Only HTTPS is allowed, except the local addresses used for development (`network_security_config.xml`).
-- **Screens:** portfolios (headline numbers) -> portfolio (grouped view country -> type with a chart, all
+- **Investment screens:** portfolios (headline numbers) -> portfolio (grouped view country -> type with a chart, all
   investments, allocation vs targets with rebalancing suggestions, goals) -> investment (value, P/L, price
   history, transactions, valuations); watchlist; news about your investments; alerts (inbox + rules); settings.
 
@@ -52,4 +64,5 @@ Google Play, create an upload keystore and fill in `android/key.properties` (see
 
 - Push notifications for alerts (needs a Firebase project; alerts are already published to Kafka
   `portfolio.alerts` with title/message in the user's language).
-- More sections of Diwan (transactions, medical, smart home) as tabs.
+- The financial-history service cannot change type, currency, date or description of a saved transaction, so
+  the app shows those read-only when editing.

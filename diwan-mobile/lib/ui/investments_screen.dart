@@ -4,23 +4,23 @@ import '../l10n/app_localizations.dart';
 import 'alerts_tab.dart';
 import 'news_tab.dart';
 import 'portfolios_tab.dart';
-import 'settings_tab.dart';
 import 'watchlist_tab.dart';
 
-class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+/// The investments section (opened from the dashboard): portfolios, watchlist, news and alerts as tabs.
+class InvestmentsScreen extends StatefulWidget {
+  const InvestmentsScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  State<InvestmentsScreen> createState() => _InvestmentsScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _InvestmentsScreenState extends State<InvestmentsScreen> {
   int _tab = 0;
 
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
-    const pages = [PortfoliosTab(), WatchlistTab(), NewsTab(), AlertsTab(), SettingsTab()];
+    const pages = [PortfoliosTab(), WatchlistTab(), NewsTab(), AlertsTab()];
     return Scaffold(
       body: IndexedStack(index: _tab, children: pages),
       bottomNavigationBar: NavigationBar(
@@ -31,7 +31,6 @@ class _HomeScreenState extends State<HomeScreen> {
           NavigationDestination(icon: const Icon(Icons.visibility_outlined), selectedIcon: const Icon(Icons.visibility), label: t.watchlist),
           NavigationDestination(icon: const Icon(Icons.newspaper_outlined), selectedIcon: const Icon(Icons.newspaper), label: t.news),
           NavigationDestination(icon: const Icon(Icons.notifications_outlined), selectedIcon: const Icon(Icons.notifications), label: t.alerts),
-          NavigationDestination(icon: const Icon(Icons.settings_outlined), selectedIcon: const Icon(Icons.settings), label: t.settings),
         ],
       ),
     );

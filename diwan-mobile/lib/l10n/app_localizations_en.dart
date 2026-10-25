@@ -10,7 +10,7 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
-  String get appTitle => 'Diwan Investments';
+  String get appTitle => 'Diwan';
 
   @override
   String get signIn => 'Sign in';
@@ -401,4 +401,285 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get readMore => 'Read article';
+
+  @override
+  String get dashboard => 'Home';
+
+  @override
+  String hello(String name) {
+    return 'Hello, $name';
+  }
+
+  @override
+  String get featureNotInApp => 'This section is not available in the app yet.';
+
+  @override
+  String get featureSmartHome => 'Smart Home';
+
+  @override
+  String get featureSmartHomeDesc => 'Your devices: switch them on and off';
+
+  @override
+  String get featureMedical => 'Medical History';
+
+  @override
+  String get featureMedicalDesc =>
+      'Medications, allergies, lab results and more';
+
+  @override
+  String get featureTransactions => 'Financial History';
+
+  @override
+  String get featureTransactionsDesc => 'Income and expenses';
+
+  @override
+  String get featureAccount => 'My Account';
+
+  @override
+  String get featureAccountDesc => 'Profile, language and security';
+
+  @override
+  String get featurePortfolio => 'Investments';
+
+  @override
+  String get featurePortfolioDesc => 'Portfolios, prices, alerts and news';
+
+  @override
+  String get all => 'All';
+
+  @override
+  String get incomeType => 'Income';
+
+  @override
+  String get expenseType => 'Expense';
+
+  @override
+  String get net => 'Net';
+
+  @override
+  String get newTransaction => 'New transaction';
+
+  @override
+  String get editTransaction => 'Edit transaction';
+
+  @override
+  String get noMoneyTransactions => 'No transactions yet.';
+
+  @override
+  String get category => 'Category';
+
+  @override
+  String get merchant => 'Merchant';
+
+  @override
+  String get bank => 'Bank';
+
+  @override
+  String get paymentMethod => 'Payment method';
+
+  @override
+  String get status => 'Status';
+
+  @override
+  String get notEditable => 'Cannot be changed after saving';
+
+  @override
+  String get catFood => 'Food';
+
+  @override
+  String get catTransport => 'Transport';
+
+  @override
+  String get catBills => 'Bills';
+
+  @override
+  String get catHealth => 'Health';
+
+  @override
+  String get catShopping => 'Shopping';
+
+  @override
+  String get catEntertainment => 'Entertainment';
+
+  @override
+  String get catSalary => 'Salary';
+
+  @override
+  String get catGeneral => 'General';
+
+  @override
+  String get payCash => 'Cash';
+
+  @override
+  String get payCard => 'Card';
+
+  @override
+  String get payTransfer => 'Transfer';
+
+  @override
+  String get payWallet => 'Wallet';
+
+  @override
+  String get payCheque => 'Cheque';
+
+  @override
+  String get statusCompleted => 'Completed';
+
+  @override
+  String get statusPending => 'Pending';
+
+  @override
+  String get statusCancelled => 'Cancelled';
+
+  @override
+  String get newRecord => 'New record';
+
+  @override
+  String get editRecord => 'Edit record';
+
+  @override
+  String get noMedicalRecords => 'No records in this section yet.';
+
+  @override
+  String get medMedications => 'Medications';
+
+  @override
+  String get medAllergies => 'Allergies';
+
+  @override
+  String get medBloodType => 'Blood type';
+
+  @override
+  String get medSurgeries => 'Surgeries';
+
+  @override
+  String get medChronicDiseases => 'Chronic diseases';
+
+  @override
+  String get medLabResults => 'Lab results';
+
+  @override
+  String get medVaccines => 'Vaccines';
+
+  @override
+  String get medFamilyHistory => 'Family history';
+
+  @override
+  String get fDosage => 'Dosage';
+
+  @override
+  String get fFrequency => 'Frequency';
+
+  @override
+  String get fStartDate => 'Start date';
+
+  @override
+  String get fEndDate => 'End date';
+
+  @override
+  String get fAllergen => 'Allergen';
+
+  @override
+  String get fSeverity => 'Severity';
+
+  @override
+  String get fReaction => 'Reaction';
+
+  @override
+  String get fSurgery => 'Surgery';
+
+  @override
+  String get fHospital => 'Hospital';
+
+  @override
+  String get fSurgeon => 'Surgeon';
+
+  @override
+  String get fDisease => 'Disease';
+
+  @override
+  String get fDiagnosedAt => 'Diagnosed on';
+
+  @override
+  String get fTreatment => 'Current treatment';
+
+  @override
+  String get fTest => 'Test';
+
+  @override
+  String get fResult => 'Result';
+
+  @override
+  String get fUnit => 'Unit';
+
+  @override
+  String get fReferenceRange => 'Reference range';
+
+  @override
+  String get fVaccine => 'Vaccine';
+
+  @override
+  String get fDose => 'Dose number';
+
+  @override
+  String get fNextDose => 'Next dose';
+
+  @override
+  String get fCondition => 'Condition';
+
+  @override
+  String get fRelation => 'Relation';
+
+  @override
+  String get devices => 'Devices';
+
+  @override
+  String get addDevice => 'Add device';
+
+  @override
+  String get deviceId => 'Device ID';
+
+  @override
+  String get deviceIdHint => 'Printed on the device / its QR code';
+
+  @override
+  String get rename => 'Rename';
+
+  @override
+  String get remove => 'Remove';
+
+  @override
+  String get noDevices => 'No devices yet. Add one with the ID printed on it.';
+
+  @override
+  String get deviceOn => 'On';
+
+  @override
+  String get deviceOff => 'Off';
+
+  @override
+  String get deviceUnknown => 'Unknown';
+
+  @override
+  String get alexaHint => 'You can also control these devices with Alexa.';
+
+  @override
+  String get account => 'Account';
+
+  @override
+  String get deactivateAccount => 'Deactivate account';
+
+  @override
+  String get deactivateConfirm =>
+      'Deactivate your account? You will be signed out and cannot sign in until it is reactivated.';
+
+  @override
+  String get deleteAccount => 'Delete account';
+
+  @override
+  String get deleteAccountConfirm =>
+      'Delete your account and all your data (investments, transactions, medical records)? This cannot be undone.';
+
+  @override
+  String get deactivate => 'Deactivate';
 }

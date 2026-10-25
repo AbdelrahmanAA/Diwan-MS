@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/widgets.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:http/http.dart' as http;
 import 'package:local_auth/local_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -12,13 +13,14 @@ import '../api/models.dart';
 /// Who is signed in, which language the app uses, and whether the app is locked behind the fingerprint.
 /// The token lives in the platform's secure storage (Keychain / Android Keystore), never in plain prefs.
 class Session extends ChangeNotifier {
-  Session({FlutterSecureStorage? storage, LocalAuthentication? localAuth})
+  Session({FlutterSecureStorage? storage, LocalAuthentication? localAuth, http.Client? httpClient})
       : _storage = storage ?? const FlutterSecureStorage(),
         _localAuth = localAuth ?? LocalAuthentication() {
     api = DiwanApi(ApiClient(
       tokenProvider: () => _user?.token,
       languageProvider: () => locale.languageCode,
       onUnauthorized: _expired,
+      httpClient: httpClient,
     ));
   }
 
@@ -83,6 +85,17 @@ class Session extends ChangeNotifier {
       // signing out locally must work offline too
     }
     await _clear();
+  }
+
+  /// Deactivates or deletes the signed-in user's own account, then signs out.
+  Future<void> closeAccount({required bool delete}) async {
+    final id = _user!.userId;
+    if (delete) {
+      await api.deleteAccount(id);
+    } else {
+      await api.deactivateAccount(id);
+    }
+    await logout();
   }
 
   void _expired() {

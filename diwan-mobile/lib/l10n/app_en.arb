@@ -1,6 +1,6 @@
 {
   "@@locale": "en",
-  "appTitle": "Diwan Investments",
+  "appTitle": "Diwan",
   "signIn": "Sign in",
   "createAccount": "Create account",
   "fullName": "Full name",
@@ -19,7 +19,13 @@
   "editPortfolio": "Edit portfolio",
   "deletePortfolio": "Delete portfolio",
   "deletePortfolioConfirm": "Delete \"{name}\" and all its investments? This cannot be undone.",
-  "@deletePortfolioConfirm": {"placeholders": {"name": {"type": "String"}}},
+  "@deletePortfolioConfirm": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "name": "Name",
   "description": "Description",
   "baseCurrency": "Base currency",
@@ -39,7 +45,13 @@
   "income": "Net income",
   "costBasis": "Cost",
   "holdingsCount": "{count, plural, =0{No investments} =1{1 investment} other{{count} investments}}",
-  "@holdingsCount": {"placeholders": {"count": {"type": "int"}}},
+  "@holdingsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "overview": "Overview",
   "holdings": "Investments",
   "allocation": "Allocation",
@@ -74,7 +86,13 @@
   "marketValue": "Market value",
   "weight": "Weight",
   "priceFrom": "Price: {source}",
-  "@priceFrom": {"placeholders": {"source": {"type": "String"}}},
+  "@priceFrom": {
+    "placeholders": {
+      "source": {
+        "type": "String"
+      }
+    }
+  },
   "sourceQuote": "market quote",
   "sourceValuation": "your valuation",
   "sourceCost": "purchase cost",
@@ -87,20 +105,44 @@
   "editTargets": "Set targets",
   "targetsHint": "Percentages must add up to 100. Leave all empty to remove the targets.",
   "targetsSum": "Total: {sum}%",
-  "@targetsSum": {"placeholders": {"sum": {"type": "String"}}},
+  "@targetsSum": {
+    "placeholders": {
+      "sum": {
+        "type": "String"
+      }
+    }
+  },
   "current": "Current",
   "target": "Target",
   "drift": "Drift",
   "buyMore": "Add {amount}",
-  "@buyMore": {"placeholders": {"amount": {"type": "String"}}},
+  "@buyMore": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
   "reduce": "Reduce {amount}",
-  "@reduce": {"placeholders": {"amount": {"type": "String"}}},
+  "@reduce": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
   "noTargets": "No targets yet. Set a target allocation to see how far you are from it.",
   "newGoal": "New goal",
   "targetAmount": "Target amount",
   "targetDate": "Target date",
   "monthlyNeeded": "{amount} per month",
-  "@monthlyNeeded": {"placeholders": {"amount": {"type": "String"}}},
+  "@monthlyNeeded": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
   "goalReached": "Reached",
   "noPortfolios": "No portfolios yet. Create your first one.",
   "noHoldings": "No investments yet.",
@@ -124,10 +166,121 @@
   "fxAttribution": "Exchange rates by ExchangeRate-API (exchangerate-api.com)",
   "demoData": "Demo market data: the server has no market data key yet.",
   "marketData": "Market data: {provider}",
-  "@marketData": {"placeholders": {"provider": {"type": "String"}}},
+  "@marketData": {
+    "placeholders": {
+      "provider": {
+        "type": "String"
+      }
+    }
+  },
   "missingRates": "No exchange rate for {currencies}; not included in totals.",
-  "@missingRates": {"placeholders": {"currencies": {"type": "String"}}},
+  "@missingRates": {
+    "placeholders": {
+      "currencies": {
+        "type": "String"
+      }
+    }
+  },
   "history": "Price history",
   "noHistory": "Price history builds up day by day.",
-  "readMore": "Read article"
+  "readMore": "Read article",
+  "dashboard": "Home",
+  "hello": "Hello, {name}",
+  "@hello": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "featureNotInApp": "This section is not available in the app yet.",
+  "featureSmartHome": "Smart Home",
+  "featureSmartHomeDesc": "Your devices: switch them on and off",
+  "featureMedical": "Medical History",
+  "featureMedicalDesc": "Medications, allergies, lab results and more",
+  "featureTransactions": "Financial History",
+  "featureTransactionsDesc": "Income and expenses",
+  "featureAccount": "My Account",
+  "featureAccountDesc": "Profile, language and security",
+  "featurePortfolio": "Investments",
+  "featurePortfolioDesc": "Portfolios, prices, alerts and news",
+  "all": "All",
+  "incomeType": "Income",
+  "expenseType": "Expense",
+  "net": "Net",
+  "newTransaction": "New transaction",
+  "editTransaction": "Edit transaction",
+  "noMoneyTransactions": "No transactions yet.",
+  "category": "Category",
+  "merchant": "Merchant",
+  "bank": "Bank",
+  "paymentMethod": "Payment method",
+  "status": "Status",
+  "notEditable": "Cannot be changed after saving",
+  "catFood": "Food",
+  "catTransport": "Transport",
+  "catBills": "Bills",
+  "catHealth": "Health",
+  "catShopping": "Shopping",
+  "catEntertainment": "Entertainment",
+  "catSalary": "Salary",
+  "catGeneral": "General",
+  "payCash": "Cash",
+  "payCard": "Card",
+  "payTransfer": "Transfer",
+  "payWallet": "Wallet",
+  "payCheque": "Cheque",
+  "statusCompleted": "Completed",
+  "statusPending": "Pending",
+  "statusCancelled": "Cancelled",
+  "newRecord": "New record",
+  "editRecord": "Edit record",
+  "noMedicalRecords": "No records in this section yet.",
+  "medMedications": "Medications",
+  "medAllergies": "Allergies",
+  "medBloodType": "Blood type",
+  "medSurgeries": "Surgeries",
+  "medChronicDiseases": "Chronic diseases",
+  "medLabResults": "Lab results",
+  "medVaccines": "Vaccines",
+  "medFamilyHistory": "Family history",
+  "fDosage": "Dosage",
+  "fFrequency": "Frequency",
+  "fStartDate": "Start date",
+  "fEndDate": "End date",
+  "fAllergen": "Allergen",
+  "fSeverity": "Severity",
+  "fReaction": "Reaction",
+  "fSurgery": "Surgery",
+  "fHospital": "Hospital",
+  "fSurgeon": "Surgeon",
+  "fDisease": "Disease",
+  "fDiagnosedAt": "Diagnosed on",
+  "fTreatment": "Current treatment",
+  "fTest": "Test",
+  "fResult": "Result",
+  "fUnit": "Unit",
+  "fReferenceRange": "Reference range",
+  "fVaccine": "Vaccine",
+  "fDose": "Dose number",
+  "fNextDose": "Next dose",
+  "fCondition": "Condition",
+  "fRelation": "Relation",
+  "devices": "Devices",
+  "addDevice": "Add device",
+  "deviceId": "Device ID",
+  "deviceIdHint": "Printed on the device / its QR code",
+  "rename": "Rename",
+  "remove": "Remove",
+  "noDevices": "No devices yet. Add one with the ID printed on it.",
+  "deviceOn": "On",
+  "deviceOff": "Off",
+  "deviceUnknown": "Unknown",
+  "alexaHint": "You can also control these devices with Alexa.",
+  "account": "Account",
+  "deactivateAccount": "Deactivate account",
+  "deactivateConfirm": "Deactivate your account? You will be signed out and cannot sign in until it is reactivated.",
+  "deleteAccount": "Delete account",
+  "deleteAccountConfirm": "Delete your account and all your data (investments, transactions, medical records)? This cannot be undone.",
+  "deactivate": "Deactivate"
 }

@@ -83,6 +83,14 @@ public class SmartDeviceService {
         return DeviceResponse.from(repo.save(d));
     }
 
+    /** Switch one of the user's devices on or off from the app: persist the state and publish the MQTT command. */
+    public DeviceResponse control(Long userId, Long deviceId, String state) {
+        SmartDevice d = repo.findByIdAndUserId(deviceId, userId)
+                .filter(SmartDevice::isActive)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Device not found"));
+        return controlByExternalDeviceId(userId, d.getDeviceId(), state);
+    }
+
     /** Resolve active device by external ID, persist state and publish command to MQTT. */
     public DeviceResponse controlByExternalDeviceId(Long userId, String externalDeviceId, String state) {
         if (externalDeviceId == null || externalDeviceId.isBlank()) {

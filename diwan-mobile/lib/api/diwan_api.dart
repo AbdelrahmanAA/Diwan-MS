@@ -128,4 +128,59 @@ class DiwanApi {
   Future<int> unreadAlerts() async => ((await http.get('$_p/alerts/unread-count') as Map)['unread'] as num).toInt();
 
   Future<void> markAllRead() => http.post('$_p/alerts/read-all');
+
+  // ---- account (diwan-users) ----
+  Future<void> deactivateAccount(int userId) => http.patch('/api/users/$userId/deactivate');
+
+  Future<void> deleteAccount(int userId) => http.delete('/api/users/$userId');
+
+  // ---- dashboard (gateway) ----
+  Future<List<Feature>> features() async =>
+      (await http.get('/api/features') as List).map((e) => Feature.fromJson(e as Map<String, dynamic>)).toList();
+
+  // ---- financial transactions (diwan-transactions, answers {"success":true,"data":...}) ----
+  static const _tx = '/api/transactions';
+
+  Future<List<MoneyTransaction>> moneyTransactions({String? type, String? category}) async {
+    final r = await http.get(_tx, query: {'type': type, 'category': category}) as Map<String, dynamic>;
+    return (r['data'] as List).map((e) => MoneyTransaction.fromJson(e as Map<String, dynamic>)).toList();
+  }
+
+  Future<List<CurrencyTotals>> moneySummary() async =>
+      CurrencyTotals.listFromJson((await http.get('$_tx/summary') as Map<String, dynamic>)['data'] as Map<String, dynamic>);
+
+  Future<void> saveMoneyTransaction(int? id, Map<String, Object?> body) =>
+      id == null ? http.post(_tx, body) : http.put('$_tx/$id', body);
+
+  Future<void> deleteMoneyTransaction(int id) => http.delete('$_tx/$id');
+
+  // ---- medical records (diwan-medical) ----
+  static const _med = '/api/medical';
+
+  Future<List<MedicalRecord>> medicalRecords({String? category}) async =>
+      (await http.get(_med, query: {'category': category}) as List)
+          .map((e) => MedicalRecord.fromJson(e as Map<String, dynamic>))
+          .toList();
+
+  Future<void> saveMedicalRecord(int? id, Map<String, Object?> body) =>
+      id == null ? http.post(_med, body) : http.put('$_med/$id', body);
+
+  Future<void> deleteMedicalRecord(int id, String category) =>
+      http.delete('$_med/$id', query: {'category': category});
+
+  // ---- smart home (diwan-smarthome) ----
+  static const _dev = '/api/smart-home/devices';
+
+  Future<List<SmartDevice>> devices() async =>
+      (await http.get(_dev) as List).map((e) => SmartDevice.fromJson(e as Map<String, dynamic>)).toList();
+
+  Future<void> addDevice(String deviceId, String name) => http.post(_dev, {'deviceId': deviceId, 'name': name});
+
+  Future<void> renameDevice(int id, String name) => http.patch('$_dev/$id/name', {'name': name});
+
+  /// Switches the device (the server publishes the MQTT command) and returns its new state.
+  Future<SmartDevice> switchDevice(int id, bool on) async =>
+      SmartDevice.fromJson(await http.post('$_dev/$id/command', {'state': on ? 'ON' : 'OFF'}) as Map<String, dynamic>);
+
+  Future<void> removeDevice(int id) => http.delete('$_dev/$id');
 }

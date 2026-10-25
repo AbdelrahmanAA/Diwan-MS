@@ -10,7 +10,7 @@ class AppLocalizationsAr extends AppLocalizations {
   AppLocalizationsAr([String locale = 'ar']) : super(locale);
 
   @override
-  String get appTitle => 'ديوان للاستثمار';
+  String get appTitle => 'ديوان';
 
   @override
   String get signIn => 'تسجيل الدخول';
@@ -404,4 +404,285 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get readMore => 'قراءة المقال';
+
+  @override
+  String get dashboard => 'الرئيسية';
+
+  @override
+  String hello(String name) {
+    return 'أهلاً، $name';
+  }
+
+  @override
+  String get featureNotInApp => 'هذا القسم غير متاح في التطبيق بعد.';
+
+  @override
+  String get featureSmartHome => 'المنزل الذكي';
+
+  @override
+  String get featureSmartHomeDesc => 'أجهزتك: شغّلها وأطفئها';
+
+  @override
+  String get featureMedical => 'السجل الطبي';
+
+  @override
+  String get featureMedicalDesc => 'الأدوية والحساسية ونتائج التحاليل وغيرها';
+
+  @override
+  String get featureTransactions => 'السجل المالي';
+
+  @override
+  String get featureTransactionsDesc => 'الدخل والمصروفات';
+
+  @override
+  String get featureAccount => 'حسابي';
+
+  @override
+  String get featureAccountDesc => 'الملف الشخصي واللغة والأمان';
+
+  @override
+  String get featurePortfolio => 'الاستثمارات';
+
+  @override
+  String get featurePortfolioDesc => 'المحافظ والأسعار والتنبيهات والأخبار';
+
+  @override
+  String get all => 'الكل';
+
+  @override
+  String get incomeType => 'دخل';
+
+  @override
+  String get expenseType => 'مصروف';
+
+  @override
+  String get net => 'الصافي';
+
+  @override
+  String get newTransaction => 'معاملة جديدة';
+
+  @override
+  String get editTransaction => 'تعديل المعاملة';
+
+  @override
+  String get noMoneyTransactions => 'لا توجد معاملات بعد.';
+
+  @override
+  String get category => 'الفئة';
+
+  @override
+  String get merchant => 'التاجر';
+
+  @override
+  String get bank => 'البنك';
+
+  @override
+  String get paymentMethod => 'طريقة الدفع';
+
+  @override
+  String get status => 'الحالة';
+
+  @override
+  String get notEditable => 'لا يمكن تغييره بعد الحفظ';
+
+  @override
+  String get catFood => 'طعام';
+
+  @override
+  String get catTransport => 'مواصلات';
+
+  @override
+  String get catBills => 'فواتير';
+
+  @override
+  String get catHealth => 'صحة';
+
+  @override
+  String get catShopping => 'تسوق';
+
+  @override
+  String get catEntertainment => 'ترفيه';
+
+  @override
+  String get catSalary => 'راتب';
+
+  @override
+  String get catGeneral => 'عام';
+
+  @override
+  String get payCash => 'نقداً';
+
+  @override
+  String get payCard => 'بطاقة';
+
+  @override
+  String get payTransfer => 'تحويل';
+
+  @override
+  String get payWallet => 'محفظة إلكترونية';
+
+  @override
+  String get payCheque => 'شيك';
+
+  @override
+  String get statusCompleted => 'مكتملة';
+
+  @override
+  String get statusPending => 'قيد الانتظار';
+
+  @override
+  String get statusCancelled => 'ملغاة';
+
+  @override
+  String get newRecord => 'سجل جديد';
+
+  @override
+  String get editRecord => 'تعديل السجل';
+
+  @override
+  String get noMedicalRecords => 'لا توجد سجلات في هذا القسم بعد.';
+
+  @override
+  String get medMedications => 'الأدوية';
+
+  @override
+  String get medAllergies => 'الحساسية';
+
+  @override
+  String get medBloodType => 'فصيلة الدم';
+
+  @override
+  String get medSurgeries => 'العمليات الجراحية';
+
+  @override
+  String get medChronicDiseases => 'الأمراض المزمنة';
+
+  @override
+  String get medLabResults => 'نتائج التحاليل';
+
+  @override
+  String get medVaccines => 'التطعيمات';
+
+  @override
+  String get medFamilyHistory => 'التاريخ العائلي';
+
+  @override
+  String get fDosage => 'الجرعة';
+
+  @override
+  String get fFrequency => 'عدد المرات';
+
+  @override
+  String get fStartDate => 'تاريخ البدء';
+
+  @override
+  String get fEndDate => 'تاريخ الانتهاء';
+
+  @override
+  String get fAllergen => 'مسبب الحساسية';
+
+  @override
+  String get fSeverity => 'الشدة';
+
+  @override
+  String get fReaction => 'رد الفعل';
+
+  @override
+  String get fSurgery => 'العملية';
+
+  @override
+  String get fHospital => 'المستشفى';
+
+  @override
+  String get fSurgeon => 'الجراح';
+
+  @override
+  String get fDisease => 'المرض';
+
+  @override
+  String get fDiagnosedAt => 'تاريخ التشخيص';
+
+  @override
+  String get fTreatment => 'العلاج الحالي';
+
+  @override
+  String get fTest => 'التحليل';
+
+  @override
+  String get fResult => 'النتيجة';
+
+  @override
+  String get fUnit => 'الوحدة';
+
+  @override
+  String get fReferenceRange => 'المعدل الطبيعي';
+
+  @override
+  String get fVaccine => 'التطعيم';
+
+  @override
+  String get fDose => 'رقم الجرعة';
+
+  @override
+  String get fNextDose => 'الجرعة التالية';
+
+  @override
+  String get fCondition => 'الحالة المرضية';
+
+  @override
+  String get fRelation => 'صلة القرابة';
+
+  @override
+  String get devices => 'الأجهزة';
+
+  @override
+  String get addDevice => 'إضافة جهاز';
+
+  @override
+  String get deviceId => 'معرّف الجهاز';
+
+  @override
+  String get deviceIdHint => 'مطبوع على الجهاز / رمز QR الخاص به';
+
+  @override
+  String get rename => 'إعادة تسمية';
+
+  @override
+  String get remove => 'إزالة';
+
+  @override
+  String get noDevices =>
+      'لا توجد أجهزة بعد. أضف جهازاً بالمعرّف المطبوع عليه.';
+
+  @override
+  String get deviceOn => 'يعمل';
+
+  @override
+  String get deviceOff => 'مطفأ';
+
+  @override
+  String get deviceUnknown => 'غير معروف';
+
+  @override
+  String get alexaHint => 'يمكنك أيضاً التحكم في هذه الأجهزة عبر Alexa.';
+
+  @override
+  String get account => 'الحساب';
+
+  @override
+  String get deactivateAccount => 'إيقاف الحساب';
+
+  @override
+  String get deactivateConfirm =>
+      'إيقاف حسابك؟ سيتم تسجيل خروجك ولن تتمكن من الدخول حتى يُعاد تفعيله.';
+
+  @override
+  String get deleteAccount => 'حذف الحساب';
+
+  @override
+  String get deleteAccountConfirm =>
+      'حذف حسابك وكل بياناتك (الاستثمارات والمعاملات والسجلات الطبية)؟ لا يمكن التراجع عن ذلك.';
+
+  @override
+  String get deactivate => 'إيقاف';
 }
