@@ -30,6 +30,13 @@ class SmsTransaction {
     this.merchantName,
     this.referenceNumber,
     this.notes,
+    this.accountRef,
+    this.counterAccountRef,
+    this.cardRef,
+    this.cardNetwork,
+    this.balance,
+    this.balanceCurrency,
+    this.balanceOf,
   });
 
   final String sourceRef;
@@ -43,6 +50,20 @@ class SmsTransaction {
   final String? merchantName;
   final String? referenceNumber;
   final String? notes;
+
+  /// Own account debited / credited (last 4 digits); the receiving own account of an own transfer.
+  final String? accountRef;
+  final String? counterAccountRef;
+
+  /// Card used (last 4 digits) and its network (Visa, mada, ...).
+  final String? cardRef;
+  final String? cardNetwork;
+
+  /// Balance the SMS reported after the transaction: a card's available amount (CARD), an account's
+  /// balance (ACCOUNT) or a loan's remaining amount (LOAN).
+  final String? balance;
+  final String? balanceCurrency;
+  final String? balanceOf;
 
   Map<String, Object?> toJson() => {
         'sourceRef': sourceRef,
@@ -59,6 +80,13 @@ class SmsTransaction {
         'merchantName': merchantName,
         'referenceNumber': referenceNumber,
         'notes': notes,
+        'accountRef': accountRef,
+        'counterAccountRef': counterAccountRef,
+        'cardRef': cardRef,
+        'cardNetwork': cardNetwork,
+        'balance': balance,
+        'balanceCurrency': balanceCurrency,
+        'balanceOf': balanceOf,
       };
 }
 
@@ -177,15 +205,42 @@ class BankSmsParser {
     if (money == null) return SmsParseResult(SmsOutcome.unknown, reason: 'amount');
 
     // counterparty: shop, else the other person of a transfer, else the biller
-    final isName = _account.hasMatch;
+    final isAccount = _account.hasMatch;
     final merchant = take(find((k, _) => k == 'at' || k == 'place')) ??
-        take(find((k, v) => k == (rule.type == 'income' ? 'from' : 'to') && !isName(v))) ??
+        take(find((k, v) => k == (rule.type == 'income' ? 'from' : 'to') && !isAccount(v))) ??
         take(find((k, _) => k == 'service'));
     final reference = take(find((k, _) => k == 'bill' || k == 'reference' || k == 'ref'));
 
     var payment = rule.payment;
     final card = find((k, _) => k == 'card' || k == 'by');
     if (payment == 'card' && card != null && fields[card].value.toLowerCase().contains('pay')) payment = 'wallet';
+
+    // positions: which own account / card, and the balance after the transaction
+    String? value(bool Function(String key, String value) test) =>
+        fields.where((f) => test(f.key, f.value)).map((f) => f.value).firstOrNull;
+    final cardValue = value((k, _) => k == 'card' || k == 'by');
+    final cardRef = cardValue == null ? null : RegExp(r'\d{4}').firstMatch(cardValue)?.group(0);
+    final cardNetwork = cardValue
+        ?.replaceAll(RegExp(r'\d'), '')
+        .split(RegExp(r'[;\-]'))
+        .map((s) => s.trim())
+        .firstWhere((s) => s.isNotEmpty, orElse: () => '');
+    final from = value((k, v) => k == 'from' && isAccount(v));
+    final to = value((k, v) => k == 'to' && isAccount(v));
+    final accountRef = rule.type == 'income' ? to : from;
+    final counterAccountRef = rule.type == 'transfer' ? to : null;
+    final remaining = value((k, _) => k == 'remaining amount');
+    final balanceText = remaining ?? value((k, _) => k == 'balance');
+    final balance = balanceText == null ? null : _parseMoney(balanceText);
+    final balanceOf = balance == null
+        ? null
+        : remaining != null
+            ? 'LOAN'
+            : cardRef != null
+                ? 'CARD'
+                : accountRef != null
+                    ? 'ACCOUNT'
+                    : null;
 
     final notes = [
       for (var i = 0; i < fields.length; i++)
@@ -206,6 +261,13 @@ class BankSmsParser {
         merchantName: merchant,
         referenceNumber: reference,
         notes: notes.isEmpty ? null : notes,
+        accountRef: accountRef,
+        counterAccountRef: counterAccountRef,
+        cardRef: cardRef,
+        cardNetwork: cardNetwork == null || cardNetwork.isEmpty ? null : cardNetwork,
+        balance: balanceOf == null ? null : balance!.amount,
+        balanceCurrency: balanceOf == null ? null : balance!.currency,
+        balanceOf: balanceOf,
       ),
     );
   }

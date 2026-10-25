@@ -1519,6 +1519,144 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count, plural, =0{No new transactions} =1{1 new transaction} other{{count} new transactions}}'**
   String smsSyncResult(int count);
+
+  /// No description provided for @cardsAndAccounts.
+  ///
+  /// In en, this message translates to:
+  /// **'Cards & accounts'**
+  String get cardsAndAccounts;
+
+  /// No description provided for @positionsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Your cards, accounts and loans appear here once bank SMS are logged. Turn it on in My Account.'**
+  String get positionsEmpty;
+
+  /// No description provided for @accountTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Account ••{ref}'**
+  String accountTitle(String ref);
+
+  /// No description provided for @cardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{network} ••{ref}'**
+  String cardTitle(String network, String ref);
+
+  /// No description provided for @loanTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Loan'**
+  String get loanTitle;
+
+  /// No description provided for @accounts.
+  ///
+  /// In en, this message translates to:
+  /// **'Accounts'**
+  String get accounts;
+
+  /// No description provided for @cards.
+  ///
+  /// In en, this message translates to:
+  /// **'Cards'**
+  String get cards;
+
+  /// No description provided for @loans.
+  ///
+  /// In en, this message translates to:
+  /// **'Loans'**
+  String get loans;
+
+  /// No description provided for @balanceEstimated.
+  ///
+  /// In en, this message translates to:
+  /// **'Estimated from SMS since {date}'**
+  String balanceEstimated(String date);
+
+  /// No description provided for @enterBalance.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to enter the current balance'**
+  String get enterBalance;
+
+  /// No description provided for @monthInOut.
+  ///
+  /// In en, this message translates to:
+  /// **'This month: {moneyIn} in, {moneyOut} out'**
+  String monthInOut(String moneyIn, String moneyOut);
+
+  /// No description provided for @availableAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Available {amount} · {date}'**
+  String availableAt(String amount, String date);
+
+  /// No description provided for @owedOfLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'Owed {owed} of {limit}'**
+  String owedOfLimit(String owed, String limit);
+
+  /// No description provided for @enterLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to enter the credit limit'**
+  String get enterLimit;
+
+  /// No description provided for @linkedAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Debit card of account ••{ref}'**
+  String linkedAccount(String ref);
+
+  /// No description provided for @spentThisMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'Spent this month: {amount}'**
+  String spentThisMonth(String amount);
+
+  /// No description provided for @lastInstalment.
+  ///
+  /// In en, this message translates to:
+  /// **'Last instalment {amount} · {date}'**
+  String lastInstalment(String amount, String date);
+
+  /// No description provided for @remaining.
+  ///
+  /// In en, this message translates to:
+  /// **'Remaining'**
+  String get remaining;
+
+  /// No description provided for @available.
+  ///
+  /// In en, this message translates to:
+  /// **'Available'**
+  String get available;
+
+  /// No description provided for @currentBalance.
+  ///
+  /// In en, this message translates to:
+  /// **'Current balance'**
+  String get currentBalance;
+
+  /// No description provided for @currentBalanceHint.
+  ///
+  /// In en, this message translates to:
+  /// **'As your banking app shows it now; the SMS that follow keep it up to date.'**
+  String get currentBalanceHint;
+
+  /// No description provided for @creditLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'Credit limit'**
+  String get creditLimit;
+
+  /// No description provided for @nickname.
+  ///
+  /// In en, this message translates to:
+  /// **'Name (optional)'**
+  String get nickname;
 }
 
 class _AppLocalizationsDelegate

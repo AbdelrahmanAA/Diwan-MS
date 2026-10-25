@@ -792,4 +792,93 @@ class AppLocalizationsAr extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get cardsAndAccounts => 'البطاقات والحسابات';
+
+  @override
+  String get positionsEmpty =>
+      'تظهر هنا بطاقاتك وحساباتك وقروضك بعد تسجيل رسائل البنك. فعّل ذلك من صفحة حسابي.';
+
+  @override
+  String accountTitle(String ref) {
+    return 'حساب ••$ref';
+  }
+
+  @override
+  String cardTitle(String network, String ref) {
+    return '$network ••$ref';
+  }
+
+  @override
+  String get loanTitle => 'قرض';
+
+  @override
+  String get accounts => 'الحسابات';
+
+  @override
+  String get cards => 'البطاقات';
+
+  @override
+  String get loans => 'القروض';
+
+  @override
+  String balanceEstimated(String date) {
+    return 'تقدير من الرسائل منذ $date';
+  }
+
+  @override
+  String get enterBalance => 'اضغط لإدخال الرصيد الحالي';
+
+  @override
+  String monthInOut(String moneyIn, String moneyOut) {
+    return 'هذا الشهر: $moneyIn وارد، $moneyOut صادر';
+  }
+
+  @override
+  String availableAt(String amount, String date) {
+    return 'المتاح $amount · $date';
+  }
+
+  @override
+  String owedOfLimit(String owed, String limit) {
+    return 'المستحق $owed من $limit';
+  }
+
+  @override
+  String get enterLimit => 'اضغط لإدخال حد الائتمان';
+
+  @override
+  String linkedAccount(String ref) {
+    return 'بطاقة خصم للحساب ••$ref';
+  }
+
+  @override
+  String spentThisMonth(String amount) {
+    return 'مصروف هذا الشهر: $amount';
+  }
+
+  @override
+  String lastInstalment(String amount, String date) {
+    return 'آخر قسط $amount · $date';
+  }
+
+  @override
+  String get remaining => 'المتبقي';
+
+  @override
+  String get available => 'المتاح';
+
+  @override
+  String get currentBalance => 'الرصيد الحالي';
+
+  @override
+  String get currentBalanceHint =>
+      'كما يظهر في تطبيق البنك الآن؛ والرسائل التالية تحدّثه.';
+
+  @override
+  String get creditLimit => 'حد الائتمان';
+
+  @override
+  String get nickname => 'الاسم (اختياري)';
 }

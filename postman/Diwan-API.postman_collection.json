@@ -1147,6 +1147,305 @@
           ]
         },
         {
+          "name": "Import SMS with card / account / balance",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/transactions/import",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "transactions",
+                "import"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"transactions\": [\n    {\n      \"sourceRef\": \"c0ffee00000000000000000000000000000000000000000000000000000000a1\",\n      \"type\": \"expense\",\n      \"category\": \"loan\",\n      \"amount\": \"5210\",\n      \"currency\": \"SAR\",\n      \"bank\": \"Al Rajhi\",\n      \"description\": \"Debit: Loan Instalment\",\n      \"recordedAt\": \"2026-10-25T20:05:00\",\n      \"accountRef\": \"2410\",\n      \"balance\": \"41680\",\n      \"balanceCurrency\": \"SAR\",\n      \"balanceOf\": \"LOAN\"\n    },\n    {\n      \"sourceRef\": \"c0ffee00000000000000000000000000000000000000000000000000000000a2\",\n      \"type\": \"expense\",\n      \"category\": \"shopping\",\n      \"amount\": \"103.51\",\n      \"currency\": \"SAR\",\n      \"bank\": \"Al Rajhi\",\n      \"merchantName\": \"TASALIMAR\",\n      \"recordedAt\": \"2026-10-25T21:18:00\",\n      \"cardRef\": \"1553\",\n      \"cardNetwork\": \"Visa\",\n      \"balance\": \"864.89\",\n      \"balanceCurrency\": \"SAR\",\n      \"balanceOf\": \"CARD\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenA}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('imported', () => pm.expect(pm.response.json().imported).to.eql(2));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Set the card limit",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/transactions/positions/products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "transactions",
+                "positions",
+                "products"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bank\": \"Al Rajhi\",\n  \"kind\": \"CARD\",\n  \"ref\": \"1553\",\n  \"creditLimit\": \"10000\",\n  \"currency\": \"SAR\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenA}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Set an account balance",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/transactions/positions/products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "transactions",
+                "positions",
+                "products"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bank\": \"Al Rajhi\",\n  \"kind\": \"ACCOUNT\",\n  \"ref\": \"2410\",\n  \"label\": \"Main\",\n  \"balance\": \"10000\",\n  \"currency\": \"SAR\",\n  \"balanceAt\": \"2026-10-25T00:00:00\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenA}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Product with an invalid kind -> 400",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/transactions/positions/products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "transactions",
+                "positions",
+                "products"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bank\": \"Al Rajhi\",\n  \"kind\": \"WALLET\",\n  \"ref\": \"1\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenA}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 400', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cards, accounts and loans per bank",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/transactions/positions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "transactions",
+                "positions"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenA}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "const bank = pm.response.json().data.find(b => b.bank === 'Al Rajhi');",
+                  "pm.test('card: available and owed', () => { const c = bank.cards.find(x => x.ref === '1553'); pm.expect(c.available).to.eql(864.89); pm.expect(c.owed).to.eql(9135.11); });",
+                  "pm.test('account: entered balance minus the loan instalment since', () => { const a = bank.accounts.find(x => x.ref === '2410'); pm.expect(a.label).to.eql('Main'); pm.expect(a.balance).to.eql(4790); });",
+                  "pm.test('loan remaining', () => pm.expect(bank.loans[0].remaining).to.eql(41680));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "User B sees no positions of A",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/transactions/positions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "transactions",
+                "positions"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenB}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('empty', () => pm.expect(pm.response.json().data).to.eql([]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
           "name": "Forged X-User-Id is ignored (still user A's data)",
           "request": {
             "method": "GET",

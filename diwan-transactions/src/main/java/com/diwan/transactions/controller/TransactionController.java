@@ -1,7 +1,9 @@
 package com.diwan.transactions.controller;
 import com.diwan.transactions.dto.ImportTransactionsRequest;
+import com.diwan.transactions.dto.Positions;
 import com.diwan.transactions.dto.TransactionRequest;
 import com.diwan.transactions.dto.TransactionResponse;
+import com.diwan.transactions.service.PositionService;
 import com.diwan.transactions.service.TransactionService;
 import jakarta.validation.Valid;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -17,7 +19,26 @@ import java.util.Map;
 @CrossOrigin(origins = "*")
 public class TransactionController {
     private final TransactionService service;
-    public TransactionController(TransactionService service){ this.service = service; }
+    private final PositionService positions;
+    public TransactionController(TransactionService service, PositionService positions){
+        this.service = service;
+        this.positions = positions;
+    }
+
+    /** Cards, accounts and loans per bank from the user's bank SMS (see PositionService). */
+    @GetMapping("/positions")
+    public ResponseEntity<Map<String, Object>> positions(@RequestHeader("X-User-Id") Long userId){
+        return ResponseEntity.ok(Map.of("success", true, "data", positions.positions(userId)));
+    }
+
+    /** The account balance / card limit / nickname the user enters once. */
+    @PutMapping("/positions/products")
+    public ResponseEntity<Map<String, Object>> saveProduct(
+            @Valid @RequestBody Positions.ProductRequest request,
+            @RequestHeader("X-User-Id") Long userId){
+        positions.saveProduct(userId, request);
+        return ResponseEntity.ok(Map.of("success", true, "data", positions.positions(userId)));
+    }
 
     @PostMapping
     public ResponseEntity<Map<String, Object>> save(

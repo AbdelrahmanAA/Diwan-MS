@@ -785,4 +785,93 @@ class AppLocalizationsEn extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get cardsAndAccounts => 'Cards & accounts';
+
+  @override
+  String get positionsEmpty =>
+      'Your cards, accounts and loans appear here once bank SMS are logged. Turn it on in My Account.';
+
+  @override
+  String accountTitle(String ref) {
+    return 'Account ••$ref';
+  }
+
+  @override
+  String cardTitle(String network, String ref) {
+    return '$network ••$ref';
+  }
+
+  @override
+  String get loanTitle => 'Loan';
+
+  @override
+  String get accounts => 'Accounts';
+
+  @override
+  String get cards => 'Cards';
+
+  @override
+  String get loans => 'Loans';
+
+  @override
+  String balanceEstimated(String date) {
+    return 'Estimated from SMS since $date';
+  }
+
+  @override
+  String get enterBalance => 'Tap to enter the current balance';
+
+  @override
+  String monthInOut(String moneyIn, String moneyOut) {
+    return 'This month: $moneyIn in, $moneyOut out';
+  }
+
+  @override
+  String availableAt(String amount, String date) {
+    return 'Available $amount · $date';
+  }
+
+  @override
+  String owedOfLimit(String owed, String limit) {
+    return 'Owed $owed of $limit';
+  }
+
+  @override
+  String get enterLimit => 'Tap to enter the credit limit';
+
+  @override
+  String linkedAccount(String ref) {
+    return 'Debit card of account ••$ref';
+  }
+
+  @override
+  String spentThisMonth(String amount) {
+    return 'Spent this month: $amount';
+  }
+
+  @override
+  String lastInstalment(String amount, String date) {
+    return 'Last instalment $amount · $date';
+  }
+
+  @override
+  String get remaining => 'Remaining';
+
+  @override
+  String get available => 'Available';
+
+  @override
+  String get currentBalance => 'Current balance';
+
+  @override
+  String get currentBalanceHint =>
+      'As your banking app shows it now; the SMS that follow keep it up to date.';
+
+  @override
+  String get creditLimit => 'Credit limit';
+
+  @override
+  String get nickname => 'Name (optional)';
 }

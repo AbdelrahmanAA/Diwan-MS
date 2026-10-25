@@ -2,6 +2,9 @@ package com.diwan.transactions.repository;
 
 import com.diwan.transactions.entity.Transaction;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
@@ -26,7 +29,12 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
 
     List<Transaction> findByUserIdAndRecordedAtBetweenOrderByRecordedAtDesc(Long userId, LocalDateTime from, LocalDateTime to);
 
-    boolean existsByUserIdAndSourceRef(Long userId, String sourceRef);
+    Optional<Transaction> findByUserIdAndSourceRef(Long userId, String sourceRef);
+
+    @Modifying
+    @Transactional
+    @Query("delete from Transaction t where t.userId = :userId")
+    int deleteByUserId(Long userId);
 
     Optional<Transaction> findFirstByUserIdAndMerchantNameIgnoreCaseOrderByRecordedAtDesc(Long userId, String merchantName);
 

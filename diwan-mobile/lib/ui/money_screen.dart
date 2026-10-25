@@ -6,6 +6,7 @@ import '../api/models.dart';
 import '../l10n/app_localizations.dart';
 import '../state/session.dart';
 import 'format.dart';
+import 'positions_view.dart';
 import 'widgets.dart';
 
 // Codes the transactions service stores (lower case); labels are the app's.
@@ -66,7 +67,8 @@ String statusLabel(AppLocalizations t, String code) => switch (code) {
       _ => code,
     };
 
-/// Financial history (diwan-transactions): totals per currency and the list of income/expenses.
+/// Financial history (diwan-transactions): totals per currency and the list of income/expenses/transfers, and
+/// the cards, accounts and loans per bank (from bank SMS).
 class MoneyScreen extends StatefulWidget {
   const MoneyScreen({super.key});
 
@@ -88,9 +90,23 @@ class _MoneyScreenState extends State<MoneyScreen> {
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
+    // transactions, and the cards / accounts / loans they add up to
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(t.featureTransactions),
+          bottom: TabBar(tabs: [Tab(text: t.transactions), Tab(text: t.cardsAndAccounts)]),
+        ),
+        body: TabBarView(children: [_transactions(context), const PositionsView()]),
+      ),
+    );
+  }
+
+  Widget _transactions(BuildContext context) {
+    final t = AppLocalizations.of(context);
     final api = context.read<Session>().api;
     return Scaffold(
-      appBar: AppBar(title: Text(t.featureTransactions)),
       floatingActionButton: FloatingActionButton.extended(
         icon: const Icon(Icons.add),
         label: Text(t.newTransaction),

@@ -34,6 +34,27 @@ final _server = MockClient((req) async => switch (req.url.path) {
       '/api/smart-home/devices' => _json([
           {'id': 3, 'deviceId': 'lamp1', 'name': 'Kitchen lamp', 'state': 'ON', 'active': true},
         ]),
+      '/api/transactions/positions' => _json({
+          'success': true,
+          'data': [
+            {
+              'bank': 'Al Rajhi',
+              'accounts': [
+                {'ref': '2410', 'currency': 'SAR', 'balance': 29255, 'balanceSince': '2026-10-25T00:00:00',
+                 'monthIn': 34965, 'monthOut': 18710, 'cards': ['5101']},
+                {'ref': '8468', 'currency': 'SAR', 'monthIn': 5500, 'monthOut': 0, 'cards': []},
+              ],
+              'cards': [
+                {'ref': '1553', 'network': 'Visa', 'currency': 'SAR', 'available': 5844.89, 'availableAt': '2026-10-25T22:25:00',
+                 'creditLimit': 10000, 'owed': 4155.11, 'monthSpent': 103.51},
+                {'ref': '5101', 'network': 'mada', 'currency': 'SAR', 'account': '2410', 'monthSpent': 8000},
+              ],
+              'loans': [
+                {'ref': 'loan', 'currency': 'SAR', 'remaining': 41680, 'remainingAt': '2026-10-25T20:05:00', 'lastInstalment': 5210, 'account': '2410'},
+              ],
+            },
+          ],
+        }),
       '/api/transactions/summary' => _json({'success': true, 'data': {'EGP': {'income': 1000, 'expense': 250}}}),
       '/api/transactions' => _json({'success': true, 'count': 0, 'data': []}),
       '/api/medical' => _json([]),
@@ -113,5 +134,30 @@ void main() {
     await tester.tap(find.text('Travel'));
     await tester.pumpAndSettle();
     expect(find.text('This section is not available in the app yet.'), findsOneWidget);
+  });
+
+  testWidgets('cards & accounts tab shows the positions per bank', (tester) async {
+    tester.view.physicalSize = const Size(1440, 6000); // every tile on screen
+    addTearDown(tester.view.reset);
+    await _pumpDashboard(tester, const Locale('en'));
+
+    await tester.tap(find.text('Financial History'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Cards & accounts'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Al Rajhi'), findsOneWidget);
+    expect(find.text('Account ••2410'), findsOneWidget);
+    expect(find.textContaining('Tap to enter the current balance'), findsOneWidget); // 8468
+    expect(find.text('Visa ••1553'), findsOneWidget);
+    expect(find.textContaining('Owed'), findsOneWidget);
+    expect(find.textContaining('Debit card of account ••2410'), findsOneWidget);
+    expect(find.text('Loan'), findsOneWidget);
+
+    expect(find.text('SAR\u00A029,255.00'), findsOneWidget); // non-breaking space
+
+    await tester.tap(find.text('Account ••8468'));
+    await tester.pumpAndSettle();
+    expect(find.text('Current balance'), findsOneWidget);
   });
 }

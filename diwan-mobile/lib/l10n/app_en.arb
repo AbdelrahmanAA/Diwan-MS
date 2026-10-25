@@ -334,5 +334,106 @@
         "type": "int"
       }
     }
-  }
+  },
+  "cardsAndAccounts": "Cards & accounts",
+  "positionsEmpty": "Your cards, accounts and loans appear here once bank SMS are logged. Turn it on in My Account.",
+  "accountTitle": "Account ••{ref}",
+  "@accountTitle": {
+    "placeholders": {
+      "ref": {
+        "type": "String"
+      }
+    }
+  },
+  "cardTitle": "{network} ••{ref}",
+  "@cardTitle": {
+    "placeholders": {
+      "network": {
+        "type": "String"
+      },
+      "ref": {
+        "type": "String"
+      }
+    }
+  },
+  "loanTitle": "Loan",
+  "accounts": "Accounts",
+  "cards": "Cards",
+  "loans": "Loans",
+  "balanceEstimated": "Estimated from SMS since {date}",
+  "@balanceEstimated": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "enterBalance": "Tap to enter the current balance",
+  "monthInOut": "This month: {moneyIn} in, {moneyOut} out",
+  "@monthInOut": {
+    "placeholders": {
+      "moneyIn": {
+        "type": "String"
+      },
+      "moneyOut": {
+        "type": "String"
+      }
+    }
+  },
+  "availableAt": "Available {amount} · {date}",
+  "@availableAt": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "owedOfLimit": "Owed {owed} of {limit}",
+  "@owedOfLimit": {
+    "placeholders": {
+      "owed": {
+        "type": "String"
+      },
+      "limit": {
+        "type": "String"
+      }
+    }
+  },
+  "enterLimit": "Tap to enter the credit limit",
+  "linkedAccount": "Debit card of account ••{ref}",
+  "@linkedAccount": {
+    "placeholders": {
+      "ref": {
+        "type": "String"
+      }
+    }
+  },
+  "spentThisMonth": "Spent this month: {amount}",
+  "@spentThisMonth": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "lastInstalment": "Last instalment {amount} · {date}",
+  "@lastInstalment": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "remaining": "Remaining",
+  "available": "Available",
+  "currentBalance": "Current balance",
+  "currentBalanceHint": "As your banking app shows it now; the SMS that follow keep it up to date.",
+  "creditLimit": "Credit limit",
+  "nickname": "Name (optional)"
 }

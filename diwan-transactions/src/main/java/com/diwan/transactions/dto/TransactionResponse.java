@@ -19,6 +19,9 @@ public class TransactionResponse {
     private String referenceNumber;
     private String tags;
     private String source;
+    private String accountRef;
+    private String cardRef;
+    private String cardNetwork;
     private LocalDateTime recordedAt;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -51,6 +54,12 @@ public class TransactionResponse {
     public String getTags()                      { return tags; }
     public void setTags(String v)                { this.tags = v; }
     public String getSource()                    { return source; }
+    public String getAccountRef()                { return accountRef; }
+    public void setAccountRef(String v)          { this.accountRef = v; }
+    public String getCardRef()                   { return cardRef; }
+    public void setCardRef(String v)             { this.cardRef = v; }
+    public String getCardNetwork()               { return cardNetwork; }
+    public void setCardNetwork(String v)         { this.cardNetwork = v; }
     public void setSource(String v)              { this.source = v; }
     public LocalDateTime getRecordedAt()         { return recordedAt; }
     public void setRecordedAt(LocalDateTime v)   { this.recordedAt = v; }

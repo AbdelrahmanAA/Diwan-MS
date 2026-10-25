@@ -4,6 +4,7 @@ import com.diwan.transactions.dto.ImportTransactionsRequest;
 import com.diwan.transactions.dto.TransactionRequest;
 import com.diwan.transactions.dto.TransactionResponse;
 import com.diwan.transactions.entity.Transaction;
+import com.diwan.transactions.repository.BankProductRepository;
 import com.diwan.transactions.repository.TransactionRepository;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
@@ -14,6 +15,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -21,9 +23,11 @@ import java.util.stream.Collectors;
 public class TransactionService {
 
     private final TransactionRepository repository;
+    private final BankProductRepository products;
 
-    public TransactionService(TransactionRepository repository) {
+    public TransactionService(TransactionRepository repository, BankProductRepository products) {
         this.repository = repository;
+        this.products = products;
     }
 
     // â”€â”€ Save â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -61,11 +65,20 @@ public class TransactionService {
         Set<String> seen = new HashSet<>();
         for (ImportTransactionsRequest.Item item : items) {
             String ref = item.getSourceRef().trim().toLowerCase();
-            if (!seen.add(ref) || repository.existsByUserIdAndSourceRef(userId, ref)) {
+            if (!seen.add(ref)) {
                 duplicates++;
                 continue;
             }
-            Transaction.Builder tx = build(item, userId).source("sms").sourceRef(ref);
+            Optional<Transaction> existing = repository.findByUserIdAndSourceRef(userId, ref);
+            if (existing.isPresent()) {
+                duplicates++;
+                fillPositionFields(existing.get(), item); // imported by an app version before positions
+                continue;
+            }
+            Transaction.Builder tx = build(item, userId).source("sms").sourceRef(ref)
+                    .accountRef(item.getAccountRef()).counterAccountRef(item.getCounterAccountRef())
+                    .cardRef(item.getCardRef()).cardNetwork(item.getCardNetwork())
+                    .balance(item.getBalance()).balanceCurrency(item.getBalanceCurrency()).balanceOf(item.getBalanceOf());
             if (item.getMerchantName() != null && !item.getMerchantName().isBlank()) {
                 repository.findFirstByUserIdAndMerchantNameIgnoreCaseOrderByRecordedAtDesc(userId, item.getMerchantName().trim())
                         .ifPresent(previous -> tx.category(previous.getCategory()));
@@ -78,6 +91,26 @@ public class TransactionService {
             }
         }
         return Map.of("imported", imported, "duplicates", duplicates);
+    }
+
+    private void fillPositionFields(Transaction t, ImportTransactionsRequest.Item item) {
+        boolean hasNone = t.getAccountRef() == null && t.getCardRef() == null && t.getBalanceOf() == null;
+        boolean itemHas = item.getAccountRef() != null || item.getCardRef() != null || item.getBalanceOf() != null;
+        if (!hasNone || !itemHas) return;
+        t.setAccountRef(item.getAccountRef());
+        t.setCounterAccountRef(item.getCounterAccountRef());
+        t.setCardRef(item.getCardRef());
+        t.setCardNetwork(item.getCardNetwork());
+        t.setBalance(item.getBalance());
+        t.setBalanceCurrency(item.getBalanceCurrency());
+        t.setBalanceOf(item.getBalanceOf());
+        repository.save(t);
+    }
+
+    /** Everything of a deleted user (user.invalidated DELETED). */
+    public void deleteUserData(Long userId) {
+        repository.deleteByUserId(userId);
+        products.deleteByUserId(userId);
     }
 
     // â”€â”€ Queries (user-scoped) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -144,6 +177,9 @@ public class TransactionService {
         res.setReferenceNumber(t.getReferenceNumber());
         res.setTags(t.getTags());
         res.setSource(t.getSource());
+        res.setAccountRef(t.getAccountRef());
+        res.setCardRef(t.getCardRef());
+        res.setCardNetwork(t.getCardNetwork());
         res.setRecordedAt(t.getRecordedAt());
         res.setCreatedAt(t.getCreatedAt());
         res.setUpdatedAt(t.getUpdatedAt());

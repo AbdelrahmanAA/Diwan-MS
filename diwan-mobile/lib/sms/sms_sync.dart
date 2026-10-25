@@ -67,6 +67,10 @@ class SmsSync {
   static const enabledKey = 'diwan.sms.enabled';
   static const lastSyncKey = 'diwan.sms.lastSync';
   static const statsKey = 'diwan.sms.stats';
+
+  /// 2 = transactions carry card/account/balance (positions); older imports are re-read once to fill them in.
+  static const versionKey = 'diwan.sms.version';
+  static const _version = 2;
   static const _overlap = Duration(days: 1);
   static const _batch = 200;
 
@@ -95,6 +99,7 @@ class SmsSync {
     await prefs.setBool(enabledKey, true);
     await prefs.remove(statsKey);
     await prefs.setInt(lastSyncKey, since.millisecondsSinceEpoch);
+    await prefs.setInt(versionKey, _version);
     await platform.setEnabled(true);
     return run(since: since);
   }
@@ -109,7 +114,11 @@ class SmsSync {
   Future<SmsSyncResult> run({DateTime? since}) async {
     if (!enabled) return SmsSyncResult();
     final started = DateTime.now();
-    final from = since ?? lastSync?.subtract(_overlap) ?? started.subtract(_overlap);
+    final upgrade = (prefs.getInt(versionKey) ?? 1) < _version;
+    final from = since ??
+        (upgrade ? DateTime(started.year - 1, started.month, started.day) : null) ??
+        lastSync?.subtract(_overlap) ??
+        started.subtract(_overlap);
 
     final messages = [...await platform.pending(), ...await platform.inbox(from)];
     final transactions = <String, Map<String, Object?>>{};
@@ -139,6 +148,7 @@ class SmsSync {
     final ids = [for (final m in messages) if (m.pendingId != null) m.pendingId!];
     if (ids.isNotEmpty) await platform.clearPending(ids);
     await prefs.setInt(lastSyncKey, started.millisecondsSinceEpoch);
+    await prefs.setInt(versionKey, _version);
     final s = stats;
     await prefs.setString(statsKey, jsonEncode({
       'imported': (s['imported'] ?? 0) + imported,

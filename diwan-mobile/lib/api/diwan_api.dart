@@ -1,3 +1,5 @@
+import 'package:intl/intl.dart';
+
 import 'api_client.dart';
 import 'models.dart';
 
@@ -153,6 +155,22 @@ class DiwanApi {
       id == null ? http.post(_tx, body) : http.put('$_tx/$id', body);
 
   Future<void> deleteMoneyTransaction(int id) => http.delete('$_tx/$id');
+
+  Future<List<BankPositions>> positions() async =>
+      ((await http.get('$_tx/positions') as Map<String, dynamic>)['data'] as List)
+          .map((e) => BankPositions.fromJson(e as Map<String, dynamic>))
+          .toList();
+
+  /// The user's own figures for an account (current balance), card (credit limit) or loan; [kind] is
+  /// ACCOUNT, CARD or LOAN.
+  Future<void> saveBankProduct(String bank, String kind, String ref,
+          {String? label, String? balance, String? creditLimit, String? currency}) =>
+      http.put('$_tx/positions/products', {
+        'bank': bank, 'kind': kind, 'ref': ref, 'label': label,
+        'balance': balance, 'creditLimit': creditLimit, 'currency': currency,
+        // same clock as the SMS transactions' recordedAt (phone local time)
+        if (balance != null) 'balanceAt': DateFormat("yyyy-MM-dd'T'HH:mm:ss").format(DateTime.now()),
+      });
 
   /// Transactions read from bank SMS; the server skips messages (sourceRef) it already has.
   Future<({int imported, int duplicates})> importTransactions(List<Map<String, Object?>> transactions) async {

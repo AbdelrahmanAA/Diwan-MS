@@ -202,4 +202,43 @@ void main() {
     expect(BankSmsParser.isBankSender('STC'), isFalse);
     expect(BankSmsParser.isBankSender('+966500000000'), isFalse);
   });
+
+  group('positions: own account, card and balance of each message', () {
+    // [body, account, counter account, card, network, balance, balance of]
+    final cases = <List<String?>>[
+      ['Transfer Between Your Accounts\nAmount:SR 5500\nFrom:2410\nTo:8468\n26/10/25 22:26', '2410', '8468', null, null, null, null],
+      ['Credit Card:Payment\nCard:Visa 1553\nAmount:SR 4980\nBalance:5844.89 SR\n25/10/26 22:25', null, null, '1553', 'Visa', '5844.89', 'CARD'],
+      ['Bill Payment\nFrom:2410\nAmount:SR 2572.33\nBiller:125\nService:ENBD PAYMENTS\nBill:0196074079101\n26/10/25 22:07', '2410', null, null, null, null, null],
+      // To:2368 is the other person's account, not one of the user's
+      ['Debit Internal Transfer\nFrom:2410\nAmount:SR 5000\nTo:MOHAMED HASSAN\nTo:2368\n26/10/25 21:58', '2410', null, null, null, null, null],
+      ['Credit Transfer Internal\nAmount:SR 471.50\nTo:2410\nFrom:KHALED MOUS\nFrom:7496\n26/10/25 21:54', '2410', null, null, null, null, null],
+      ['PoS purchase\nCard:1553 ;Visa-Samsung Pay\nAt: TASALIMAR\nAmount:103.51 SAR\nBalance: 864.89 SAR\n25/10/26 21:18', null, null, '1553', 'Visa', '864.89', 'CARD'],
+      ['Debit: Loan Instalment\nInstalment: SAR 5210\nFrom: 2410\nRemaining Amount: SAR 41680\n25/10/26 20:05', '2410', null, null, null, '41680', 'LOAN'],
+      ['Online Purchase\nBy:5101;mada\nFrom:2410\nAmount:SR 5000\nAt:barq\n25/10/26 16:10', '2410', null, '5101', 'mada', null, null],
+      ['Withdrawal:ATM\nBy:5101;mada\nAmount:SR 3000\nPlace:ALRAJHI BANK OPR BLDG 1\n28/9/26 11:44', null, null, '5101', 'mada', null, null],
+      ['Credit Card Refund\nCard: 1553; Visa\nAmount: 37.3 SAR\nFrom: TRENDYOL A \nDate: 17/10/26 10:42', null, null, '1553', 'Visa', null, null],
+      ['Reverse Transaction\nCard:1553;Visa\nAmount:SAR 9000\nBalance:SAR 9999.53\n14/9/26 21:20', null, null, '1553', 'Visa', '9999.53', 'CARD'],
+      ['Credit transfer Salary\nAmount:SAR 34965\nTo:2410\n25/10/26 00:23', '2410', null, null, null, null, null],
+      ['Online Purchase\nCard:1500 ;Visa\nAmount:57USD(214.05 SAR)\nAt: CCA*VF Wo\nFee &VAT: 4.92 SAR\nExchange rate~ 3.755263\n'
+          'Total due amount:218.97 SAR\nCountry:UAE\nBalance:955.49 SAR\n25/8/26 22:07', null, null, '1500', 'Visa', '955.49', 'CARD'],
+      ['Online Purchase\nBy:1553 ;Visa\nAmount:8.75 USD\nAt:MOFA-VISA\nBalance:184.41 SR\n14/10/26 10:44', null, null, '1553', 'Visa', '184.41', 'CARD'],
+      ['Deposit:Saving Account Monthly Profit\nAmount:SAR 7.62\nTo:8468\n1/10/26 06:48', '8468', null, null, null, null, null],
+      ['Deposit:ATM\nAmount:SAR 41000\nTo:2410\n10/6/26 22:02', '2410', null, null, null, null, null],
+    ];
+    for (final c in cases) {
+      test(c[0]!.split('\n').first, () {
+        final t = _parser.parse(_sender, c[0]!, DateTime(2026, 10, 25)).transaction!;
+        expect([t.accountRef, t.counterAccountRef, t.cardRef, t.cardNetwork, t.balance, t.balanceOf], c.sublist(1));
+        if (t.balance != null) expect(t.balanceCurrency, 'SAR');
+      });
+    }
+
+    test('sent to the server', () {
+      final j = _tx('PoS purchase\nCard:1553 ;Visa-Samsung Pay\nAt: TASALIMAR\nAmount:103.51 SAR\nBalance: 864.89 SAR\n25/10/26 21:18',
+              '2026-10-25 21:18')
+          .toJson();
+      expect([j['cardRef'], j['cardNetwork'], j['balance'], j['balanceCurrency'], j['balanceOf']],
+          ['1553', 'Visa', '864.89', 'SAR', 'CARD']);
+    });
+  });
 }

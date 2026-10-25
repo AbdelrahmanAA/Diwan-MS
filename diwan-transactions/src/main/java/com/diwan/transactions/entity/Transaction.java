@@ -90,6 +90,28 @@ public class Transaction {
     @Column(name = "source_ref", length = 64)
     private String sourceRef;
 
+    // ── From bank SMS: which own account / card it moved, balance reported after it (V3) ──
+    @Column(name = "account_ref", length = 8)
+    private String accountRef;
+
+    @Column(name = "counter_account_ref", length = 8)
+    private String counterAccountRef;
+
+    @Column(name = "card_ref", length = 8)
+    private String cardRef;
+
+    @Column(name = "card_network", length = 50)
+    private String cardNetwork;
+
+    @Column(name = "balance", precision = 14, scale = 2)
+    private BigDecimal balance;
+
+    @Column(name = "balance_currency", length = 10)
+    private String balanceCurrency;
+
+    @Column(name = "balance_of", length = 10)
+    private String balanceOf;
+
     // ── Timestamps ────────────────────────────────────────────────────────────
 
     /** وقت العملية الفعلي */
@@ -143,6 +165,13 @@ public class Transaction {
         public Builder recordedAt(LocalDateTime v){ t.recordedAt = v;      return this; }
         public Builder source(String v)           { t.source = v;          return this; }
         public Builder sourceRef(String v)        { t.sourceRef = v;       return this; }
+        public Builder accountRef(String v) { t.accountRef = v; return this; }
+        public Builder counterAccountRef(String v) { t.counterAccountRef = v; return this; }
+        public Builder cardRef(String v) { t.cardRef = v; return this; }
+        public Builder cardNetwork(String v) { t.cardNetwork = v; return this; }
+        public Builder balance(BigDecimal v) { t.balance = v; return this; }
+        public Builder balanceCurrency(String v) { t.balanceCurrency = v; return this; }
+        public Builder balanceOf(String v) { t.balanceOf = v; return this; }
         public Transaction build()                { return t; }
     }
 
@@ -178,6 +207,20 @@ public class Transaction {
     public void setRecordedAt(LocalDateTime v)   { this.recordedAt = v; }
     public String getSource()                    { return source; }
     public String getSourceRef()                 { return sourceRef; }
+    public String getAccountRef() { return accountRef; }
+    public void setAccountRef(String v) { this.accountRef = v; }
+    public String getCounterAccountRef() { return counterAccountRef; }
+    public void setCounterAccountRef(String v) { this.counterAccountRef = v; }
+    public String getCardRef() { return cardRef; }
+    public void setCardRef(String v) { this.cardRef = v; }
+    public String getCardNetwork() { return cardNetwork; }
+    public void setCardNetwork(String v) { this.cardNetwork = v; }
+    public BigDecimal getBalance() { return balance; }
+    public void setBalance(BigDecimal v) { this.balance = v; }
+    public String getBalanceCurrency() { return balanceCurrency; }
+    public void setBalanceCurrency(String v) { this.balanceCurrency = v; }
+    public String getBalanceOf() { return balanceOf; }
+    public void setBalanceOf(String v) { this.balanceOf = v; }
     public LocalDateTime getCreatedAt()          { return createdAt; }
     public LocalDateTime getUpdatedAt()          { return updatedAt; }
 }

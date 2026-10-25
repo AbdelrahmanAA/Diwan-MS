@@ -172,4 +172,49 @@ void main() {
       await api.http.delete('/api/users/${user.userId}');
     }
   }, skip: _base.isEmpty ? 'set --dart-define=CONTRACT_API=<gateway url> to run' : false);
+
+  test('cards & accounts positions from the sample SMS', () async {
+    String? token;
+    final api = DiwanApi(ApiClient(baseUrl: _base, tokenProvider: () => token, languageProvider: () => 'en'));
+    final parser = BankSmsParser();
+    final now = DateTime.now();
+    Map<String, Object?> sms(String body, Duration ago) =>
+        parser.parse('AlRajhiBank', body, (ago == Duration.zero ? DateTime.now().add(const Duration(seconds: 1)) : now.subtract(ago)))
+            .transaction!
+            .toJson();
+
+    final user = await api.register('Contract Test', 'contract4-${DateTime.now().millisecondsSinceEpoch}@diwan.test', 'Passw0rd!x');
+    token = user.token;
+    try {
+      await api.importTransactions([
+        sms('PoS purchase\nCard:1553 ;Visa-Samsung Pay\nAt: TASALIMAR\nAmount:103.51 SAR\nBalance: 864.89 SAR', const Duration(hours: 3)),
+        sms('Credit Card:Payment\nCard:Visa 1553\nAmount:SR 4980\nBalance:5844.89 SR', const Duration(hours: 2)),
+        sms('Debit: Loan Instalment\nInstalment: SAR 5210\nFrom: 2410\nRemaining Amount: SAR 41680', const Duration(hours: 4)),
+        sms('Online Purchase\nBy:5101;mada\nFrom:2410\nAmount:SR 5000\nAt:barq', const Duration(hours: 5)),
+      ]);
+      // the balance is entered now: only later SMS change it
+      await api.saveBankProduct('Al Rajhi', 'ACCOUNT', '2410', label: 'Main', balance: '10000', currency: 'SAR');
+      await api.saveBankProduct('Al Rajhi', 'CARD', '1553', creditLimit: '10000', currency: 'SAR');
+      await api.importTransactions([
+        sms('Transfer Between Your Accounts\nAmount:SR 1500\nFrom:2410\nTo:8468', Duration.zero),
+        sms('Withdrawal:ATM\nBy:5101;mada\nAmount:SR 300\nPlace:ALRAJHI BANK OPR BLDG 1', Duration.zero),
+      ]);
+
+      final bank = (await api.positions()).single;
+      expect(bank.bank, 'Al Rajhi');
+      final main = bank.accounts.firstWhere((a) => a.ref == '2410');
+      expect(main.label, 'Main');
+      expect(main.balance, 8200); // 10000 - 1500 transfer - 300 ATM by its mada card
+      expect(main.cards, ['5101']);
+      expect(bank.accounts.firstWhere((a) => a.ref == '8468').balance, isNull);
+      final visa = bank.cards.firstWhere((c) => c.ref == '1553');
+      expect(visa.network, 'Visa');
+      expect(visa.available, 5844.89);
+      expect(visa.owed, closeTo(4155.11, 0.001));
+      expect(bank.cards.firstWhere((c) => c.ref == '5101').account, '2410');
+      expect(bank.loans.single.remaining, 41680);
+    } finally {
+      await api.http.delete('/api/users/${user.userId}');
+    }
+  }, skip: _base.isEmpty ? 'set --dart-define=CONTRACT_API=<gateway url> to run' : false);
 }

@@ -9,7 +9,11 @@ class Fmt {
 
   String money(double? value, String currency, {bool signed = false}) {
     if (value == null) return '-';
-    final f = NumberFormat.simpleCurrency(locale: locale, name: currency);
+    var f = NumberFormat.simpleCurrency(locale: locale, name: currency);
+    // currencies without a sign get a word ("Riyal29,255.00"): use the code with a space instead
+    if (RegExp(r'^[A-Za-z]+$').hasMatch(f.currencySymbol)) {
+      f = NumberFormat.currency(locale: locale, name: currency, symbol: '$currency\u00A0', decimalDigits: f.decimalDigits);
+    }
     final text = f.format(value.abs());
     if (value < 0) return '-$text';
     return signed && value > 0 ? '+$text' : text;

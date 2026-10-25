@@ -11,7 +11,7 @@ Monorepo of Spring Boot 3.2.5 / Java 17 Maven services under a root aggregator/p
 | `diwan-common` | — | Shared library + Spring Boot auto-configuration (see below) |
 | `diwan-gateway` | 8111 (published as 8087 in docker/Jenkins) | Spring Cloud Gateway (reactive), DB-driven routes, JWT validation, request logging |
 | `diwan-users` | 8083 | Register/login, issues JWTs, publishes `UserInvalidatedEvent` to Kafka |
-| `diwan-transactions` | 8085 | Financial transactions (types expense/income/transfer); `POST /api/transactions/import` takes bank-SMS transactions from the mobile app, de-duplicated per user by `source_ref` |
+| `diwan-transactions` | 8085 | Financial transactions (types expense/income/transfer); `POST /api/transactions/import` takes bank-SMS transactions from the mobile app, de-duplicated per user by `source_ref`; `GET /api/transactions/positions` = cards/accounts/loans per bank from those SMS plus `bank_products` (balance/limit the user enters); deletes a DELETED user's data |
 | `diwan-medical` | 8082 | Medical records |
 | `diwan-smarthome` | 8086 | Smart devices, Alexa endpoint, MQTT command publishing |
 | `diwan-logging` | 8084 | Consumes Kafka `request-logs`, stores/serves request logs |

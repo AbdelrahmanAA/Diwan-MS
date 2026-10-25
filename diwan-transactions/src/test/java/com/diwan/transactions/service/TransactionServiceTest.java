@@ -24,7 +24,7 @@ import static org.mockito.Mockito.when;
 class TransactionServiceTest {
 
     private final TransactionRepository repo = mock(TransactionRepository.class);
-    private final TransactionService service = new TransactionService(repo);
+    private final TransactionService service = new TransactionService(repo, mock(com.diwan.transactions.repository.BankProductRepository.class));
 
     private static Transaction tx(Long userId, String type, String currency, String amount) {
         return Transaction.builder().userId(userId).type(type).currency(currency)
@@ -120,7 +120,7 @@ class TransactionServiceTest {
 
     @Test
     void importSkipsMessagesTheUserAlreadyHasAndRepeatsWithinTheBatch() {
-        when(repo.existsByUserIdAndSourceRef(7L, "aa")).thenReturn(true);
+        when(repo.findByUserIdAndSourceRef(7L, "aa")).thenReturn(Optional.of(tx(7L, "expense", "SAR", "1")));
         when(repo.saveAndFlush(any(Transaction.class))).thenAnswer(inv -> inv.getArgument(0));
 
         Map<String, Integer> result = service.importSms(7L, List.of(

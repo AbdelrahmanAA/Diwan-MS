@@ -47,6 +47,12 @@ is saved automatically, also while the app is closed.
   user, so re-imports and overlapping syncs are harmless.
 - **Category memory:** an imported transaction takes the category of the user's latest transaction with the
   same merchant, so recategorizing one (e.g. a "bill" that is a car loan) fixes the following ones.
+- **Cards & accounts** (second tab of Financial History, `GET /api/transactions/positions`): per bank the
+  credit cards (available amount from the latest SMS that reported it; owed = limit - available once the user
+  enters the limit), debit cards (linked to their account), accounts and loans (remaining amount from the
+  instalment SMS). Account balances are never in the SMS: the user enters the current balance once and every
+  later SMS movement of the account is added to it (an estimate). Messages imported by an older app version are
+  re-read once (12 months) to fill in their card/account fields.
 - **How it runs:** `SmsReceiver` (manifest) queues new bank SMS and starts `SmsSyncWorker` (WorkManager, needs
   network, retries with backoff, plus every 6 h), which runs `smsBackgroundSync` (lib/main.dart) in a headless
   Flutter engine. The app also syncs on start and when it comes back to the foreground.

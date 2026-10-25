@@ -569,3 +569,89 @@ class SmartDevice {
 
   bool get isOn => state == 'ON';
 }
+
+// ---- cards, accounts and loans per bank (diwan-transactions /positions, from bank SMS) ----
+
+class BankPositions {
+  BankPositions.fromJson(Map<String, dynamic> j)
+      : bank = j['bank'] as String,
+        accounts = _list(j['accounts'], AccountPosition.fromJson),
+        cards = _list(j['cards'], CardPosition.fromJson),
+        loans = _list(j['loans'], LoanPosition.fromJson);
+
+  final String bank;
+  final List<AccountPosition> accounts;
+  final List<CardPosition> cards;
+  final List<LoanPosition> loans;
+}
+
+/// [balance] is null until the user entered it once ([balanceSince]); then it is kept up to date from the SMS.
+class AccountPosition {
+  AccountPosition.fromJson(Map<String, dynamic> j)
+      : ref = j['ref'] as String,
+        label = j['label'] as String?,
+        currency = (j['currency'] ?? 'SAR') as String,
+        balance = _d(j['balance']),
+        balanceSince = _t(j['balanceSince']),
+        monthIn = _d(j['monthIn']) ?? 0,
+        monthOut = _d(j['monthOut']) ?? 0,
+        cards = ((j['cards'] ?? []) as List).cast<String>(),
+        lastActivity = _t(j['lastActivity']);
+
+  final String ref;
+  final String? label;
+  final String currency;
+  final double? balance;
+  final DateTime? balanceSince;
+  final double monthIn;
+  final double monthOut;
+  final List<String> cards;
+  final DateTime? lastActivity;
+}
+
+/// [available] from the latest SMS that reported it; [owed] = limit - available once the limit is entered.
+class CardPosition {
+  CardPosition.fromJson(Map<String, dynamic> j)
+      : ref = j['ref'] as String,
+        network = j['network'] as String?,
+        label = j['label'] as String?,
+        currency = (j['currency'] ?? 'SAR') as String,
+        available = _d(j['available']),
+        availableAt = _t(j['availableAt']),
+        creditLimit = _d(j['creditLimit']),
+        owed = _d(j['owed']),
+        account = j['account'] as String?,
+        monthSpent = _d(j['monthSpent']) ?? 0,
+        lastActivity = _t(j['lastActivity']);
+
+  final String ref;
+  final String? network;
+  final String? label;
+  final String currency;
+  final double? available;
+  final DateTime? availableAt;
+  final double? creditLimit;
+  final double? owed;
+  final String? account; // a debit card's account
+  final double monthSpent;
+  final DateTime? lastActivity;
+}
+
+class LoanPosition {
+  LoanPosition.fromJson(Map<String, dynamic> j)
+      : ref = j['ref'] as String,
+        label = j['label'] as String?,
+        currency = (j['currency'] ?? 'SAR') as String,
+        remaining = _d(j['remaining']) ?? 0,
+        remainingAt = _t(j['remainingAt']),
+        lastInstalment = _d(j['lastInstalment']),
+        account = j['account'] as String?;
+
+  final String ref;
+  final String? label;
+  final String currency;
+  final double remaining;
+  final DateTime? remainingAt;
+  final double? lastInstalment;
+  final String? account;
+}
