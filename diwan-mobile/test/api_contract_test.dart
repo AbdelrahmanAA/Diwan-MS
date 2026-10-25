@@ -4,6 +4,7 @@
 // Arabic, and deletes the user again.
 import 'package:diwan_mobile/api/api_client.dart';
 import 'package:diwan_mobile/api/diwan_api.dart';
+import 'package:diwan_mobile/sms/bank_sms_parser.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 const _base = String.fromEnvironment('CONTRACT_API');
@@ -127,6 +128,48 @@ void main() {
       deleted = true;
     } finally {
       if (!deleted) await api.http.delete('/api/users/${user.userId}');
+    }
+  }, skip: _base.isEmpty ? 'set --dart-define=CONTRACT_API=<gateway url> to run' : false);
+
+  test('bank SMS import: duplicates skipped, category remembered per merchant, type editable', () async {
+    String? token;
+    final api = DiwanApi(ApiClient(baseUrl: _base, tokenProvider: () => token, languageProvider: () => 'en'));
+    final parser = BankSmsParser();
+    Map<String, Object?> sms(String body, DateTime at) => parser.parse('AlRajhiBank', body, at).transaction!.toJson();
+
+    final user = await api.register('Contract Test', 'contract3-${DateTime.now().millisecondsSinceEpoch}@diwan.test', 'Passw0rd!x');
+    token = user.token;
+    try {
+      final batch = [
+        sms('PoS purchase\nCard:1553 ;Visa-Samsung Pay\nAt: TASALIMAR\nAmount:103.51 SAR\n25/10/26 21:18', DateTime(2026, 10, 25, 21, 18)),
+        sms('Credit Card:Payment\nCard:Visa 1553\nAmount:SR 4980\nBalance:5844.89 SR\n25/10/26 22:25', DateTime(2026, 10, 25, 22, 25)),
+        sms('Bill Payment\nFrom:2410\nAmount:SR 2572.33\nBiller:125\nService:ENBD PAYMENTS\nBill:0196074079101\n26/9/25 22:07',
+            DateTime(2026, 9, 25, 22, 7)),
+      ];
+      expect(await api.importTransactions(batch), (imported: 3, duplicates: 0));
+      expect(await api.importTransactions(batch), (imported: 0, duplicates: 3));
+
+      final all = await api.moneyTransactions();
+      expect(all, hasLength(3));
+      expect(all.every((t) => t.fromSms), isTrue);
+      expect(all.firstWhere((t) => t.category == 'transfer').isTransfer, isTrue);
+      final summary = (await api.moneySummary()).single;
+      expect(summary.expense, closeTo(2675.84, 0.001)); // the card payment is not counted
+
+      // the ENBD "bill" is the car loan: recategorize once, the next month's SMS follows
+      final enbd = all.firstWhere((t) => t.merchantName == 'ENBD PAYMENTS');
+      await api.saveMoneyTransaction(enbd.id, {'category': 'loan'});
+      await api.importTransactions([
+        sms('Bill Payment\nFrom:2410\nAmount:SR 2572.33\nBiller:125\nService:ENBD PAYMENTS\nBill:0196074079101\n26/10/25 22:07',
+            DateTime(2026, 10, 25, 22, 7)),
+      ]);
+      expect((await api.moneyTransactions(category: 'loan')), hasLength(2));
+
+      final pos = all.firstWhere((t) => t.merchantName == 'TASALIMAR');
+      await api.saveMoneyTransaction(pos.id, {'type': 'transfer'});
+      expect((await api.moneyTransactions(type: 'transfer')), hasLength(2));
+    } finally {
+      await api.http.delete('/api/users/${user.userId}');
     }
   }, skip: _base.isEmpty ? 'set --dart-define=CONTRACT_API=<gateway url> to run' : false);
 }

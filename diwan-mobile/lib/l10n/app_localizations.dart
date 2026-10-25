@@ -1375,6 +1375,150 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Deactivate'**
   String get deactivate;
+
+  /// No description provided for @transferType.
+  ///
+  /// In en, this message translates to:
+  /// **'Transfer'**
+  String get transferType;
+
+  /// No description provided for @catTransfer.
+  ///
+  /// In en, this message translates to:
+  /// **'Transfer'**
+  String get catTransfer;
+
+  /// No description provided for @catLoan.
+  ///
+  /// In en, this message translates to:
+  /// **'Loan'**
+  String get catLoan;
+
+  /// No description provided for @catCash.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash'**
+  String get catCash;
+
+  /// No description provided for @catRefund.
+  ///
+  /// In en, this message translates to:
+  /// **'Refund'**
+  String get catRefund;
+
+  /// No description provided for @catProfit.
+  ///
+  /// In en, this message translates to:
+  /// **'Profit'**
+  String get catProfit;
+
+  /// No description provided for @fromSms.
+  ///
+  /// In en, this message translates to:
+  /// **'From SMS'**
+  String get fromSms;
+
+  /// No description provided for @smsLogging.
+  ///
+  /// In en, this message translates to:
+  /// **'Log bank SMS automatically'**
+  String get smsLogging;
+
+  /// No description provided for @smsLoggingHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Al Rajhi Bank transactions are added to Financial History.'**
+  String get smsLoggingHint;
+
+  /// No description provided for @smsDisclosureTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Read your bank SMS?'**
+  String get smsDisclosureTitle;
+
+  /// No description provided for @smsDisclosure.
+  ///
+  /// In en, this message translates to:
+  /// **'Diwan reads the SMS messages your bank (Al Rajhi) sends you, also while the app is closed, and adds your purchases, transfers, salary and other transactions to Financial History.\n\nOnly the transaction details are sent to your Diwan account: amount, currency, merchant or person, date, the last 4 digits of the card or account, and the balance. The message text, OTP codes and all your other SMS stay on your phone.\n\nYou can turn this off at any time in My Account.'**
+  String get smsDisclosure;
+
+  /// No description provided for @continueLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get continueLabel;
+
+  /// No description provided for @notNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Not now'**
+  String get notNow;
+
+  /// No description provided for @smsPermissionDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Diwan needs permission to read SMS for this.'**
+  String get smsPermissionDenied;
+
+  /// No description provided for @openSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Open settings'**
+  String get openSettings;
+
+  /// No description provided for @smsHistoryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Import earlier messages?'**
+  String get smsHistoryTitle;
+
+  /// No description provided for @smsHistoryNone.
+  ///
+  /// In en, this message translates to:
+  /// **'Only new messages'**
+  String get smsHistoryNone;
+
+  /// No description provided for @smsHistory3.
+  ///
+  /// In en, this message translates to:
+  /// **'Last 3 months'**
+  String get smsHistory3;
+
+  /// No description provided for @smsHistory12.
+  ///
+  /// In en, this message translates to:
+  /// **'Last 12 months'**
+  String get smsHistory12;
+
+  /// No description provided for @smsSyncNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync now'**
+  String get smsSyncNow;
+
+  /// No description provided for @smsLastSync.
+  ///
+  /// In en, this message translates to:
+  /// **'Last sync: {date}'**
+  String smsLastSync(String date);
+
+  /// No description provided for @smsImported.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No transactions added yet} =1{1 transaction added} other{{count} transactions added}}'**
+  String smsImported(int count);
+
+  /// No description provided for @smsUnrecognized.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 bank message not recognized} other{{count} bank messages not recognized}}'**
+  String smsUnrecognized(int count);
+
+  /// No description provided for @smsSyncResult.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No new transactions} =1{1 new transaction} other{{count} new transactions}}'**
+  String smsSyncResult(int count);
 }
 
 class _AppLocalizationsDelegate

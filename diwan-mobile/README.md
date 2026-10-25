@@ -27,6 +27,33 @@ shows the server's texts and a "not available in the app yet" page. The mapping 
   investments, allocation vs targets with rebalancing suggestions, goals) -> investment (value, P/L, price
   history, transactions, valuations); watchlist; news about your investments; alerts (inbox + rules); settings.
 
+## Bank SMS -> Financial History (Android)
+
+Turned on by the user in My Account ("Log bank SMS automatically"): a disclosure screen, the SMS permission,
+then a choice to import earlier messages (none / 3 / 12 months). From then on every transaction SMS of the bank
+is saved automatically, also while the app is closed.
+
+- **Supported now:** Al Rajhi Bank, English messages (sender contains `alrajhi`). The rules are a table in
+  `lib/sms/bank_sms_parser.dart` (title line -> type/category, generic `Key:Value` reader); the samples the
+  rules were built from are the tests in `test/bank_sms_parser_test.dart`. Other banks / user-configured
+  rules are a later phase (sender list also in `android/.../SmsStore.kt`).
+- **Types:** purchases, bills, loan instalments, ATM withdrawals and transfers to other people are expenses;
+  salary, incoming transfers, refunds/reversals, profit and ATM deposits are income; transfers between your own
+  accounts and credit card payments are `transfer` (shown, not counted in the totals). Foreign purchases use
+  the SAR "total due" when the SMS has one. Declined transactions and OTP messages are never stored.
+- **Privacy:** only the extracted fields (amount, currency, merchant/person, date, card/account last 4 digits,
+  balance) are sent to `POST /api/transactions/import`; the SMS text stays on the phone. Turned off on sign-out.
+- **No duplicates:** each SMS is sent with a SHA-256 fingerprint (`sourceRef`); the server stores it once per
+  user, so re-imports and overlapping syncs are harmless.
+- **Category memory:** an imported transaction takes the category of the user's latest transaction with the
+  same merchant, so recategorizing one (e.g. a "bill" that is a car loan) fixes the following ones.
+- **How it runs:** `SmsReceiver` (manifest) queues new bank SMS and starts `SmsSyncWorker` (WorkManager, needs
+  network, retries with backoff, plus every 6 h), which runs `smsBackgroundSync` (lib/main.dart) in a headless
+  Flutter engine. The app also syncs on start and when it comes back to the foreground.
+- **Google Play:** `READ_SMS`/`RECEIVE_SMS` need the Permissions Declaration Form (use case: SMS-based money
+  management) and the in-app disclosure shown before the permission request (already in the app). iOS does
+  not allow reading SMS, so the switch is hidden there.
+
 ## Requirements
 
 Flutter 3.47+ (installed on this machine in `C:\Users\abdel\dev\flutter`), the Android SDK, and for iOS a Mac

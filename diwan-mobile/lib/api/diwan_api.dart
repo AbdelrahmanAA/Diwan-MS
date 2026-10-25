@@ -154,6 +154,12 @@ class DiwanApi {
 
   Future<void> deleteMoneyTransaction(int id) => http.delete('$_tx/$id');
 
+  /// Transactions read from bank SMS; the server skips messages (sourceRef) it already has.
+  Future<({int imported, int duplicates})> importTransactions(List<Map<String, Object?>> transactions) async {
+    final r = await http.post('$_tx/import', {'transactions': transactions}) as Map<String, dynamic>;
+    return (imported: (r['imported'] as num).toInt(), duplicates: (r['duplicates'] as num).toInt());
+  }
+
   // ---- medical records (diwan-medical) ----
   static const _med = '/api/medical';
 

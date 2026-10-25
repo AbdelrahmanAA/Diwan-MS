@@ -1,8 +1,13 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 
 import 'l10n/app_localizations.dart';
+import 'sms/sms_sync.dart';
 import 'state/session.dart';
 import 'ui/dashboard_screen.dart';
 import 'ui/login_screen.dart';
@@ -12,6 +17,20 @@ void main() {
   final session = Session();
   session.load(WidgetsBinding.instance.platformDispatcher.locale);
   runApp(ChangeNotifierProvider.value(value: session, child: const DiwanApp()));
+}
+
+/// Started by SmsSyncWorker (Android) in a headless engine: uploads new bank SMS, then reports back.
+@pragma('vm:entry-point')
+Future<void> smsBackgroundSync() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  var ok = false;
+  try {
+    final raw = await const FlutterSecureStorage().read(key: Session.userKey);
+    ok = await runSmsSyncInBackground(raw == null ? null : (jsonDecode(raw) as Map<String, dynamic>)['token'] as String?);
+  } catch (_) {
+    ok = false;
+  }
+  await const MethodChannel('diwan/sms').invokeMethod('done', {'ok': ok});
 }
 
 class DiwanApp extends StatelessWidget {

@@ -1,5 +1,6 @@
 package com.diwan.transactions.service;
 
+import com.diwan.transactions.dto.ImportTransactionsRequest;
 import com.diwan.transactions.dto.TransactionRequest;
 import com.diwan.transactions.dto.TransactionResponse;
 import com.diwan.transactions.entity.Transaction;
@@ -103,5 +104,71 @@ class TransactionServiceTest {
         assertEquals(new BigDecimal("15.5"), summary.get("EGP").get("expense"));
         assertEquals(new BigDecimal("100"), summary.get("EGP").get("income"));
         assertEquals(new BigDecimal("3"), summary.get("USD").get("expense"));
+    }
+
+    private static ImportTransactionsRequest.Item smsItem(String ref, String merchant, String category) {
+        ImportTransactionsRequest.Item item = new ImportTransactionsRequest.Item();
+        item.setSourceRef(ref);
+        item.setType("expense");
+        item.setCategory(category);
+        item.setAmount(new BigDecimal("103.51"));
+        item.setCurrency("SAR");
+        item.setMerchantName(merchant);
+        item.setBank("Al Rajhi");
+        return item;
+    }
+
+    @Test
+    void importSkipsMessagesTheUserAlreadyHasAndRepeatsWithinTheBatch() {
+        when(repo.existsByUserIdAndSourceRef(7L, "aa")).thenReturn(true);
+        when(repo.saveAndFlush(any(Transaction.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Map<String, Integer> result = service.importSms(7L, List.of(
+                smsItem("AA", "TASALIMAR", "shopping"), smsItem("bb", "barq", "shopping"), smsItem("BB", "barq", "shopping")));
+
+        assertEquals(1, result.get("imported"));
+        assertEquals(2, result.get("duplicates"));
+        ArgumentCaptor<Transaction> saved = ArgumentCaptor.forClass(Transaction.class);
+        verify(repo).saveAndFlush(saved.capture());
+        assertEquals("sms", saved.getValue().getSource());
+        assertEquals("bb", saved.getValue().getSourceRef());
+        assertEquals(7L, saved.getValue().getUserId());
+    }
+
+    @Test
+    void importKeepsTheCategoryTheUserGaveTheSameMerchantBefore() {
+        Transaction previous = tx(7L, "expense", "SAR", "2572.33");
+        previous.setCategory("loan");
+        when(repo.findFirstByUserIdAndMerchantNameIgnoreCaseOrderByRecordedAtDesc(7L, "ENBD PAYMENTS"))
+                .thenReturn(Optional.of(previous));
+        when(repo.saveAndFlush(any(Transaction.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        service.importSms(7L, List.of(smsItem("cc", "ENBD PAYMENTS", "bills")));
+
+        ArgumentCaptor<Transaction> saved = ArgumentCaptor.forClass(Transaction.class);
+        verify(repo).saveAndFlush(saved.capture());
+        assertEquals("loan", saved.getValue().getCategory());
+    }
+
+    @Test
+    void aConcurrentDuplicateCountsAsDuplicate() {
+        when(repo.saveAndFlush(any(Transaction.class)))
+                .thenThrow(new org.springframework.dao.DataIntegrityViolationException("uk_user_source_ref"));
+
+        Map<String, Integer> result = service.importSms(7L, List.of(smsItem("dd", null, "cash")));
+
+        assertEquals(0, result.get("imported"));
+        assertEquals(1, result.get("duplicates"));
+    }
+
+    @Test
+    void updateCanMoveATransactionToAnotherType() {
+        Transaction existing = tx(7L, "expense", "SAR", "4980");
+        when(repo.findById(1L)).thenReturn(Optional.of(existing));
+        when(repo.save(any(Transaction.class))).thenAnswer(inv -> inv.getArgument(0));
+        TransactionRequest patch = new TransactionRequest();
+        patch.setType("Transfer");
+
+        assertEquals("transfer", service.update(1L, 7L, patch).getType());
     }
 }

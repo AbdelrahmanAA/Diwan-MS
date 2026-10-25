@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../l10n/app_localizations.dart';
 import '../state/session.dart';
+import 'sms_settings.dart';
 import 'widgets.dart';
 
 /// Account and app settings (dashboard tile "My Account" and the settings button).
@@ -58,6 +59,7 @@ class SettingsTab extends StatelessWidget {
                 )
               : const SizedBox.shrink(),
         ),
+        const SmsSettings(),
         const Divider(),
         FutureBuilder(
           future: session.reference(),

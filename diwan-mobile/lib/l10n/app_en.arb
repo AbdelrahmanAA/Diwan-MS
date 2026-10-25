@@ -282,5 +282,57 @@
   "deactivateConfirm": "Deactivate your account? You will be signed out and cannot sign in until it is reactivated.",
   "deleteAccount": "Delete account",
   "deleteAccountConfirm": "Delete your account and all your data (investments, transactions, medical records)? This cannot be undone.",
-  "deactivate": "Deactivate"
+  "deactivate": "Deactivate",
+  "transferType": "Transfer",
+  "catTransfer": "Transfer",
+  "catLoan": "Loan",
+  "catCash": "Cash",
+  "catRefund": "Refund",
+  "catProfit": "Profit",
+  "fromSms": "From SMS",
+  "smsLogging": "Log bank SMS automatically",
+  "smsLoggingHint": "Al Rajhi Bank transactions are added to Financial History.",
+  "smsDisclosureTitle": "Read your bank SMS?",
+  "smsDisclosure": "Diwan reads the SMS messages your bank (Al Rajhi) sends you, also while the app is closed, and adds your purchases, transfers, salary and other transactions to Financial History.\n\nOnly the transaction details are sent to your Diwan account: amount, currency, merchant or person, date, the last 4 digits of the card or account, and the balance. The message text, OTP codes and all your other SMS stay on your phone.\n\nYou can turn this off at any time in My Account.",
+  "continueLabel": "Continue",
+  "notNow": "Not now",
+  "smsPermissionDenied": "Diwan needs permission to read SMS for this.",
+  "openSettings": "Open settings",
+  "smsHistoryTitle": "Import earlier messages?",
+  "smsHistoryNone": "Only new messages",
+  "smsHistory3": "Last 3 months",
+  "smsHistory12": "Last 12 months",
+  "smsSyncNow": "Sync now",
+  "smsLastSync": "Last sync: {date}",
+  "@smsLastSync": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "smsImported": "{count, plural, =0{No transactions added yet} =1{1 transaction added} other{{count} transactions added}}",
+  "@smsImported": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "smsUnrecognized": "{count, plural, =1{1 bank message not recognized} other{{count} bank messages not recognized}}",
+  "@smsUnrecognized": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "smsSyncResult": "{count, plural, =0{No new transactions} =1{1 new transaction} other{{count} new transactions}}",
+  "@smsSyncResult": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

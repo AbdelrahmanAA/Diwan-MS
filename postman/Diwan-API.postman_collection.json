@@ -941,6 +941,212 @@
           ]
         },
         {
+          "name": "Import bank SMS transactions (mobile app)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/transactions/import",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "transactions",
+                "import"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"transactions\": [\n    {\n      \"sourceRef\": \"9f2c0e5d1a7b4c3e8f6a2b1c0d9e8f7a6b5c4d3e2f1a0b9c8d7e6f5a4b3c2d1e\",\n      \"type\": \"expense\",\n      \"category\": \"shopping\",\n      \"amount\": \"103.51\",\n      \"currency\": \"SAR\",\n      \"bank\": \"Al Rajhi\",\n      \"paymentMethod\": \"wallet\",\n      \"status\": \"completed\",\n      \"merchantName\": \"TASALIMAR\",\n      \"description\": \"PoS purchase\",\n      \"tags\": \"sms\",\n      \"recordedAt\": \"2026-10-25T21:18:00\"\n    },\n    {\n      \"sourceRef\": \"1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b\",\n      \"type\": \"transfer\",\n      \"category\": \"transfer\",\n      \"amount\": \"4980\",\n      \"currency\": \"SAR\",\n      \"bank\": \"Al Rajhi\",\n      \"paymentMethod\": \"transfer\",\n      \"status\": \"completed\",\n      \"description\": \"Credit Card:Payment\",\n      \"tags\": \"sms\",\n      \"recordedAt\": \"2026-10-25T22:25:00\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenA}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('both imported', () => { const r = pm.response.json(); pm.expect(r.imported).to.eql(2); pm.expect(r.duplicates).to.eql(0); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Import the same SMS again -> all duplicates",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/transactions/import",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "transactions",
+                "import"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"transactions\": [\n    {\n      \"sourceRef\": \"9f2c0e5d1a7b4c3e8f6a2b1c0d9e8f7a6b5c4d3e2f1a0b9c8d7e6f5a4b3c2d1e\",\n      \"type\": \"expense\",\n      \"category\": \"shopping\",\n      \"amount\": \"103.51\",\n      \"currency\": \"SAR\",\n      \"bank\": \"Al Rajhi\",\n      \"paymentMethod\": \"wallet\",\n      \"status\": \"completed\",\n      \"merchantName\": \"TASALIMAR\",\n      \"description\": \"PoS purchase\",\n      \"tags\": \"sms\",\n      \"recordedAt\": \"2026-10-25T21:18:00\"\n    },\n    {\n      \"sourceRef\": \"1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b\",\n      \"type\": \"transfer\",\n      \"category\": \"transfer\",\n      \"amount\": \"4980\",\n      \"currency\": \"SAR\",\n      \"bank\": \"Al Rajhi\",\n      \"paymentMethod\": \"transfer\",\n      \"status\": \"completed\",\n      \"description\": \"Credit Card:Payment\",\n      \"tags\": \"sms\",\n      \"recordedAt\": \"2026-10-25T22:25:00\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenA}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('nothing imported twice', () => { const r = pm.response.json(); pm.expect(r.imported).to.eql(0); pm.expect(r.duplicates).to.eql(2); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Import without sourceRef -> 400",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/transactions/import",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "transactions",
+                "import"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"transactions\": [\n    {\n      \"type\": \"expense\",\n      \"category\": \"food\",\n      \"amount\": \"5\",\n      \"currency\": \"SAR\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenA}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 400', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Imported transfer is marked as from SMS",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/transactions?type=transfer",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "transactions"
+              ],
+              "query": [
+                {
+                  "key": "type",
+                  "value": "transfer"
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenA}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('one SMS transfer', () => { const d = pm.response.json().data; pm.expect(d).to.have.length(1); pm.expect(d[0].source).to.eql('sms'); pm.expect(d[0].amount).to.eql(4980); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
           "name": "Forged X-User-Id is ignored (still user A's data)",
           "request": {
             "method": "GET",

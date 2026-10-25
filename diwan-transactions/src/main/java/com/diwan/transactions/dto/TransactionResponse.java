@@ -18,6 +18,7 @@ public class TransactionResponse {
     private String notes;
     private String referenceNumber;
     private String tags;
+    private String source;
     private LocalDateTime recordedAt;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -49,6 +50,8 @@ public class TransactionResponse {
     public void setReferenceNumber(String v)     { this.referenceNumber = v; }
     public String getTags()                      { return tags; }
     public void setTags(String v)                { this.tags = v; }
+    public String getSource()                    { return source; }
+    public void setSource(String v)              { this.source = v; }
     public LocalDateTime getRecordedAt()         { return recordedAt; }
     public void setRecordedAt(LocalDateTime v)   { this.recordedAt = v; }
     public LocalDateTime getCreatedAt()          { return createdAt; }

@@ -685,4 +685,111 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get deactivate => 'إيقاف';
+
+  @override
+  String get transferType => 'تحويل';
+
+  @override
+  String get catTransfer => 'تحويل';
+
+  @override
+  String get catLoan => 'قرض';
+
+  @override
+  String get catCash => 'نقد';
+
+  @override
+  String get catRefund => 'استرداد';
+
+  @override
+  String get catProfit => 'أرباح';
+
+  @override
+  String get fromSms => 'من رسالة';
+
+  @override
+  String get smsLogging => 'تسجيل رسائل البنك تلقائياً';
+
+  @override
+  String get smsLoggingHint => 'تُضاف معاملات مصرف الراجحي إلى السجل المالي.';
+
+  @override
+  String get smsDisclosureTitle => 'قراءة رسائل البنك؟';
+
+  @override
+  String get smsDisclosure =>
+      'يقرأ ديوان الرسائل النصية التي يرسلها لك البنك (الراجحي)، حتى والتطبيق مغلق، ويضيف مشترياتك وتحويلاتك وراتبك وباقي معاملاتك إلى السجل المالي.\n\nتُرسل إلى حسابك في ديوان تفاصيل المعاملة فقط: المبلغ والعملة والتاجر أو الشخص والتاريخ وآخر 4 أرقام من البطاقة أو الحساب والرصيد. أما نص الرسالة ورموز التحقق (OTP) وباقي رسائلك فتبقى على هاتفك.\n\nيمكنك إيقاف ذلك في أي وقت من صفحة حسابي.';
+
+  @override
+  String get continueLabel => 'متابعة';
+
+  @override
+  String get notNow => 'ليس الآن';
+
+  @override
+  String get smsPermissionDenied => 'يحتاج ديوان إذن قراءة الرسائل لذلك.';
+
+  @override
+  String get openSettings => 'فتح الإعدادات';
+
+  @override
+  String get smsHistoryTitle => 'استيراد الرسائل السابقة؟';
+
+  @override
+  String get smsHistoryNone => 'الرسائل الجديدة فقط';
+
+  @override
+  String get smsHistory3 => 'آخر 3 أشهر';
+
+  @override
+  String get smsHistory12 => 'آخر 12 شهراً';
+
+  @override
+  String get smsSyncNow => 'مزامنة الآن';
+
+  @override
+  String smsLastSync(String date) {
+    return 'آخر مزامنة: $date';
+  }
+
+  @override
+  String smsImported(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'أُضيفت $count معاملة',
+      few: 'أُضيفت $count معاملات',
+      two: 'أُضيفت معاملتان',
+      one: 'أُضيفت معاملة واحدة',
+      zero: 'لم تُضف معاملات بعد',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String smsUnrecognized(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count رسالة بنكية غير معروفة',
+      few: '$count رسائل بنكية غير معروفة',
+      two: 'رسالتان بنكيتان غير معروفتين',
+      one: 'رسالة بنكية واحدة غير معروفة',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String smsSyncResult(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count معاملة جديدة',
+      few: '$count معاملات جديدة',
+      two: 'معاملتان جديدتان',
+      one: 'معاملة جديدة واحدة',
+      zero: 'لا توجد معاملات جديدة',
+    );
+    return '$_temp0';
+  }
 }

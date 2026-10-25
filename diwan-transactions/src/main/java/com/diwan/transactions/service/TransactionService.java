@@ -1,16 +1,20 @@
 package com.diwan.transactions.service;
 
+import com.diwan.transactions.dto.ImportTransactionsRequest;
 import com.diwan.transactions.dto.TransactionRequest;
 import com.diwan.transactions.dto.TransactionResponse;
 import com.diwan.transactions.entity.Transaction;
 import com.diwan.transactions.repository.TransactionRepository;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -24,7 +28,11 @@ public class TransactionService {
 
     // â”€â”€ Save â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     public TransactionResponse save(TransactionRequest req, Long userId) {
-        Transaction entity = Transaction.builder()
+        return toResponse(repository.save(build(req, userId).build()));
+    }
+
+    private static Transaction.Builder build(TransactionRequest req, Long userId) {
+        return Transaction.builder()
                 .userId(userId)
                 .bank(req.getBank() != null ? req.getBank() : "Unknown")
                 .type(req.getType())
@@ -38,10 +46,38 @@ public class TransactionService {
                 .notes(req.getNotes())
                 .referenceNumber(req.getReferenceNumber())
                 .tags(req.getTags())
-                .recordedAt(req.getRecordedAt())
-                .build();
+                .recordedAt(req.getRecordedAt());
+    }
 
-        return toResponse(repository.save(entity));
+    // -- Import from bank SMS (mobile app) ------------------------------------
+    /**
+     * Stores the transactions whose SMS fingerprint the user does not have yet. A merchant the user has seen
+     * before keeps the category of their latest transaction there, so recategorizing one SMS transaction
+     * (e.g. a "bill" that is really a car loan) applies to the following ones.
+     */
+    public Map<String, Integer> importSms(Long userId, List<ImportTransactionsRequest.Item> items) {
+        int imported = 0;
+        int duplicates = 0;
+        Set<String> seen = new HashSet<>();
+        for (ImportTransactionsRequest.Item item : items) {
+            String ref = item.getSourceRef().trim().toLowerCase();
+            if (!seen.add(ref) || repository.existsByUserIdAndSourceRef(userId, ref)) {
+                duplicates++;
+                continue;
+            }
+            Transaction.Builder tx = build(item, userId).source("sms").sourceRef(ref);
+            if (item.getMerchantName() != null && !item.getMerchantName().isBlank()) {
+                repository.findFirstByUserIdAndMerchantNameIgnoreCaseOrderByRecordedAtDesc(userId, item.getMerchantName().trim())
+                        .ifPresent(previous -> tx.category(previous.getCategory()));
+            }
+            try {
+                repository.saveAndFlush(tx.build());
+                imported++;
+            } catch (DataIntegrityViolationException e) {
+                duplicates++; // the same SMS imported concurrently
+            }
+        }
+        return Map.of("imported", imported, "duplicates", duplicates);
     }
 
     // â”€â”€ Queries (user-scoped) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -107,6 +143,7 @@ public class TransactionService {
         res.setNotes(t.getNotes());
         res.setReferenceNumber(t.getReferenceNumber());
         res.setTags(t.getTags());
+        res.setSource(t.getSource());
         res.setRecordedAt(t.getRecordedAt());
         res.setCreatedAt(t.getCreatedAt());
         res.setUpdatedAt(t.getUpdatedAt());
@@ -118,6 +155,7 @@ public class TransactionService {
         Transaction entity = repository.findById(id)
                 .filter(t -> t.getUserId().equals(userId))
                 .orElseThrow(() -> new RuntimeException("Transaction not found or unauthorized"));
+        if (req.getType()          != null) entity.setType(req.getType().toLowerCase());
         if (req.getAmount()        != null) entity.setAmount(req.getAmount());
         if (req.getCategory()      != null) entity.setCategory(req.getCategory().toLowerCase());
         if (req.getMerchantName()  != null) entity.setMerchantName(req.getMerchantName());

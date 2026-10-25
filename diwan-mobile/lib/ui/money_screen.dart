@@ -9,7 +9,10 @@ import 'format.dart';
 import 'widgets.dart';
 
 // Codes the transactions service stores (lower case); labels are the app's.
-const moneyCategories = ['food', 'transport', 'bills', 'health', 'shopping', 'entertainment', 'salary', 'general'];
+const moneyCategories = [
+  'food', 'transport', 'bills', 'health', 'shopping', 'entertainment', 'salary', //
+  'transfer', 'loan', 'cash', 'refund', 'profit', 'general',
+];
 const moneyCurrencies = ['EGP', 'USD', 'EUR', 'SAR', 'AED', 'GBP'];
 const paymentMethods = ['cash', 'card', 'transfer', 'wallet', 'cheque'];
 const moneyStatuses = ['completed', 'pending', 'cancelled'];
@@ -22,6 +25,11 @@ String categoryLabel(AppLocalizations t, String code) => switch (code.toLowerCas
       'shopping' => t.catShopping,
       'entertainment' => t.catEntertainment,
       'salary' => t.catSalary,
+      'transfer' => t.catTransfer,
+      'loan' => t.catLoan,
+      'cash' => t.catCash,
+      'refund' => t.catRefund,
+      'profit' => t.catProfit,
       'general' => t.catGeneral,
       _ => code,
     };
@@ -34,6 +42,11 @@ IconData categoryIcon(String code) => switch (code.toLowerCase()) {
       'shopping' => Icons.shopping_bag_outlined,
       'entertainment' => Icons.movie_outlined,
       'salary' => Icons.payments_outlined,
+      'transfer' => Icons.swap_horiz,
+      'loan' => Icons.directions_car_filled_outlined,
+      'cash' => Icons.local_atm,
+      'refund' => Icons.undo,
+      'profit' => Icons.savings_outlined,
       _ => Icons.category_outlined,
     };
 
@@ -91,6 +104,7 @@ class _MoneyScreenState extends State<MoneyScreen> {
               ButtonSegment(value: null, label: Text(t.all)),
               ButtonSegment(value: 'income', label: Text(t.incomeType)),
               ButtonSegment(value: 'expense', label: Text(t.expenseType)),
+              ButtonSegment(value: 'transfer', label: Text(t.transferType)),
             ],
             selected: {_type},
             onSelectionChanged: (s) => setState(() {
@@ -177,13 +191,25 @@ class _MoneyTile extends StatelessWidget {
       onTap: onTap,
       leading: CircleAvatar(child: Icon(categoryIcon(tx.category))),
       title: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis),
-      subtitle: Text(subtitle),
-      trailing: PnlText(value: tx.isIncome ? tx.amount : -tx.amount, currency: tx.currency),
+      subtitle: Text.rich(TextSpan(children: [
+        if (tx.fromSms) ...[
+          WidgetSpan(
+            alignment: PlaceholderAlignment.middle,
+            child: Icon(Icons.sms_outlined, size: 14, semanticLabel: t.fromSms),
+          ),
+          const TextSpan(text: ' '),
+        ],
+        TextSpan(text: subtitle),
+      ])),
+      // transfers move money between your own accounts: neither gain nor loss
+      trailing: tx.isTransfer
+          ? Text(f.money(tx.amount, tx.currency))
+          : PnlText(value: tx.isIncome ? tx.amount : -tx.amount, currency: tx.currency),
     );
   }
 }
 
-/// Add or edit a transaction. The service cannot change type, currency, date or description of a saved
+/// Add or edit a transaction. The service cannot change currency, date or description of a saved
 /// transaction, so those fields are read-only when editing.
 class MoneyTransactionForm extends StatefulWidget {
   const MoneyTransactionForm({super.key, this.transaction});
@@ -269,9 +295,10 @@ class _MoneyTransactionFormState extends State<MoneyTransactionForm> {
             segments: [
               ButtonSegment(value: 'expense', label: Text(t.expenseType), icon: const Icon(Icons.arrow_upward)),
               ButtonSegment(value: 'income', label: Text(t.incomeType), icon: const Icon(Icons.arrow_downward)),
+              ButtonSegment(value: 'transfer', label: Text(t.transferType), icon: const Icon(Icons.swap_horiz)),
             ],
             selected: {_type},
-            onSelectionChanged: _editing ? null : (s) => setState(() => _type = s.first),
+            onSelectionChanged: (s) => setState(() => _type = s.first),
           ),
           const SizedBox(height: 16),
           Row(crossAxisAlignment: CrossAxisAlignment.start, children: [

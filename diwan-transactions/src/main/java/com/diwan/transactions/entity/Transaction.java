@@ -82,6 +82,14 @@ public class Transaction {
     @Column(columnDefinition = "TEXT")
     private String tags;
 
+    /** manual | sms */
+    @Column(nullable = false, length = 20)
+    private String source = "manual";
+
+    /** Fingerprint of the bank SMS a row was imported from (unique per user), null for manual rows. */
+    @Column(name = "source_ref", length = 64)
+    private String sourceRef;
+
     // ── Timestamps ────────────────────────────────────────────────────────────
 
     /** وقت العملية الفعلي */
@@ -133,6 +141,8 @@ public class Transaction {
         public Builder referenceNumber(String v)  { t.referenceNumber = v; return this; }
         public Builder tags(String v)             { t.tags = v;            return this; }
         public Builder recordedAt(LocalDateTime v){ t.recordedAt = v;      return this; }
+        public Builder source(String v)           { t.source = v;          return this; }
+        public Builder sourceRef(String v)        { t.sourceRef = v;       return this; }
         public Transaction build()                { return t; }
     }
 
@@ -166,6 +176,8 @@ public class Transaction {
     public void setTags(String v)                { this.tags = v; }
     public LocalDateTime getRecordedAt()         { return recordedAt; }
     public void setRecordedAt(LocalDateTime v)   { this.recordedAt = v; }
+    public String getSource()                    { return source; }
+    public String getSourceRef()                 { return sourceRef; }
     public LocalDateTime getCreatedAt()          { return createdAt; }
     public LocalDateTime getUpdatedAt()          { return updatedAt; }
 }

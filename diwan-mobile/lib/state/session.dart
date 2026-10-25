@@ -9,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../api/api_client.dart';
 import '../api/diwan_api.dart';
 import '../api/models.dart';
+import '../sms/sms_sync.dart';
 
 /// Who is signed in, which language the app uses, and whether the app is locked behind the fingerprint.
 /// The token lives in the platform's secure storage (Keychain / Android Keystore), never in plain prefs.
@@ -24,7 +25,7 @@ class Session extends ChangeNotifier {
     ));
   }
 
-  static const _userKey = 'diwan.user';
+  static const userKey = 'diwan.user'; // also read by the background SMS sync
   static const _langKey = 'diwan.language';
   static const _biometricKey = 'diwan.biometric';
 
@@ -40,6 +41,9 @@ class Session extends ChangeNotifier {
   Reference? _reference;
   String? _referenceLanguage;
 
+  /// Bank SMS logging (Android); null until [load] finished.
+  SmsSync? sms;
+
   AuthUser? get user => _user;
   bool get signedIn => _user != null;
 
@@ -49,14 +53,15 @@ class Session extends ChangeNotifier {
     final lang = prefs.getString(_langKey) ?? (deviceLocale.languageCode == 'ar' ? 'ar' : 'en');
     locale = Locale(lang);
     biometricEnabled = prefs.getBool(_biometricKey) ?? false;
+    sms = SmsSync(api: api, prefs: prefs);
     try {
-      final raw = await _storage.read(key: _userKey);
+      final raw = await _storage.read(key: userKey);
       if (raw != null) {
         _user = AuthUser.fromJson(jsonDecode(raw) as Map<String, dynamic>);
         locked = biometricEnabled;
       }
     } catch (_) {
-      await _storage.delete(key: _userKey); // unreadable after a reinstall / key change: sign in again
+      await _storage.delete(key: userKey); // unreadable after a reinstall / key change: sign in again
     }
     ready = true;
     notifyListeners();
@@ -69,7 +74,7 @@ class Session extends ChangeNotifier {
 
   Future<void> _signedIn(Future<AuthUser> call) async {
     final user = await call;
-    await _storage.write(key: _userKey, value: jsonEncode({
+    await _storage.write(key: userKey, value: jsonEncode({
       'token': user.token, 'userId': user.userId, 'fullName': user.fullName, 'email': user.email,
     }));
     _user = user;
@@ -103,7 +108,9 @@ class Session extends ChangeNotifier {
   }
 
   Future<void> _clear() async {
-    await _storage.delete(key: _userKey);
+    // the next user of this phone must turn SMS logging on themselves
+    if (sms?.enabled ?? false) await sms!.disable().catchError((_) {});
+    await _storage.delete(key: userKey);
     _user = null;
     _reference = null;
     locked = false;

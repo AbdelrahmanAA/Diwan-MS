@@ -1,4 +1,5 @@
 package com.diwan.transactions.controller;
+import com.diwan.transactions.dto.ImportTransactionsRequest;
 import com.diwan.transactions.dto.TransactionRequest;
 import com.diwan.transactions.dto.TransactionResponse;
 import com.diwan.transactions.service.TransactionService;
@@ -24,6 +25,16 @@ public class TransactionController {
             @RequestHeader("X-User-Id") Long userId){
         TransactionResponse saved = service.save(request, userId);
         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("success",true,"data",saved));
+    }
+
+    /** Batch from the mobile app's bank SMS detection; already imported messages are skipped. */
+    @PostMapping("/import")
+    public ResponseEntity<Map<String, Object>> importSms(
+            @Valid @RequestBody ImportTransactionsRequest request,
+            @RequestHeader("X-User-Id") Long userId){
+        Map<String, Integer> result = service.importSms(userId, request.getTransactions());
+        return ResponseEntity.ok(Map.of("success", true,
+                "imported", result.get("imported"), "duplicates", result.get("duplicates")));
     }
 
     @GetMapping

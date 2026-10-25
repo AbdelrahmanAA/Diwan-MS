@@ -490,10 +490,12 @@ class MoneyTransaction {
         status = j['status'] as String?,
         description = j['description'] as String?,
         notes = j['notes'] as String?,
+        source = (j['source'] ?? 'manual') as String,
         recordedAt = _t(j['recordedAt']);
 
   final int id;
-  final String type; // expense | income
+  final String source; // manual | sms
+  final String type; // expense | income | transfer
   final String category;
   final double amount;
   final String currency;
@@ -506,6 +508,8 @@ class MoneyTransaction {
   final DateTime? recordedAt;
 
   bool get isIncome => type.toLowerCase() == 'income';
+  bool get isTransfer => type.toLowerCase() == 'transfer';
+  bool get fromSms => source == 'sms';
 }
 
 /// Income and expense totals of one currency.

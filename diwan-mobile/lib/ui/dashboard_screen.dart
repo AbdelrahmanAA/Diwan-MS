@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../api/models.dart';
 import '../l10n/app_localizations.dart';
+import '../sms/sms_sync.dart';
 import '../state/session.dart';
 import 'investments_screen.dart';
 import 'medical_screen.dart';
@@ -32,8 +33,34 @@ final Map<String, FeatureScreen> featureScreens = {
   'UpdateUserInfo': FeatureScreen(Icons.person_outline, () => const SettingsTab(), (t) => t.featureAccount, (t) => t.featureAccountDesc),
 };
 
-class DashboardScreen extends StatelessWidget {
+class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
+
+  @override
+  State<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> {
+  late final AppLifecycleListener _lifecycle;
+
+  @override
+  void initState() {
+    super.initState();
+    _lifecycle = AppLifecycleListener(onResume: _syncSms);
+    _syncSms();
+  }
+
+  @override
+  void dispose() {
+    _lifecycle.dispose();
+    super.dispose();
+  }
+
+  /// New bank SMS (when turned on); failures are retried by the background worker.
+  void _syncSms() {
+    final sms = context.read<Session>().sms;
+    if (sms != null && SmsSync.supported && sms.enabled) sms.run().catchError((_) => SmsSyncResult());
+  }
 
   @override
   Widget build(BuildContext context) {

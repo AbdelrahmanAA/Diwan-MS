@@ -6,6 +6,7 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface TransactionRepository extends JpaRepository<Transaction, Long> {
@@ -24,6 +25,10 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     List<Transaction> findByUserIdAndPaymentMethodIgnoreCaseOrderByRecordedAtDesc(Long userId, String paymentMethod);
 
     List<Transaction> findByUserIdAndRecordedAtBetweenOrderByRecordedAtDesc(Long userId, LocalDateTime from, LocalDateTime to);
+
+    boolean existsByUserIdAndSourceRef(Long userId, String sourceRef);
+
+    Optional<Transaction> findFirstByUserIdAndMerchantNameIgnoreCaseOrderByRecordedAtDesc(Long userId, String merchantName);
 
     // ── Legacy (non-scoped) ───────────────────────────────────────────────────
     List<Transaction> findByCategoryIgnoreCaseOrderByRecordedAtDesc(String category);

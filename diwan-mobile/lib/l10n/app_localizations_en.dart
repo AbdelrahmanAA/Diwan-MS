@@ -682,4 +682,107 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get deactivate => 'Deactivate';
+
+  @override
+  String get transferType => 'Transfer';
+
+  @override
+  String get catTransfer => 'Transfer';
+
+  @override
+  String get catLoan => 'Loan';
+
+  @override
+  String get catCash => 'Cash';
+
+  @override
+  String get catRefund => 'Refund';
+
+  @override
+  String get catProfit => 'Profit';
+
+  @override
+  String get fromSms => 'From SMS';
+
+  @override
+  String get smsLogging => 'Log bank SMS automatically';
+
+  @override
+  String get smsLoggingHint =>
+      'Al Rajhi Bank transactions are added to Financial History.';
+
+  @override
+  String get smsDisclosureTitle => 'Read your bank SMS?';
+
+  @override
+  String get smsDisclosure =>
+      'Diwan reads the SMS messages your bank (Al Rajhi) sends you, also while the app is closed, and adds your purchases, transfers, salary and other transactions to Financial History.\n\nOnly the transaction details are sent to your Diwan account: amount, currency, merchant or person, date, the last 4 digits of the card or account, and the balance. The message text, OTP codes and all your other SMS stay on your phone.\n\nYou can turn this off at any time in My Account.';
+
+  @override
+  String get continueLabel => 'Continue';
+
+  @override
+  String get notNow => 'Not now';
+
+  @override
+  String get smsPermissionDenied =>
+      'Diwan needs permission to read SMS for this.';
+
+  @override
+  String get openSettings => 'Open settings';
+
+  @override
+  String get smsHistoryTitle => 'Import earlier messages?';
+
+  @override
+  String get smsHistoryNone => 'Only new messages';
+
+  @override
+  String get smsHistory3 => 'Last 3 months';
+
+  @override
+  String get smsHistory12 => 'Last 12 months';
+
+  @override
+  String get smsSyncNow => 'Sync now';
+
+  @override
+  String smsLastSync(String date) {
+    return 'Last sync: $date';
+  }
+
+  @override
+  String smsImported(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count transactions added',
+      one: '1 transaction added',
+      zero: 'No transactions added yet',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String smsUnrecognized(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count bank messages not recognized',
+      one: '1 bank message not recognized',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String smsSyncResult(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count new transactions',
+      one: '1 new transaction',
+      zero: 'No new transactions',
+    );
+    return '$_temp0';
+  }
 }
