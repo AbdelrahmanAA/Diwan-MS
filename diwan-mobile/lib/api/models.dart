@@ -491,6 +491,9 @@ class MoneyTransaction {
         description = j['description'] as String?,
         notes = j['notes'] as String?,
         source = (j['source'] ?? 'manual') as String,
+        accountRef = j['accountRef'] as String?,
+        cardRef = j['cardRef'] as String?,
+        cardNetwork = j['cardNetwork'] as String?,
         recordedAt = _t(j['recordedAt']);
 
   final int id;
@@ -505,6 +508,9 @@ class MoneyTransaction {
   final String? status;
   final String? description;
   final String? notes;
+  final String? accountRef; // last 4 digits, from bank SMS
+  final String? cardRef;
+  final String? cardNetwork;
   final DateTime? recordedAt;
 
   bool get isIncome => type.toLowerCase() == 'income';

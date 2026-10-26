@@ -435,5 +435,45 @@
   "currentBalance": "Current balance",
   "currentBalanceHint": "As your banking app shows it now; the SMS that follow keep it up to date.",
   "creditLimit": "Credit limit",
-  "nickname": "Name (optional)"
+  "nickname": "Name (optional)",
+  "filters": "Filters",
+  "clearAll": "Clear all",
+  "groupBy": "Group by",
+  "groupNone": "No grouping",
+  "groupDay": "Day",
+  "groupMonth": "Month",
+  "groupProduct": "Card / account",
+  "period": "Period",
+  "periodAll": "All time",
+  "periodThisMonth": "This month",
+  "periodLastMonth": "Last month",
+  "periodLast3Months": "Last 3 months",
+  "periodThisYear": "This year",
+  "periodCustom": "Choose dates",
+  "txSource": "Source",
+  "sourceSms": "Bank SMS",
+  "sourceManual": "Entered by me",
+  "minAmount": "Min amount",
+  "maxAmount": "Max amount",
+  "card": "Card",
+  "otherGroup": "Other",
+  "yesterday": "Yesterday",
+  "searchTransactions": "Search merchant, description, notes",
+  "noMatchingTransactions": "No transactions match these filters.",
+  "txCount": "{count, plural, =1{1 transaction} other{{count} transactions}}",
+  "@txCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "showTransactions": "{count, plural, =0{No transactions} =1{Show 1 transaction} other{Show {count} transactions}}",
+  "@showTransactions": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

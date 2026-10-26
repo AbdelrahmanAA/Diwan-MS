@@ -9,6 +9,10 @@ import 'widgets.dart';
 
 const _arabicBankNames = {'Al Rajhi': 'مصرف الراجحي'};
 
+/// A bank's name in the app's language (the service stores the English one).
+String bankLabel(BuildContext context, String bank) =>
+    Localizations.localeOf(context).languageCode == 'ar' ? _arabicBankNames[bank] ?? bank : bank;
+
 /// Financial History, second tab: per bank the accounts (estimated balance), cards (available / owed) and
 /// loans (remaining) as known from the bank SMS, plus what the user entered once (balance, limit, name).
 class PositionsView extends StatefulWidget {
@@ -38,7 +42,6 @@ class _PositionsViewState extends State<PositionsView> with AutomaticKeepAliveCl
   Widget build(BuildContext context) {
     super.build(context);
     final t = AppLocalizations.of(context);
-    final arabic = Localizations.localeOf(context).languageCode == 'ar';
     return Loader<List<BankPositions>>(
       key: _key,
       load: context.read<Session>().api.positions,
@@ -48,7 +51,7 @@ class _PositionsViewState extends State<PositionsView> with AutomaticKeepAliveCl
           for (final b in banks) ...[
             Padding(
               padding: const EdgeInsets.fromLTRB(4, 12, 4, 4),
-              child: Text(arabic ? _arabicBankNames[b.bank] ?? b.bank : b.bank,
+              child: Text(bankLabel(context, b.bank),
                   style: Theme.of(context).textTheme.titleLarge),
             ),
             if (b.accounts.isNotEmpty) _Section(title: t.accounts),

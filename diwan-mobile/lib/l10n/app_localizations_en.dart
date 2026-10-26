@@ -874,4 +874,99 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get nickname => 'Name (optional)';
+
+  @override
+  String get filters => 'Filters';
+
+  @override
+  String get clearAll => 'Clear all';
+
+  @override
+  String get groupBy => 'Group by';
+
+  @override
+  String get groupNone => 'No grouping';
+
+  @override
+  String get groupDay => 'Day';
+
+  @override
+  String get groupMonth => 'Month';
+
+  @override
+  String get groupProduct => 'Card / account';
+
+  @override
+  String get period => 'Period';
+
+  @override
+  String get periodAll => 'All time';
+
+  @override
+  String get periodThisMonth => 'This month';
+
+  @override
+  String get periodLastMonth => 'Last month';
+
+  @override
+  String get periodLast3Months => 'Last 3 months';
+
+  @override
+  String get periodThisYear => 'This year';
+
+  @override
+  String get periodCustom => 'Choose dates';
+
+  @override
+  String get txSource => 'Source';
+
+  @override
+  String get sourceSms => 'Bank SMS';
+
+  @override
+  String get sourceManual => 'Entered by me';
+
+  @override
+  String get minAmount => 'Min amount';
+
+  @override
+  String get maxAmount => 'Max amount';
+
+  @override
+  String get card => 'Card';
+
+  @override
+  String get otherGroup => 'Other';
+
+  @override
+  String get yesterday => 'Yesterday';
+
+  @override
+  String get searchTransactions => 'Search merchant, description, notes';
+
+  @override
+  String get noMatchingTransactions => 'No transactions match these filters.';
+
+  @override
+  String txCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count transactions',
+      one: '1 transaction',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String showTransactions(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Show $count transactions',
+      one: 'Show 1 transaction',
+      zero: 'No transactions',
+    );
+    return '$_temp0';
+  }
 }

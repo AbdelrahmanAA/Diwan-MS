@@ -7,6 +7,7 @@ import '../l10n/app_localizations.dart';
 import '../state/session.dart';
 import 'format.dart';
 import 'positions_view.dart';
+import 'transactions_view.dart';
 import 'widgets.dart';
 
 // Codes the transactions service stores (lower case); labels are the app's.
@@ -77,16 +78,6 @@ class MoneyScreen extends StatefulWidget {
 }
 
 class _MoneyScreenState extends State<MoneyScreen> {
-  String? _type; // null = all, else income | expense
-  Key _key = UniqueKey();
-
-  void _refresh() => setState(() => _key = UniqueKey());
-
-  Future<void> _open([MoneyTransaction? tx]) async {
-    final changed = await Navigator.push<bool>(context, MaterialPageRoute(builder: (_) => MoneyTransactionForm(transaction: tx)));
-    if (changed == true) _refresh();
-  }
-
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
@@ -98,129 +89,8 @@ class _MoneyScreenState extends State<MoneyScreen> {
           title: Text(t.featureTransactions),
           bottom: TabBar(tabs: [Tab(text: t.transactions), Tab(text: t.cardsAndAccounts)]),
         ),
-        body: TabBarView(children: [_transactions(context), const PositionsView()]),
+        body: const TabBarView(children: [TransactionsView(), PositionsView()]),
       ),
-    );
-  }
-
-  Widget _transactions(BuildContext context) {
-    final t = AppLocalizations.of(context);
-    final api = context.read<Session>().api;
-    return Scaffold(
-      floatingActionButton: FloatingActionButton.extended(
-        icon: const Icon(Icons.add),
-        label: Text(t.newTransaction),
-        onPressed: _open,
-      ),
-      body: Column(children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-          child: SegmentedButton<String?>(
-            segments: [
-              ButtonSegment(value: null, label: Text(t.all)),
-              ButtonSegment(value: 'income', label: Text(t.incomeType)),
-              ButtonSegment(value: 'expense', label: Text(t.expenseType)),
-              ButtonSegment(value: 'transfer', label: Text(t.transferType)),
-            ],
-            selected: {_type},
-            onSelectionChanged: (s) => setState(() {
-              _type = s.first;
-              _key = UniqueKey();
-            }),
-          ),
-        ),
-        Expanded(
-          child: Loader<(List<CurrencyTotals>, List<MoneyTransaction>)>(
-            key: _key,
-            load: () async {
-              final results = await Future.wait([api.moneySummary(), api.moneyTransactions(type: _type)]);
-              return (results[0] as List<CurrencyTotals>, results[1] as List<MoneyTransaction>);
-            },
-            builder: (context, data, reload) {
-              final (totals, list) = data;
-              return ListView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(12, 12, 12, 96),
-                children: [
-                  for (final c in totals) _TotalsCard(totals: c),
-                  if (list.isEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 48),
-                      child: Column(children: [
-                        Icon(Icons.receipt_long_outlined, size: 56, color: Theme.of(context).colorScheme.outline),
-                        const SizedBox(height: 12),
-                        Text(t.noMoneyTransactions, textAlign: TextAlign.center),
-                      ]),
-                    ),
-                  for (final tx in list) _MoneyTile(tx: tx, onTap: () => _open(tx)),
-                ],
-              );
-            },
-          ),
-        ),
-      ]),
-    );
-  }
-}
-
-class _TotalsCard extends StatelessWidget {
-  const _TotalsCard({required this.totals});
-
-  final CurrencyTotals totals;
-
-  @override
-  Widget build(BuildContext context) {
-    final t = AppLocalizations.of(context);
-    final f = Fmt(context);
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Wrap(spacing: 24, runSpacing: 8, children: [
-          Metric(label: t.incomeType, child: Text(f.money(totals.income, totals.currency), style: TextStyle(color: pnlColor(context, 1)))),
-          Metric(label: t.expenseType, child: Text(f.money(totals.expense, totals.currency), style: TextStyle(color: pnlColor(context, -1)))),
-          Metric(label: t.net, child: PnlText(value: totals.net, currency: totals.currency, style: Theme.of(context).textTheme.titleMedium)),
-        ]),
-      ),
-    );
-  }
-}
-
-class _MoneyTile extends StatelessWidget {
-  const _MoneyTile({required this.tx, required this.onTap});
-
-  final MoneyTransaction tx;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final t = AppLocalizations.of(context);
-    final f = Fmt(context);
-    final title = [tx.merchantName, tx.description].firstWhere((s) => s != null && s.trim().isNotEmpty, orElse: () => null) ??
-        categoryLabel(t, tx.category);
-    final subtitle = [
-      categoryLabel(t, tx.category),
-      f.date(tx.recordedAt),
-      if (tx.bank != null && tx.bank != 'Unknown') tx.bank!,
-      if (tx.status != null && tx.status != 'completed') statusLabel(t, tx.status!),
-    ].join(' · ');
-    return ListTile(
-      onTap: onTap,
-      leading: CircleAvatar(child: Icon(categoryIcon(tx.category))),
-      title: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis),
-      subtitle: Text.rich(TextSpan(children: [
-        if (tx.fromSms) ...[
-          WidgetSpan(
-            alignment: PlaceholderAlignment.middle,
-            child: Icon(Icons.sms_outlined, size: 14, semanticLabel: t.fromSms),
-          ),
-          const TextSpan(text: ' '),
-        ],
-        TextSpan(text: subtitle),
-      ])),
-      // transfers move money between your own accounts: neither gain nor loss
-      trailing: tx.isTransfer
-          ? Text(f.money(tx.amount, tx.currency))
-          : PnlText(value: tx.isIncome ? tx.amount : -tx.amount, currency: tx.currency),
     );
   }
 }

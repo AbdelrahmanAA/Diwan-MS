@@ -121,7 +121,7 @@ void main() {
     await tester.tap(find.text('Financial History'));
     await tester.pumpAndSettle();
     expect(find.text('No transactions yet.'), findsOneWidget);
-    expect(find.text('Net'), findsOneWidget);
+    expect(find.text('Search merchant, description, notes'), findsOneWidget);
     await tester.pageBack();
     await tester.pumpAndSettle();
 

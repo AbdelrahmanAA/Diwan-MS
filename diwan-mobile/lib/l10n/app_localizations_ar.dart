@@ -881,4 +881,104 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get nickname => 'الاسم (اختياري)';
+
+  @override
+  String get filters => 'التصفية';
+
+  @override
+  String get clearAll => 'مسح الكل';
+
+  @override
+  String get groupBy => 'تجميع حسب';
+
+  @override
+  String get groupNone => 'بدون تجميع';
+
+  @override
+  String get groupDay => 'يوم';
+
+  @override
+  String get groupMonth => 'شهر';
+
+  @override
+  String get groupProduct => 'البطاقة / الحساب';
+
+  @override
+  String get period => 'الفترة';
+
+  @override
+  String get periodAll => 'كل الأوقات';
+
+  @override
+  String get periodThisMonth => 'هذا الشهر';
+
+  @override
+  String get periodLastMonth => 'الشهر الماضي';
+
+  @override
+  String get periodLast3Months => 'آخر 3 أشهر';
+
+  @override
+  String get periodThisYear => 'هذه السنة';
+
+  @override
+  String get periodCustom => 'اختر التواريخ';
+
+  @override
+  String get txSource => 'المصدر';
+
+  @override
+  String get sourceSms => 'رسائل البنك';
+
+  @override
+  String get sourceManual => 'أدخلتها بنفسي';
+
+  @override
+  String get minAmount => 'أقل مبلغ';
+
+  @override
+  String get maxAmount => 'أعلى مبلغ';
+
+  @override
+  String get card => 'بطاقة';
+
+  @override
+  String get otherGroup => 'أخرى';
+
+  @override
+  String get yesterday => 'أمس';
+
+  @override
+  String get searchTransactions => 'ابحث في التاجر أو الوصف أو الملاحظات';
+
+  @override
+  String get noMatchingTransactions => 'لا توجد معاملات تطابق التصفية.';
+
+  @override
+  String txCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count معاملة',
+      few: '$count معاملات',
+      two: 'معاملتان',
+      one: 'معاملة واحدة',
+      zero: 'لا معاملات',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String showTransactions(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'عرض $count معاملة',
+      few: 'عرض $count معاملات',
+      two: 'عرض معاملتين',
+      one: 'عرض معاملة واحدة',
+      zero: 'لا معاملات',
+    );
+    return '$_temp0';
+  }
 }

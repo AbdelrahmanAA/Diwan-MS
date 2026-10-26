@@ -1657,6 +1657,162 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Name (optional)'**
   String get nickname;
+
+  /// No description provided for @filters.
+  ///
+  /// In en, this message translates to:
+  /// **'Filters'**
+  String get filters;
+
+  /// No description provided for @clearAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear all'**
+  String get clearAll;
+
+  /// No description provided for @groupBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Group by'**
+  String get groupBy;
+
+  /// No description provided for @groupNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No grouping'**
+  String get groupNone;
+
+  /// No description provided for @groupDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Day'**
+  String get groupDay;
+
+  /// No description provided for @groupMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'Month'**
+  String get groupMonth;
+
+  /// No description provided for @groupProduct.
+  ///
+  /// In en, this message translates to:
+  /// **'Card / account'**
+  String get groupProduct;
+
+  /// No description provided for @period.
+  ///
+  /// In en, this message translates to:
+  /// **'Period'**
+  String get period;
+
+  /// No description provided for @periodAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All time'**
+  String get periodAll;
+
+  /// No description provided for @periodThisMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'This month'**
+  String get periodThisMonth;
+
+  /// No description provided for @periodLastMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'Last month'**
+  String get periodLastMonth;
+
+  /// No description provided for @periodLast3Months.
+  ///
+  /// In en, this message translates to:
+  /// **'Last 3 months'**
+  String get periodLast3Months;
+
+  /// No description provided for @periodThisYear.
+  ///
+  /// In en, this message translates to:
+  /// **'This year'**
+  String get periodThisYear;
+
+  /// No description provided for @periodCustom.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose dates'**
+  String get periodCustom;
+
+  /// No description provided for @txSource.
+  ///
+  /// In en, this message translates to:
+  /// **'Source'**
+  String get txSource;
+
+  /// No description provided for @sourceSms.
+  ///
+  /// In en, this message translates to:
+  /// **'Bank SMS'**
+  String get sourceSms;
+
+  /// No description provided for @sourceManual.
+  ///
+  /// In en, this message translates to:
+  /// **'Entered by me'**
+  String get sourceManual;
+
+  /// No description provided for @minAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Min amount'**
+  String get minAmount;
+
+  /// No description provided for @maxAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Max amount'**
+  String get maxAmount;
+
+  /// No description provided for @card.
+  ///
+  /// In en, this message translates to:
+  /// **'Card'**
+  String get card;
+
+  /// No description provided for @otherGroup.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get otherGroup;
+
+  /// No description provided for @yesterday.
+  ///
+  /// In en, this message translates to:
+  /// **'Yesterday'**
+  String get yesterday;
+
+  /// No description provided for @searchTransactions.
+  ///
+  /// In en, this message translates to:
+  /// **'Search merchant, description, notes'**
+  String get searchTransactions;
+
+  /// No description provided for @noMatchingTransactions.
+  ///
+  /// In en, this message translates to:
+  /// **'No transactions match these filters.'**
+  String get noMatchingTransactions;
+
+  /// No description provided for @txCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 transaction} other{{count} transactions}}'**
+  String txCount(int count);
+
+  /// No description provided for @showTransactions.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No transactions} =1{Show 1 transaction} other{Show {count} transactions}}'**
+  String showTransactions(int count);
 }
 
 class _AppLocalizationsDelegate
