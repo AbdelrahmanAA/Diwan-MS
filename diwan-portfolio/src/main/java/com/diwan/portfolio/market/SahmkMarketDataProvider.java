@@ -4,6 +4,8 @@ import com.diwan.portfolio.domain.AssetType;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
@@ -78,7 +80,9 @@ public class SahmkMarketDataProvider implements MarketDataProvider {
     private Instant companiesTriedAt;
 
     public SahmkMarketDataProvider(RestClient.Builder builder, String baseUrl, String apiKey, Settings settings, Clock clock) {
-        this.http = builder.baseUrl(baseUrl).defaultHeader("X-API-Key", apiKey).build();
+        // Without an explicit Accept the JDK client asks for text/html first and SAHMK answers with an HTML page
+        this.http = builder.baseUrl(baseUrl).defaultHeader("X-API-Key", apiKey)
+                .defaultHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE).build();
         this.settings = settings;
         this.clock = clock;
         this.quota = new DailyQuota(settings.dailyRequests(), RIYADH, clock);

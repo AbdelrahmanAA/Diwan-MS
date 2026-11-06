@@ -70,6 +70,7 @@ class SaudiAndGoldProvidersTest {
         MockRestServiceServer server = MockRestServiceServer.bindTo(b).build();
         server.expect(requestTo(BASE + "/quote/2222/"))
                 .andExpect(header("X-API-Key", "secret-key"))
+                .andExpect(header("Accept", "application/json"))
                 .andRespond(withSuccess("""
                         {"symbol":"2222","price":26.16,"previous_close":26.0,"change":0.16,"change_percent":0.62,
                          "high":26.3,"low":25.9,"updated_at":"2026-11-08T12:00:00+03:00","is_delayed":true}""",
