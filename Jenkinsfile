@@ -199,9 +199,10 @@ def selectModules(List all, boolean deployAll) {
 }
 
 // Build context is the repo root (parent pom). Unit tests run in the image build, so a failing test stops the
-// pipeline before anything is deployed. The --label does not affect Docker's layer cache.
+// pipeline before anything is deployed. The --label does not affect Docker's layer cache. --pull picks up base
+// image security fixes, which a cached base would miss until the Trivy scan fails on them.
 def buildImage(String module) {
-    sh "docker build --build-arg SKIP_TESTS=false " +
+    sh "docker build --pull --build-arg SKIP_TESTS=false " +
        "--label org.opencontainers.image.revision=${env.GIT_COMMIT} " +
        "-t ${module}:${env.IMAGE_TAG} -f ./${module}/Dockerfile ."
 }
