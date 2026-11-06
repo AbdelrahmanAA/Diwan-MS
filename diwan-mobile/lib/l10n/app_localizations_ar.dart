@@ -1002,4 +1002,10 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get pricePerGram => 'سعر الجرام';
+
+  @override
+  String get allPortfolios => 'كل المحافظ';
+
+  @override
+  String get byPortfolio => 'حسب المحفظة';
 }

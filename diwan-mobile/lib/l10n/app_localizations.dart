@@ -1849,6 +1849,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Price per gram'**
   String get pricePerGram;
+
+  /// No description provided for @allPortfolios.
+  ///
+  /// In en, this message translates to:
+  /// **'All portfolios'**
+  String get allPortfolios;
+
+  /// No description provided for @byPortfolio.
+  ///
+  /// In en, this message translates to:
+  /// **'By portfolio'**
+  String get byPortfolio;
 }
 
 class _AppLocalizationsDelegate

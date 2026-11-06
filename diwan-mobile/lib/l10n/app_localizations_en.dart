@@ -990,4 +990,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get pricePerGram => 'Price per gram';
+
+  @override
+  String get allPortfolios => 'All portfolios';
+
+  @override
+  String get byPortfolio => 'By portfolio';
 }

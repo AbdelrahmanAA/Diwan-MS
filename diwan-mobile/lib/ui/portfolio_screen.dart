@@ -13,6 +13,9 @@ import 'portfolio_form.dart';
 import 'targets_view.dart';
 import 'widgets.dart';
 
+/// Value of groupBy for the view by portfolio, which only exists in the combined overview.
+const byPortfolioKey = 'PORTFOLIO';
+
 /// One portfolio: grouped overview (country -> type by default), all investments, allocation vs target, goals.
 class PortfolioScreen extends StatefulWidget {
   const PortfolioScreen({super.key, required this.portfolio});
@@ -89,7 +92,7 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
           child: TabBarView(children: [
             Loader<Summary>(
               load: () => api.summary(_portfolio.id, groupBy: _groupBy),
-              builder: (c, s, reload) => _Overview(
+              builder: (c, s, reload) => SummaryOverview(
                 summary: s,
                 groupBy: _groupBy,
                 onGroupBy: (g) => setState(() { _groupBy = g; _key = UniqueKey(); }),
@@ -116,20 +119,24 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
   }
 }
 
-class _Overview extends StatelessWidget {
-  const _Overview({required this.summary, required this.groupBy, required this.onGroupBy, required this.onHolding});
+/// Totals, chart and groups of one portfolio or, with [onPortfolio], of all of them together.
+class SummaryOverview extends StatelessWidget {
+  const SummaryOverview({super.key, required this.summary, required this.groupBy, required this.onGroupBy,
+      required this.onHolding, this.onPortfolio});
 
   final Summary summary;
   final List<String> groupBy;
   final ValueChanged<List<String>> onGroupBy;
   final ValueChanged<Holding> onHolding;
+  final ValueChanged<Portfolio>? onPortfolio;
 
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
     final f = Fmt(context);
-    final ccy = summary.portfolio.baseCurrency;
+    final ccy = summary.baseCurrency;
     final totals = summary.totals;
+    final showPortfolios = groupBy.first == byPortfolioKey;
     return ListView(padding: const EdgeInsets.only(bottom: 96), children: [
       Padding(
         padding: const EdgeInsets.all(16),
@@ -167,22 +174,33 @@ class _Overview extends StatelessWidget {
       Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16),
         child: SegmentedButton<String>(
+          showSelectedIcon: false,
           segments: [
             ButtonSegment(value: 'COUNTRY', label: Text(t.byCountry)),
             ButtonSegment(value: 'ASSET_TYPE', label: Text(t.byType)),
             ButtonSegment(value: 'CURRENCY', label: Text(t.byCurrency)),
+            if (onPortfolio != null) ButtonSegment(value: byPortfolioKey, label: Text(t.byPortfolio)),
           ],
           selected: {groupBy.first},
           onSelectionChanged: (s) {
             final first = s.first;
-            onGroupBy(first == 'COUNTRY' ? ['COUNTRY', 'ASSET_TYPE'] : first == 'ASSET_TYPE' ? ['ASSET_TYPE', 'COUNTRY'] : ['CURRENCY', 'ASSET_TYPE']);
+            onGroupBy(first == byPortfolioKey ? [byPortfolioKey]
+                : first == 'COUNTRY' ? ['COUNTRY', 'ASSET_TYPE'] : first == 'ASSET_TYPE' ? ['ASSET_TYPE', 'COUNTRY'] : ['CURRENCY', 'ASSET_TYPE']);
           },
         ),
       ),
       if (summary.groups.isEmpty)
         Padding(padding: const EdgeInsets.all(32), child: Text(t.noHoldings, textAlign: TextAlign.center))
-      else ...[
-        SizedBox(height: 200, child: _AllocationPie(groups: summary.groups)),
+      else if (showPortfolios) ...[
+        SizedBox(height: 200, child: _AllocationPie(slices: [
+          for (final s in summary.portfolios) (weight: s.weightPercent, title: _shortName(s.portfolio.name)),
+        ])),
+        for (var i = 0; i < summary.portfolios.length; i++)
+          _PortfolioShareCard(share: summary.portfolios[i], color: _palette[i % _palette.length], currency: ccy, onTap: onPortfolio!),
+      ] else ...[
+        SizedBox(height: 200, child: _AllocationPie(slices: [
+          for (final g in summary.groups) (weight: g.weightPercent, title: g.key),
+        ])),
         for (final g in summary.groups) _GroupCard(group: g, currency: ccy, onHolding: onHolding),
       ],
       const DataCredits(),
@@ -195,24 +213,51 @@ const _palette = [
   Color(0xFFCA8A04), Color(0xFFEA580C), Color(0xFFDC2626), Color(0xFFDB2777), Color(0xFF64748B),
 ];
 
-class _AllocationPie extends StatelessWidget {
-  const _AllocationPie({required this.groups});
+String _shortName(String name) => name.length <= 10 ? name : '${name.substring(0, 9)}…';
 
-  final List<GroupNode> groups;
+class _PortfolioShareCard extends StatelessWidget {
+  const _PortfolioShareCard({required this.share, required this.color, required this.currency, required this.onTap});
+
+  final PortfolioShare share;
+  final Color color;
+  final String currency;
+  final ValueChanged<Portfolio> onTap;
 
   @override
   Widget build(BuildContext context) {
-    final shown = groups.where((g) => (g.weightPercent ?? 0) > 0).toList();
+    final f = Fmt(context);
+    return Card(
+      margin: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+      clipBehavior: Clip.antiAlias,
+      child: ListTile(
+        leading: CircleAvatar(radius: 8, backgroundColor: color),
+        title: Text(share.portfolio.name, maxLines: 1, overflow: TextOverflow.ellipsis),
+        subtitle: Text('${f.money(share.totals.marketValue, currency)} · ${f.percent(share.weightPercent, signed: false)}'),
+        trailing: PnlText(value: share.totals.totalReturn, currency: currency),
+        onTap: () => onTap(share.portfolio),
+      ),
+    );
+  }
+}
+
+class _AllocationPie extends StatelessWidget {
+  const _AllocationPie({required this.slices});
+
+  final List<({double? weight, String title})> slices;
+
+  @override
+  Widget build(BuildContext context) {
+    final shown = slices.where((s) => (s.weight ?? 0) > 0).toList();
     return PieChart(PieChartData(
       sectionsSpace: 2,
       centerSpaceRadius: 48,
       sections: [
         for (var i = 0; i < shown.length; i++)
           PieChartSectionData(
-            value: shown[i].weightPercent,
+            value: shown[i].weight,
             color: _palette[i % _palette.length],
             radius: 44,
-            title: (shown[i].weightPercent ?? 0) >= 6 ? shown[i].key : '',
+            title: (shown[i].weight ?? 0) >= 6 ? shown[i].title : '',
             titleStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
           ),
       ],

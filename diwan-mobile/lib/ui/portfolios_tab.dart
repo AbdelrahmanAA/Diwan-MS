@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../api/models.dart';
 import '../l10n/app_localizations.dart';
 import '../state/session.dart';
+import 'all_portfolios_screen.dart';
 import 'format.dart';
 import 'portfolio_form.dart';
 import 'portfolio_screen.dart';
@@ -36,24 +37,71 @@ class _PortfoliosTabState extends State<PortfoliosTab> {
           if (created != null) _refresh();
         },
       ),
-      body: Loader<List<PortfolioOverview>>(
+      body: Loader<(List<PortfolioOverview>, Summary)>(
         key: _key,
-        load: api.portfolios,
-        builder: (context, list, reload) {
+        load: () async => (await api.portfolios(), await api.combinedSummary()),
+        builder: (context, data, reload) {
+          final (list, all) = data;
           if (list.isEmpty) return EmptyState(icon: Icons.pie_chart_outline, text: t.noPortfolios);
-          return ListView.builder(
-            padding: const EdgeInsets.fromLTRB(12, 12, 12, 96),
-            itemCount: list.length,
-            itemBuilder: (c, i) => _PortfolioCard(
-              overview: list[i],
+          return ListView(padding: const EdgeInsets.fromLTRB(12, 12, 12, 96), children: [
+            _AllPortfoliosCard(
+              summary: all,
               onTap: () async {
-                await Navigator.push(context,
-                    MaterialPageRoute(builder: (_) => PortfolioScreen(portfolio: list[i].portfolio)));
+                await Navigator.push(context, MaterialPageRoute(builder: (_) => const AllPortfoliosScreen()));
                 reload();
               },
             ),
-          );
+            for (final overview in list)
+              _PortfolioCard(
+                overview: overview,
+                onTap: () async {
+                  await Navigator.push(context,
+                      MaterialPageRoute(builder: (_) => PortfolioScreen(portfolio: overview.portfolio)));
+                  reload();
+                },
+              ),
+          ]);
         },
+      ),
+    );
+  }
+}
+
+class _AllPortfoliosCard extends StatelessWidget {
+  const _AllPortfoliosCard({required this.summary, required this.onTap});
+
+  final Summary summary;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
+    final f = Fmt(context);
+    final ccy = summary.baseCurrency;
+    final totals = summary.totals;
+    return Card(
+      color: Theme.of(context).colorScheme.primaryContainer,
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(children: [
+              const Icon(Icons.donut_large),
+              const SizedBox(width: 12),
+              Expanded(child: Text(t.allPortfolios, style: Theme.of(context).textTheme.titleMedium)),
+              const Icon(Icons.chevron_right),
+            ]),
+            const SizedBox(height: 12),
+            Text(f.money(totals.marketValue, ccy), style: Theme.of(context).textTheme.headlineSmall),
+            const SizedBox(height: 8),
+            Wrap(spacing: 24, runSpacing: 8, children: [
+              Metric(label: t.today, child: PnlText(value: totals.dayChange, percent: totals.dayChangePercent, currency: ccy)),
+              Metric(label: t.totalReturn, child: PnlText(value: totals.totalReturn, percent: totals.totalReturnPercent, currency: ccy)),
+            ]),
+          ]),
+        ),
       ),
     );
   }

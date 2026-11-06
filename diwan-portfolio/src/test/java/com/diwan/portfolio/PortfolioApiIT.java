@@ -156,6 +156,47 @@ class PortfolioApiIT {
     }
 
     @Test
+    void combinedSummaryAddsUpEveryPortfolioOfTheUserInThePreferredCurrency() throws Exception {
+        long dollars = createPortfolio("Dollars", "USD");
+        long riyals = createPortfolio("Riyals", "SAR");
+        long empty = createPortfolio("Empty", "EGP");
+        var today = java.time.LocalDate.now().toString();
+        call(post("/api/portfolio/portfolios/" + dollars + "/holdings"), java.util.Map.of(
+                "assetType", "CASH", "name", "Cash", "countryCode", "US", "currency", "USD",
+                "initialTransaction", java.util.Map.of("type", "DEPOSIT", "tradeDate", today, "amount", "1000")))
+                .andExpect(status().isCreated());
+        call(post("/api/portfolio/portfolios/" + riyals + "/holdings"), java.util.Map.of(
+                "assetType", "CASH", "name", "Cash", "countryCode", "SA", "currency", "SAR",
+                "initialTransaction", java.util.Map.of("type", "DEPOSIT", "tradeDate", today, "amount", "11250")))
+                .andExpect(status().isCreated());
+
+        JsonNode all = body(call(get("/api/portfolio/portfolios/summary"), null).andExpect(status().isOk()));
+
+        assertThat(all.get("baseCurrency").asText()).isEqualTo("USD");
+        assertThat(all.get("totals").get("marketValue").decimalValue()).isEqualByComparingTo("4000");
+        assertThat(all.get("currencyTotals")).extracting(n -> n.get("currency").asText()).containsExactly("SAR", "USD");
+        assertThat(all.get("groups")).extracting(n -> n.get("key").asText()).containsExactly("SA", "US");
+        JsonNode shares = all.get("portfolios");
+        assertThat(shares).hasSize(3);
+        assertThat(shares.get(0).get("portfolio").get("id").asLong()).isEqualTo(riyals);
+        assertThat(shares.get(0).get("weightPercent").decimalValue()).isEqualByComparingTo("75");
+        assertThat(shares.get(1).get("weightPercent").decimalValue()).isEqualByComparingTo("25");
+        assertThat(shares.get(2).get("portfolio").get("id").asLong()).isEqualTo(empty);
+        assertThat(shares.get(2).get("holdingsCount").asInt()).isZero();
+
+        call(put("/api/portfolio/preferences"), java.util.Map.of("baseCurrency", "SAR")).andExpect(status().isOk());
+        JsonNode inRiyals = body(call(get("/api/portfolio/portfolios/summary"), null));
+        assertThat(inRiyals.get("baseCurrency").asText()).isEqualTo("SAR");
+        assertThat(inRiyals.get("totals").get("marketValue").decimalValue()).isEqualByComparingTo("15000");
+
+        long stranger = USERS.incrementAndGet();
+        JsonNode theirs = body(call(get("/api/portfolio/portfolios/summary"), null, stranger, "en"));
+        assertThat(theirs.get("portfolios")).isEmpty();
+        assertThat(theirs.get("groups")).isEmpty();
+        assertThat(theirs.get("totals").get("marketValue").decimalValue()).isEqualByComparingTo("0");
+    }
+
+    @Test
     void requestsWithoutAGatewaySignatureAreRejected() throws Exception {
         mvc.perform(get("/api/portfolio/portfolios").header("X-User-Id", "1")).andExpect(status().isUnauthorized());
     }

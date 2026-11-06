@@ -5041,6 +5041,50 @@
           ]
         },
         {
+          "name": "All portfolios added together",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/portfolio/portfolios/summary",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "portfolio",
+                "portfolios",
+                "summary"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenA}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "const s = pm.response.json();",
+                  "pm.test('in the preferred currency', () => pm.expect(s.baseCurrency).to.eql('USD'));",
+                  "pm.test('includes the portfolio', () => pm.expect(s.portfolios.map(p => p.portfolio.id)).to.include(pm.collectionVariables.get('portfolioId')));",
+                  "pm.test('has a total and groups', () => { pm.expect(s.totals.marketValue).to.be.above(0); pm.expect(s.groups).to.not.be.empty; });"
+                ]
+              }
+            }
+          ]
+        },
+        {
           "name": "Targets that do not add up to 100 -> 400",
           "request": {
             "method": "PUT",

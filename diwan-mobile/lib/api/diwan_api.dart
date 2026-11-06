@@ -45,6 +45,9 @@ class DiwanApi {
         query: {'groupBy': groupBy?.join(','), 'tagId': tagId},
       ) as Map<String, dynamic>);
 
+  Future<Summary> combinedSummary({List<String>? groupBy}) async => Summary.fromJson(
+      await http.get('$_p/portfolios/summary', query: {'groupBy': groupBy?.join(',')}) as Map<String, dynamic>);
+
   Future<Allocation> allocation(int id, String dimension) async => Allocation.fromJson(
       await http.get('$_p/portfolios/$id/allocation', query: {'dimension': dimension}) as Map<String, dynamic>);
 

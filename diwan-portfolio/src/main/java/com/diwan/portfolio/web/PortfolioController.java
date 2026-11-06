@@ -11,6 +11,7 @@ import com.diwan.portfolio.web.dto.Requests.HoldingRequest;
 import com.diwan.portfolio.web.dto.Requests.PortfolioRequest;
 import com.diwan.portfolio.web.dto.Requests.TargetsRequest;
 import com.diwan.portfolio.web.dto.Responses.AllocationResponse;
+import com.diwan.portfolio.web.dto.Responses.CombinedSummaryResponse;
 import com.diwan.portfolio.web.dto.Responses.GoalResponse;
 import com.diwan.portfolio.web.dto.Responses.HoldingResponse;
 import com.diwan.portfolio.web.dto.Responses.PortfolioOverview;
@@ -47,6 +48,13 @@ public class PortfolioController {
     @GetMapping
     public List<PortfolioOverview> list(@RequestHeader("X-User-Id") Long userId) {
         return summaries.overviews(userId);
+    }
+
+    /** Every portfolio added together, in the user's preferred currency. groupBy as in the portfolio summary. */
+    @GetMapping("/summary")
+    public CombinedSummaryResponse combinedSummary(@RequestHeader("X-User-Id") Long userId,
+                                                   @RequestParam(required = false) List<AllocationDimension> groupBy) {
+        return summaries.combined(userId, groupBy);
     }
 
     @PostMapping

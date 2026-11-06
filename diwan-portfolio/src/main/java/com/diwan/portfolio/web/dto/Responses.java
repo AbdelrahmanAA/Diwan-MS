@@ -63,6 +63,14 @@ public final class Responses {
                                   List<CurrencyTotals> currencyTotals, List<GroupNode> groups,
                                   List<String> missingRates, LocalDate fxAsOf) {}
 
+    /** One portfolio's part of the combined view, in the combined currency. */
+    public record PortfolioShare(PortfolioResponse portfolio, int holdingsCount, BigDecimal weightPercent, Totals totals) {}
+
+    /** Every portfolio of the user added together; baseCurrency is the user's preferred currency. */
+    public record CombinedSummaryResponse(String baseCurrency, List<AllocationDimension> groupBy, Totals totals,
+                                          List<CurrencyTotals> currencyTotals, List<PortfolioShare> portfolios,
+                                          List<GroupNode> groups, List<String> missingRates, LocalDate fxAsOf) {}
+
     public record TransactionResponse(Long id, Long holdingId, TransactionType type, String typeLabel,
                                       LocalDate tradeDate, BigDecimal quantity, BigDecimal price, BigDecimal amount,
                                       BigDecimal fees, String note, Instant createdAt) {}

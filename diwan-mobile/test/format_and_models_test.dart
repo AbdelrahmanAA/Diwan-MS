@@ -41,6 +41,22 @@ void main() {
     expect(s.groups.last.localTotals, isNull);
   });
 
+  test('combined summary has no portfolio of its own but one share per portfolio', () {
+    final s = Summary.fromJson(jsonDecode('''
+      {"baseCurrency":"SAR","groupBy":["COUNTRY","ASSET_TYPE"],"totals":{"marketValue":15000},"currencyTotals":[],
+       "portfolios":[{"portfolio":{"id":2,"name":"Riyals","baseCurrency":"SAR"},"holdingsCount":1,"weightPercent":75,
+                      "totals":{"marketValue":11250}},
+                     {"portfolio":{"id":3,"name":"Empty","baseCurrency":"EGP"},"holdingsCount":0,"weightPercent":null,
+                      "totals":{"marketValue":0}}],
+       "groups":[],"missingRates":[]}''') as Map<String, dynamic>);
+
+    expect(s.portfolio, isNull);
+    expect(s.baseCurrency, 'SAR');
+    expect(s.portfolios.first.portfolio.name, 'Riyals');
+    expect(s.portfolios.first.weightPercent, 75);
+    expect(s.portfolios.last.weightPercent, isNull);
+  });
+
   test('gold symbols are told apart from other commodities', () {
     expect(isGold('GOLD-21K'), isTrue);
     expect(isGold('GLD'), isFalse);

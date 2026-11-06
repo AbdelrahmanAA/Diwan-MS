@@ -488,5 +488,7 @@
   },
   "goldPriceNote": "Valued from the global gold price, without shop premiums or making charges.",
   "grams": "Grams",
-  "pricePerGram": "Price per gram"
+  "pricePerGram": "Price per gram",
+  "allPortfolios": "All portfolios",
+  "byPortfolio": "By portfolio"
 }

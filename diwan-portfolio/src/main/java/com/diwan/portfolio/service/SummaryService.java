@@ -4,10 +4,12 @@ import com.diwan.portfolio.domain.AllocationDimension;
 import com.diwan.portfolio.entity.Holding;
 import com.diwan.portfolio.entity.Portfolio;
 import com.diwan.portfolio.repository.HoldingRepository;
+import com.diwan.portfolio.web.dto.Responses.CombinedSummaryResponse;
 import com.diwan.portfolio.web.dto.Responses.CurrencyTotals;
 import com.diwan.portfolio.web.dto.Responses.GroupNode;
 import com.diwan.portfolio.web.dto.Responses.HoldingResponse;
 import com.diwan.portfolio.web.dto.Responses.PortfolioOverview;
+import com.diwan.portfolio.web.dto.Responses.PortfolioShare;
 import com.diwan.portfolio.web.dto.Responses.SummaryResponse;
 import com.diwan.portfolio.web.dto.Responses.Totals;
 import org.springframework.stereotype.Service;
@@ -31,14 +33,16 @@ public class SummaryService {
     private final HoldingRepository holdings;
     private final ValuationService valuation;
     private final PortfolioService portfolios;
+    private final PreferenceService preferences;
     private final Labels labels;
     private final Views views;
 
     public SummaryService(HoldingRepository holdings, ValuationService valuation, PortfolioService portfolios,
-                          Labels labels, Views views) {
+                          PreferenceService preferences, Labels labels, Views views) {
         this.holdings = holdings;
         this.valuation = valuation;
         this.portfolios = portfolios;
+        this.preferences = preferences;
         this.labels = labels;
         this.views = views;
     }
@@ -57,13 +61,37 @@ public class SummaryService {
     @Transactional(readOnly = true)
     public SummaryResponse summary(Long userId, Long portfolioId, List<AllocationDimension> groupBy, Long tagId) {
         Portfolio p = portfolios.requireOwned(portfolioId, userId);
-        List<AllocationDimension> dims = groupBy == null || groupBy.isEmpty() ? DEFAULT_GROUPING
-                : groupBy.stream().distinct().limit(3).toList();
+        List<AllocationDimension> dims = dimensions(groupBy);
         Valued v = valued(p, tagId, false);
         Totals totals = totals(v.values());
         BigDecimal total = Money.nz(sum(v.values(), HoldingValue::marketValue));
         return new SummaryResponse(views.portfolio(p), dims, totals, currencyTotals(v.values()),
                 group(v.values(), dims, 0, total), missingRates(v.values()), v.rates().asOf());
+    }
+
+    /** All open holdings of the user, whatever portfolio they are in, valued in the user's preferred currency. */
+    @Transactional(readOnly = true)
+    public CombinedSummaryResponse combined(Long userId, List<AllocationDimension> groupBy) {
+        String currency = preferences.baseCurrencyOf(userId);
+        List<AllocationDimension> dims = dimensions(groupBy);
+        FxService.Snapshot rates = valuation.fxSnapshot();
+        List<HoldingValue> values = valuation.value(holdings.findOpenOfUser(userId), currency, rates);
+        BigDecimal total = Money.nz(sum(values, HoldingValue::marketValue));
+
+        Map<Long, List<HoldingValue>> byPortfolio = new LinkedHashMap<>();
+        values.forEach(v -> byPortfolio.computeIfAbsent(v.holding().getPortfolio().getId(), k -> new ArrayList<>()).add(v));
+        List<PortfolioShare> shares = portfolios.ownedBy(userId).stream().map(p -> {
+            List<HoldingValue> members = byPortfolio.getOrDefault(p.getId(), List.of());
+            return new PortfolioShare(views.portfolio(p), members.size(),
+                    Money.percent(sum(members, HoldingValue::marketValue), total), totals(members));
+        }).sorted(Comparator.comparing((PortfolioShare s) -> s.totals().marketValue()).reversed()).toList();
+
+        return new CombinedSummaryResponse(currency, dims, totals(values), currencyTotals(values), shares,
+                values.isEmpty() ? List.of() : group(values, dims, 0, total), missingRates(values), rates.asOf());
+    }
+
+    private static List<AllocationDimension> dimensions(List<AllocationDimension> groupBy) {
+        return groupBy == null || groupBy.isEmpty() ? DEFAULT_GROUPING : groupBy.stream().distinct().limit(3).toList();
     }
 
     @Transactional(readOnly = true)

@@ -231,16 +231,35 @@ class MarketTotals {
   final Totals totals;
 }
 
+/// One portfolio's part of the combined view, in the combined currency.
+class PortfolioShare {
+  PortfolioShare.fromJson(Map<String, dynamic> j)
+      : portfolio = Portfolio.fromJson(j['portfolio'] as Map<String, dynamic>),
+        holdingsCount = (j['holdingsCount'] as num).toInt(),
+        weightPercent = _d(j['weightPercent']),
+        totals = Totals.fromJson(j['totals'] as Map<String, dynamic>);
+
+  final Portfolio portfolio;
+  final int holdingsCount;
+  final double? weightPercent;
+  final Totals totals;
+}
+
+/// One portfolio's summary, or all of them added together (then [portfolio] is null and [portfolios] is set).
 class Summary {
   Summary.fromJson(Map<String, dynamic> j)
-      : portfolio = Portfolio.fromJson(j['portfolio'] as Map<String, dynamic>),
+      : portfolio = j['portfolio'] == null ? null : Portfolio.fromJson(j['portfolio'] as Map<String, dynamic>),
+        baseCurrency = (j['baseCurrency'] ?? (j['portfolio'] as Map<String, dynamic>)['baseCurrency']) as String,
+        portfolios = _list(j['portfolios'], PortfolioShare.fromJson),
         groupBy = (j['groupBy'] as List).cast<String>(),
         totals = Totals.fromJson(j['totals'] as Map<String, dynamic>),
         currencyTotals = _list(j['currencyTotals'], MarketTotals.fromJson),
         groups = _list(j['groups'], GroupNode.fromJson),
         missingRates = (j['missingRates'] as List? ?? []).cast<String>();
 
-  final Portfolio portfolio;
+  final Portfolio? portfolio;
+  final String baseCurrency;
+  final List<PortfolioShare> portfolios;
   final List<String> groupBy;
   final Totals totals;
   final List<MarketTotals> currencyTotals;

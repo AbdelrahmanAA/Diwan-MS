@@ -291,5 +291,7 @@
   "goldKarat": "ذهب عيار {karat}",
   "goldPriceNote": "القيمة محسوبة من السعر العالمي للذهب، بدون هامش المحلات أو المصنعية.",
   "grams": "جرام",
-  "pricePerGram": "سعر الجرام"
+  "pricePerGram": "سعر الجرام",
+  "allPortfolios": "كل المحافظ",
+  "byPortfolio": "حسب المحفظة"
 }
