@@ -121,6 +121,41 @@ class PortfolioApiIT {
     }
 
     @Test
+    void eachMarketKeepsItsCurrencyAndGoldIsHeldInGramsInAnyCurrency() throws Exception {
+        long pid = createPortfolio("Markets", "USD");
+
+        JsonNode aramco = body(call(post("/api/portfolio/portfolios/" + pid + "/holdings"), java.util.Map.of(
+                "assetType", "STOCK", "name", "Aramco", "symbol", "2222.sr",
+                "initialTransaction", buy("100", "25"))).andExpect(status().isCreated()));
+        assertThat(aramco.get("countryCode").asText()).isEqualTo("SA");
+        assertThat(aramco.get("currency").asText()).isEqualTo("SAR");
+
+        JsonNode wrong = body(call(post("/api/portfolio/portfolios/" + pid + "/holdings"), java.util.Map.of(
+                "assetType", "STOCK", "name", "Aramco", "symbol", "2222.SR", "currency", "USD"))
+                .andExpect(status().isBadRequest()));
+        assertThat(wrong.get("code").asText()).isEqualTo("holding.currency_is_the_market");
+
+        JsonNode gold = body(call(post("/api/portfolio/portfolios/" + pid + "/holdings"), java.util.Map.of(
+                "assetType", "COMMODITY", "name", "Bracelet", "symbol", "GOLD-21K", "countryCode", "EG", "currency", "EGP",
+                "initialTransaction", buy("10", "5000"))).andExpect(status().isCreated()));
+        assertThat(gold.get("currency").asText()).isEqualTo("EGP");
+        assertThat(gold.get("priceSource").asText()).isEqualTo("QUOTE");
+        // 114 USD per gram +-10% at 48.50 EGP per USD, not 114 EGP
+        assertThat(gold.get("priceLocal").asDouble()).isBetween(4900.0, 6200.0);
+
+        JsonNode summary = body(call(get("/api/portfolio/portfolios/" + pid + "/summary"), null));
+        assertThat(summary.get("currencyTotals")).extracting(n -> n.get("currency").asText())
+                .containsExactly("EGP", "SAR");
+        JsonNode sar = summary.get("currencyTotals").get(1).get("totals");
+        assertThat(sar.get("costBasis").decimalValue()).isEqualByComparingTo("2500");
+        assertThat(summary.get("groups")).anySatisfy(g -> {
+            assertThat(g.get("key").asText()).isEqualTo("SA");
+            assertThat(g.get("currency").asText()).isEqualTo("SAR");
+            assertThat(g.get("localTotals").get("costBasis").decimalValue()).isEqualByComparingTo("2500");
+        });
+    }
+
+    @Test
     void requestsWithoutAGatewaySignatureAreRejected() throws Exception {
         mvc.perform(get("/api/portfolio/portfolios").header("X-User-Id", "1")).andExpect(status().isUnauthorized());
     }

@@ -14,12 +14,14 @@ import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
  * Values holdings at their current price. Price priority: market quote (holding linked to an instrument),
- * then the newest manual valuation, then the cost basis. Cash is worth its balance.
+ * then the newest manual valuation, then the cost basis. Cash is worth its balance. A quote is in the
+ * instrument's currency, which can differ from the holding's (gold is quoted in USD and held in any currency).
  */
 @Service
 public class ValuationService {
@@ -59,6 +61,12 @@ public class ValuationService {
         return h.getInstrument() == null ? null : quoteById.get(h.getInstrument().getId());
     }
 
+    /** A quoted amount in the holding's currency; empty when the amount or the exchange rate is missing. */
+    static Optional<BigDecimal> inHoldingCurrency(BigDecimal quoted, Holding h, FxService.Snapshot rates) {
+        String quoteCurrency = h.getInstrument() == null ? null : h.getInstrument().getCurrency();
+        return quoteCurrency == null ? Optional.ofNullable(quoted) : rates.convert(quoted, quoteCurrency, h.getCurrency());
+    }
+
     /** Pure valuation of one holding; package-visible for tests. */
     static HoldingValue value(Holding h, InstrumentQuote quote, Valuation valuation,
                               String baseCurrency, FxService.Snapshot rates) {
@@ -74,14 +82,12 @@ public class ValuationService {
             price = BigDecimal.ONE;
             source = PriceSource.CASH;
             local = qty;
-        } else if (quote != null) {
-            price = quote.getPrice();
+        } else if (quote != null && inHoldingCurrency(quote.getPrice(), h, rates).isPresent()) {
+            price = inHoldingCurrency(quote.getPrice(), h, rates).orElseThrow();
             source = PriceSource.QUOTE;
             asOf = quote.getQuoteTime();
             local = qty.multiply(price);
-            if (quote.getDayChange() != null) {
-                dayChangeLocal = qty.multiply(quote.getDayChange());
-            }
+            dayChangeLocal = inHoldingCurrency(quote.getDayChange(), h, rates).map(qty::multiply).orElse(BigDecimal.ZERO);
             dayChangePercent = quote.getChangePercent();
         } else if (valuation != null && qty.signum() != 0) { // a sold-out holding is worth nothing
             local = valuation.getValue();
@@ -97,11 +103,11 @@ public class ValuationService {
         String ccy = h.getCurrency();
         var market = rates.convert(local, ccy, baseCurrency);
         if (market.isEmpty()) {
-            return new HoldingValue(h, price, source, asOf, local, false,
+            return new HoldingValue(h, price, source, asOf, local, dayChangeLocal, false,
                     null, null, null, null, null, null, dayChangePercent);
         }
         BigDecimal cost = rates.convert(h.costBasis(), ccy, baseCurrency).orElseThrow();
-        return new HoldingValue(h, price, source, asOf, local, true,
+        return new HoldingValue(h, price, source, asOf, local, dayChangeLocal, true,
                 market.get(),
                 cost,
                 market.get().subtract(cost),

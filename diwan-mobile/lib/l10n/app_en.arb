@@ -65,7 +65,7 @@
   "country": "Country",
   "currency": "Currency",
   "symbol": "Market symbol",
-  "symbolHint": "e.g. AAPL - search by name or symbol",
+  "symbolHint": "e.g. AAPL or 2222.SR - search by name or symbol",
   "search": "Search",
   "quantity": "Quantity",
   "price": "Price per unit",
@@ -475,5 +475,18 @@
         "type": "int"
       }
     }
-  }
+  },
+  "byMarketCurrency": "By market currency",
+  "goldByKarat": "Gold by karat",
+  "goldKarat": "Gold {karat}K",
+  "@goldKarat": {
+    "placeholders": {
+      "karat": {
+        "type": "int"
+      }
+    }
+  },
+  "goldPriceNote": "Valued from the global gold price, without shop premiums or making charges.",
+  "grams": "Grams",
+  "pricePerGram": "Price per gram"
 }

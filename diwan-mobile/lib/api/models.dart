@@ -38,7 +38,8 @@ class Reference {
         alertTypes = _list(j['alertTypes'], CodeLabel.fromJson),
         countries = _list(j['countries'], CodeLabel.fromJson),
         currencies = _list(j['currencies'], CodeLabel.fromJson),
-        marketDataProvider = (j['marketDataProvider'] ?? '') as String;
+        marketDataProvider = (j['marketDataProvider'] ?? '') as String,
+        dataCredits = (j['dataCredits'] as List? ?? []).cast<String>();
 
   final List<CodeLabel> assetTypes;
   final List<CodeLabel> transactionTypes;
@@ -46,6 +47,7 @@ class Reference {
   final List<CodeLabel> countries;
   final List<CodeLabel> currencies;
   final String marketDataProvider;
+  final List<String> dataCredits;
 
   String label(List<CodeLabel> list, String code) =>
       list.firstWhere((c) => c.code == code, orElse: () => CodeLabel(code, code)).label;
@@ -145,6 +147,10 @@ class Holding {
         totalReturn = _d(j['totalReturn']),
         dayChange = _d(j['dayChange']),
         dayChangePercent = _d(j['dayChangePercent']),
+        unrealizedPnlLocal = _d(j['unrealizedPnlLocal']),
+        realizedPnlLocal = _d(j['realizedPnlLocal']),
+        netIncomeLocal = _d(j['netIncomeLocal']),
+        dayChangeLocal = _d(j['dayChangeLocal']),
         weightPercent = _d(j['weightPercent']),
         notes = j['notes'] as String?,
         attributes = (j['attributes'] as Map<String, dynamic>?) ?? {},
@@ -177,6 +183,10 @@ class Holding {
   final double? totalReturn;
   final double? dayChange;
   final double? dayChangePercent;
+  final double? unrealizedPnlLocal;
+  final double? realizedPnlLocal;
+  final double? netIncomeLocal;
+  final double? dayChangeLocal;
   final double? weightPercent;
   final String? notes;
   final Map<String, dynamic> attributes;
@@ -193,6 +203,8 @@ class GroupNode {
         label = j['label'] as String,
         weightPercent = _d(j['weightPercent']),
         totals = Totals.fromJson(j['totals'] as Map<String, dynamic>),
+        currency = j['currency'] as String?,
+        localTotals = j['localTotals'] == null ? null : Totals.fromJson(j['localTotals'] as Map<String, dynamic>),
         groups = _list(j['groups'], GroupNode.fromJson),
         holdings = _list(j['holdings'], Holding.fromJson);
 
@@ -201,8 +213,22 @@ class GroupNode {
   final String label;
   final double? weightPercent;
   final Totals totals;
+  final String? currency; // set when every holding of the group is in this currency
+  final Totals? localTotals; // in that currency
   final List<GroupNode> groups;
   final List<Holding> holdings;
+}
+
+/// What a portfolio holds in one currency, in that currency.
+class MarketTotals {
+  MarketTotals.fromJson(Map<String, dynamic> j)
+      : currency = j['currency'] as String,
+        currencyLabel = (j['currencyLabel'] ?? j['currency']) as String,
+        totals = Totals.fromJson(j['totals'] as Map<String, dynamic>);
+
+  final String currency;
+  final String currencyLabel;
+  final Totals totals;
 }
 
 class Summary {
@@ -210,12 +236,14 @@ class Summary {
       : portfolio = Portfolio.fromJson(j['portfolio'] as Map<String, dynamic>),
         groupBy = (j['groupBy'] as List).cast<String>(),
         totals = Totals.fromJson(j['totals'] as Map<String, dynamic>),
+        currencyTotals = _list(j['currencyTotals'], MarketTotals.fromJson),
         groups = _list(j['groups'], GroupNode.fromJson),
         missingRates = (j['missingRates'] as List? ?? []).cast<String>();
 
   final Portfolio portfolio;
   final List<String> groupBy;
   final Totals totals;
+  final List<MarketTotals> currencyTotals;
   final List<GroupNode> groups;
   final List<String> missingRates;
 }

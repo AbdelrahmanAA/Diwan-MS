@@ -51,7 +51,7 @@
   "country": "الدولة",
   "currency": "العملة",
   "symbol": "رمز السوق",
-  "symbolHint": "مثل AAPL - ابحث بالاسم أو الرمز",
+  "symbolHint": "مثل AAPL أو 2222.SR - ابحث بالاسم أو الرمز",
   "search": "بحث",
   "quantity": "الكمية",
   "price": "سعر الوحدة",
@@ -285,5 +285,11 @@
   "searchTransactions": "ابحث في التاجر أو الوصف أو الملاحظات",
   "noMatchingTransactions": "لا توجد معاملات تطابق التصفية.",
   "txCount": "{count, plural, =0{لا معاملات} =1{معاملة واحدة} =2{معاملتان} few{{count} معاملات} other{{count} معاملة}}",
-  "showTransactions": "{count, plural, =0{لا معاملات} =1{عرض معاملة واحدة} =2{عرض معاملتين} few{عرض {count} معاملات} other{عرض {count} معاملة}}"
+  "showTransactions": "{count, plural, =0{لا معاملات} =1{عرض معاملة واحدة} =2{عرض معاملتين} few{عرض {count} معاملات} other{عرض {count} معاملة}}",
+  "byMarketCurrency": "حسب عملة السوق",
+  "goldByKarat": "الذهب حسب العيار",
+  "goldKarat": "ذهب عيار {karat}",
+  "goldPriceNote": "القيمة محسوبة من السعر العالمي للذهب، بدون هامش المحلات أو المصنعية.",
+  "grams": "جرام",
+  "pricePerGram": "سعر الجرام"
 }

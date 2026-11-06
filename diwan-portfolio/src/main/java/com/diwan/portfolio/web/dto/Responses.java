@@ -47,14 +47,21 @@ public final class Responses {
             boolean convertible, BigDecimal marketValue, BigDecimal costBasis,
             BigDecimal unrealizedPnl, BigDecimal unrealizedPnlPercent, BigDecimal realizedPnl,
             BigDecimal netIncome, BigDecimal totalReturn, BigDecimal dayChange, BigDecimal dayChangePercent,
-            BigDecimal weightPercent, String notes, Map<String, Object> attributes, boolean closed,
+            BigDecimal unrealizedPnlLocal, BigDecimal realizedPnlLocal, BigDecimal netIncomeLocal,
+            BigDecimal dayChangeLocal, BigDecimal weightPercent, String notes, Map<String, Object> attributes, boolean closed,
             List<TagResponse> tags, Instant createdAt) {}
 
+    /** currency and localTotals are set when all holdings of the group share one currency, otherwise null. */
     public record GroupNode(AllocationDimension dimension, String key, String label, BigDecimal weightPercent,
-                            Totals totals, List<GroupNode> groups, List<HoldingResponse> holdings) {}
+                            Totals totals, String currency, Totals localTotals, List<GroupNode> groups,
+                            List<HoldingResponse> holdings) {}
+
+    /** What is held in one currency, in that currency: no exchange rate is involved. */
+    public record CurrencyTotals(String currency, String currencyLabel, Totals totals) {}
 
     public record SummaryResponse(PortfolioResponse portfolio, List<AllocationDimension> groupBy, Totals totals,
-                                  List<GroupNode> groups, List<String> missingRates, LocalDate fxAsOf) {}
+                                  List<CurrencyTotals> currencyTotals, List<GroupNode> groups,
+                                  List<String> missingRates, LocalDate fxAsOf) {}
 
     public record TransactionResponse(Long id, Long holdingId, TransactionType type, String typeLabel,
                                       LocalDate tradeDate, BigDecimal quantity, BigDecimal price, BigDecimal amount,
@@ -83,7 +90,8 @@ public final class Responses {
     public record ReferenceResponse(List<CodeLabel> assetTypes, List<CodeLabel> transactionTypes,
                                     List<CodeLabel> alertTypes, List<CodeLabel> dimensions,
                                     List<CodeLabel> countries, List<CodeLabel> currencies,
-                                    List<CodeLabel> languages, String marketDataProvider) {}
+                                    List<CodeLabel> languages, String marketDataProvider,
+                                    List<String> dataCredits) {}
 
     public record QuoteResponse(String symbol, BigDecimal price, BigDecimal previousClose, BigDecimal change,
                                 BigDecimal changePercent, BigDecimal high, BigDecimal low, Instant time,

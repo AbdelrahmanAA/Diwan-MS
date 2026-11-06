@@ -54,6 +54,7 @@ public class AlertService {
     private final PortfolioService portfolios;
     private final AllocationService allocation;
     private final PreferenceService preferences;
+    private final FxService fx;
     private final AlertPublisher publisher;
     private final Labels labels;
     private final TransactionTemplate tx;
@@ -62,7 +63,7 @@ public class AlertService {
 
     public AlertService(AlertRuleRepository rules, PortfolioAlertRepository alerts, InstrumentService instruments,
                         HoldingService holdings, PortfolioService portfolios, AllocationService allocation,
-                        PreferenceService preferences, AlertPublisher publisher, Labels labels,
+                        PreferenceService preferences, FxService fx, AlertPublisher publisher, Labels labels,
                         TransactionTemplate tx, Clock clock,
                         @Value("${diwan.portfolio.alerts.cooldown-hours:24}") long cooldownHours) {
         this.rules = rules;
@@ -72,6 +73,7 @@ public class AlertService {
         this.portfolios = portfolios;
         this.allocation = allocation;
         this.preferences = preferences;
+        this.fx = fx;
         this.publisher = publisher;
         this.labels = labels;
         this.tx = tx;
@@ -183,10 +185,11 @@ public class AlertService {
 
     /** Checks the rules affected by a fresh quote of the instrument. Returns the number of alerts raised. */
     public int evaluateQuote(Instrument instrument, InstrumentQuote quote) {
+        FxService.Snapshot rates = fx.snapshot();
         List<Triggered> fired = tx.execute(s -> {
             List<Triggered> out = new ArrayList<>();
             for (AlertRule r : rules.findActiveForInstrument(instrument.getId())) {
-                observed(r, quote).filter(v -> breached(r.getType(), v, r.getThreshold()))
+                observed(r, quote, rates).filter(v -> breached(r.getType(), v, r.getThreshold()))
                         .ifPresent(v -> fire(r, v, instrument.getSymbol()).ifPresent(out::add));
             }
             return out;
@@ -212,7 +215,7 @@ public class AlertService {
     }
 
     /** The value a rule compares with its threshold, if it can be computed from this quote. */
-    static Optional<BigDecimal> observed(AlertRule r, InstrumentQuote q) {
+    static Optional<BigDecimal> observed(AlertRule r, InstrumentQuote q, FxService.Snapshot rates) {
         return switch (r.getType()) {
             case PRICE_ABOVE, PRICE_BELOW -> Optional.of(q.getPrice());
             case DAILY_MOVE_PERCENT -> Optional.ofNullable(q.getChangePercent()).map(BigDecimal::abs);
@@ -221,7 +224,7 @@ public class AlertService {
                 if (h == null || h.isClosed() || h.getQuantity().signum() <= 0 || h.getAverageCost().signum() <= 0) {
                     yield Optional.empty();
                 }
-                yield Optional.of(q.getPrice().subtract(h.getAverageCost())
+                yield ValuationService.inHoldingCurrency(q.getPrice(), h, rates).map(price -> price.subtract(h.getAverageCost())
                         .multiply(BigDecimal.valueOf(100))
                         .divide(h.getAverageCost(), MathContext.DECIMAL64).setScale(2, RoundingMode.HALF_EVEN));
             }

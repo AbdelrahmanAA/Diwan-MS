@@ -407,7 +407,7 @@ abstract class AppLocalizations {
   /// No description provided for @symbolHint.
   ///
   /// In en, this message translates to:
-  /// **'e.g. AAPL - search by name or symbol'**
+  /// **'e.g. AAPL or 2222.SR - search by name or symbol'**
   String get symbolHint;
 
   /// No description provided for @search.
@@ -1813,6 +1813,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count, plural, =0{No transactions} =1{Show 1 transaction} other{Show {count} transactions}}'**
   String showTransactions(int count);
+
+  /// No description provided for @byMarketCurrency.
+  ///
+  /// In en, this message translates to:
+  /// **'By market currency'**
+  String get byMarketCurrency;
+
+  /// No description provided for @goldByKarat.
+  ///
+  /// In en, this message translates to:
+  /// **'Gold by karat'**
+  String get goldByKarat;
+
+  /// No description provided for @goldKarat.
+  ///
+  /// In en, this message translates to:
+  /// **'Gold {karat}K'**
+  String goldKarat(int karat);
+
+  /// No description provided for @goldPriceNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Valued from the global gold price, without shop premiums or making charges.'**
+  String get goldPriceNote;
+
+  /// No description provided for @grams.
+  ///
+  /// In en, this message translates to:
+  /// **'Grams'**
+  String get grams;
+
+  /// No description provided for @pricePerGram.
+  ///
+  /// In en, this message translates to:
+  /// **'Price per gram'**
+  String get pricePerGram;
 }
 
 class _AppLocalizationsDelegate

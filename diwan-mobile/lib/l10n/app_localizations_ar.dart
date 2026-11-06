@@ -178,7 +178,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get symbol => 'رمز السوق';
 
   @override
-  String get symbolHint => 'مثل AAPL - ابحث بالاسم أو الرمز';
+  String get symbolHint => 'مثل AAPL أو 2222.SR - ابحث بالاسم أو الرمز';
 
   @override
   String get search => 'بحث';
@@ -981,4 +981,25 @@ class AppLocalizationsAr extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get byMarketCurrency => 'حسب عملة السوق';
+
+  @override
+  String get goldByKarat => 'الذهب حسب العيار';
+
+  @override
+  String goldKarat(int karat) {
+    return 'ذهب عيار $karat';
+  }
+
+  @override
+  String get goldPriceNote =>
+      'القيمة محسوبة من السعر العالمي للذهب، بدون هامش المحلات أو المصنعية.';
+
+  @override
+  String get grams => 'جرام';
+
+  @override
+  String get pricePerGram => 'سعر الجرام';
 }

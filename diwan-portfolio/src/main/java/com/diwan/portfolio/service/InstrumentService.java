@@ -75,4 +75,8 @@ public class InstrumentService {
     public String providerName() {
         return provider.name();
     }
+
+    public List<String> dataCredits() {
+        return provider.credits();
+    }
 }

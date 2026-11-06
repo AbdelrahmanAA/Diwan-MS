@@ -64,6 +64,8 @@ public class Views {
                 Money.round(v.unrealizedPnl()), v.unrealizedPnlPercent(), Money.round(v.realizedPnl()),
                 Money.round(v.netIncome()), Money.round(v.totalReturn()), Money.round(v.dayChange()),
                 v.dayChangePercent() == null ? null : Money.round(v.dayChangePercent()),
+                Money.round(v.unrealizedPnlLocal()), Money.round(h.getRealizedPnl()), Money.round(h.getNetIncome()),
+                Money.round(v.dayChangeLocal()),
                 weightBase == null || !v.convertible() ? null : Money.percent(v.marketValue(), weightBase),
                 h.getNotes(), attributes(h.getAttributes()), h.isClosed(),
                 h.getTags().stream().sorted(Comparator.comparing(Tag::getId)).map(this::tag).toList(),

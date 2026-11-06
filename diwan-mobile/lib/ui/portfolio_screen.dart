@@ -80,7 +80,7 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
           label: Text(t.addInvestment),
           onPressed: () async {
             final added = await Navigator.push<Holding>(
-                context, MaterialPageRoute(builder: (_) => HoldingForm(portfolioId: _portfolio.id)));
+                context, MaterialPageRoute(builder: (_) => HoldingForm(portfolioId: _portfolio.id, baseCurrency: _portfolio.baseCurrency)));
             if (added != null) _refresh();
           },
         ),
@@ -103,7 +103,7 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
                 if (all.isEmpty) return EmptyState(icon: Icons.inventory_2_outlined, text: t.noHoldings);
                 all.sort((a, b) => (b.marketValue ?? 0).compareTo(a.marketValue ?? 0));
                 return ListView(padding: const EdgeInsets.only(bottom: 96), children: [
-                  for (final h in all) HoldingTile(holding: h, currency: s.portfolio.baseCurrency, onTap: () => _openHolding(h)),
+                  for (final h in all) HoldingTile(holding: h, onTap: () => _openHolding(h)),
                 ]);
               },
             ),
@@ -150,6 +150,18 @@ class _Overview extends StatelessWidget {
               child: Text(t.missingRates(summary.missingRates.join(', ')),
                   style: TextStyle(color: Theme.of(context).colorScheme.error)),
             ),
+          if (summary.currencyTotals.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Text(t.byMarketCurrency, style: Theme.of(context).textTheme.labelLarge),
+            for (final c in summary.currencyTotals)
+              ListTile(
+                dense: true,
+                contentPadding: EdgeInsets.zero,
+                title: Text(c.currencyLabel),
+                subtitle: PnlText(value: c.totals.dayChange, percent: c.totals.dayChangePercent, currency: c.currency),
+                trailing: Text(f.money(c.totals.marketValue, c.currency), style: const TextStyle(fontWeight: FontWeight.w600)),
+              ),
+          ],
         ]),
       ),
       Padding(
@@ -173,6 +185,7 @@ class _Overview extends StatelessWidget {
         SizedBox(height: 200, child: _AllocationPie(groups: summary.groups)),
         for (final g in summary.groups) _GroupCard(group: g, currency: ccy, onHolding: onHolding),
       ],
+      const DataCredits(),
     ]);
   }
 }
@@ -217,25 +230,28 @@ class _GroupCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final f = Fmt(context);
+    // A group in one currency shows that currency; a mix can only be added up in the base currency
+    final groupCurrency = group.currency ?? currency;
+    final groupTotals = group.localTotals ?? group.totals;
     return Card(
       margin: const EdgeInsets.fromLTRB(12, 8, 12, 0),
       clipBehavior: Clip.antiAlias,
       child: ExpansionTile(
         initiallyExpanded: true,
         title: Text(group.label, style: Theme.of(context).textTheme.titleMedium),
-        subtitle: Text('${f.money(group.totals.marketValue, currency)} · ${f.percent(group.weightPercent, signed: false)}'),
-        trailing: PnlText(value: group.totals.totalReturn, currency: currency),
+        subtitle: Text('${f.money(groupTotals.marketValue, groupCurrency)} · ${f.percent(group.weightPercent, signed: false)}'),
+        trailing: PnlText(value: groupTotals.totalReturn, currency: groupCurrency),
         children: [
           for (final sub in group.groups)
             ExpansionTile(
               tilePadding: const EdgeInsetsDirectional.only(start: 32, end: 16),
               title: Text(sub.label),
-              subtitle: Text('${f.money(sub.totals.marketValue, currency)} · ${f.percent(sub.weightPercent, signed: false)}'),
+              subtitle: Text('${f.money((sub.localTotals ?? sub.totals).marketValue, sub.currency ?? currency)} · ${f.percent(sub.weightPercent, signed: false)}'),
               children: [
-                for (final h in sub.holdings) HoldingTile(holding: h, currency: currency, onTap: () => onHolding(h), indent: true),
+                for (final h in sub.holdings) HoldingTile(holding: h, onTap: () => onHolding(h), indent: true),
               ],
             ),
-          for (final h in group.holdings) HoldingTile(holding: h, currency: currency, onTap: () => onHolding(h)),
+          for (final h in group.holdings) HoldingTile(holding: h, onTap: () => onHolding(h)),
         ],
       ),
     );
@@ -243,10 +259,9 @@ class _GroupCard extends StatelessWidget {
 }
 
 class HoldingTile extends StatelessWidget {
-  const HoldingTile({super.key, required this.holding, required this.currency, required this.onTap, this.indent = false});
+  const HoldingTile({super.key, required this.holding, required this.onTap, this.indent = false});
 
   final Holding holding;
-  final String currency;
   final VoidCallback onTap;
   final bool indent;
 
@@ -264,8 +279,8 @@ class HoldingTile extends StatelessWidget {
       title: Text(h.name, maxLines: 1, overflow: TextOverflow.ellipsis),
       subtitle: Text(subtitle, maxLines: 1, overflow: TextOverflow.ellipsis),
       trailing: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.end, children: [
-        Text(f.money(h.marketValue, currency), style: const TextStyle(fontWeight: FontWeight.w600)),
-        PnlText(value: h.unrealizedPnl, percent: h.unrealizedPnlPercent, currency: currency, style: const TextStyle(fontSize: 12)),
+        Text(f.money(h.marketValueLocal, h.currency), style: const TextStyle(fontWeight: FontWeight.w600)),
+        PnlText(value: h.unrealizedPnlLocal, percent: h.unrealizedPnlPercent, currency: h.currency, style: const TextStyle(fontSize: 12)),
       ]),
       onTap: onTap,
     );

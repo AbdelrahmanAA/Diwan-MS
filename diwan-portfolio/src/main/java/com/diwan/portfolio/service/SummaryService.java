@@ -4,6 +4,7 @@ import com.diwan.portfolio.domain.AllocationDimension;
 import com.diwan.portfolio.entity.Holding;
 import com.diwan.portfolio.entity.Portfolio;
 import com.diwan.portfolio.repository.HoldingRepository;
+import com.diwan.portfolio.web.dto.Responses.CurrencyTotals;
 import com.diwan.portfolio.web.dto.Responses.GroupNode;
 import com.diwan.portfolio.web.dto.Responses.HoldingResponse;
 import com.diwan.portfolio.web.dto.Responses.PortfolioOverview;
@@ -61,8 +62,8 @@ public class SummaryService {
         Valued v = valued(p, tagId, false);
         Totals totals = totals(v.values());
         BigDecimal total = Money.nz(sum(v.values(), HoldingValue::marketValue));
-        return new SummaryResponse(views.portfolio(p), dims, totals, group(v.values(), dims, 0, total),
-                missingRates(v.values()), v.rates().asOf());
+        return new SummaryResponse(views.portfolio(p), dims, totals, currencyTotals(v.values()),
+                group(v.values(), dims, 0, total), missingRates(v.values()), v.rates().asOf());
     }
 
     @Transactional(readOnly = true)
@@ -99,6 +100,30 @@ public class SummaryService {
                 Money.percent(day, market.subtract(day)));
     }
 
+    /** Totals of holdings in one currency, in that currency. */
+    static Totals localTotals(List<HoldingValue> values) {
+        BigDecimal market = sum(values, HoldingValue::marketValueLocal);
+        BigDecimal cost = sum(values, v -> v.holding().costBasis());
+        BigDecimal unrealized = sum(values, HoldingValue::unrealizedPnlLocal);
+        BigDecimal realized = sum(values, v -> v.holding().getRealizedPnl());
+        BigDecimal income = sum(values, v -> v.holding().getNetIncome());
+        BigDecimal day = sum(values, HoldingValue::dayChangeLocal);
+        BigDecimal totalReturn = unrealized.add(realized).add(income);
+        return new Totals(Money.round(market), Money.round(cost), Money.round(unrealized),
+                Money.percent(unrealized, cost), Money.round(realized), Money.round(income),
+                Money.round(totalReturn), Money.percent(totalReturn, cost), Money.round(day),
+                Money.percent(day, market.subtract(day)));
+    }
+
+    private List<CurrencyTotals> currencyTotals(List<HoldingValue> values) {
+        Map<String, List<HoldingValue>> byCurrency = new LinkedHashMap<>();
+        values.forEach(v -> byCurrency.computeIfAbsent(v.holding().getCurrency(), k -> new ArrayList<>()).add(v));
+        return byCurrency.entrySet().stream()
+                .map(e -> new CurrencyTotals(e.getKey(), labels.currency(e.getKey()), localTotals(e.getValue())))
+                .sorted(Comparator.comparing(CurrencyTotals::currency))
+                .toList();
+    }
+
     private List<GroupNode> group(List<HoldingValue> values, List<AllocationDimension> dims, int level,
                                   BigDecimal portfolioTotal) {
         AllocationDimension dim = dims.get(level);
@@ -110,8 +135,11 @@ public class SummaryService {
         List<GroupNode> nodes = new ArrayList<>();
         byKey.forEach((key, members) -> {
             BigDecimal value = sum(members, HoldingValue::marketValue);
+            boolean oneCurrency = members.stream().map(m -> m.holding().getCurrency()).distinct().count() == 1;
             nodes.add(new GroupNode(dim, key, labels.key(dim, key), Money.percent(value, portfolioTotal),
                     totals(members),
+                    oneCurrency ? members.get(0).holding().getCurrency() : null,
+                    oneCurrency ? localTotals(members) : null,
                     leaf ? List.of() : group(members, dims, level + 1, portfolioTotal),
                     leaf ? members.stream().sorted(byValueDesc()).map(m -> views.holding(m, portfolioTotal)).toList()
                          : List.of()));

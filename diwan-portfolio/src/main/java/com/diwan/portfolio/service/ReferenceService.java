@@ -45,7 +45,8 @@ public class ReferenceService {
                         .filter(COMMON_CURRENCIES::contains)
                         .map(c -> new CodeLabel(c, labels.currency(c))).sorted(byLabel).toList(),
                 List.of(new CodeLabel("en", "English"), new CodeLabel("ar", "العربية")),
-                instruments.providerName());
+                instruments.providerName(),
+                instruments.dataCredits());
     }
 
     private List<CodeLabel> enums(Enum<?>[] values) {

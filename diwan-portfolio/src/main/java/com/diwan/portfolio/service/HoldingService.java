@@ -6,6 +6,7 @@ import com.diwan.portfolio.entity.Holding;
 import com.diwan.portfolio.entity.Instrument;
 import com.diwan.portfolio.entity.Portfolio;
 import com.diwan.portfolio.entity.Tag;
+import com.diwan.portfolio.market.Gold;
 import com.diwan.portfolio.repository.HoldingRepository;
 import com.diwan.portfolio.repository.TagRepository;
 import com.diwan.portfolio.web.dto.Requests.HoldingRequest;
@@ -132,6 +133,16 @@ public class HoldingService {
         return instruments.resolve(req.symbol());
     }
 
+    private static boolean sameInstrument(Holding h, Instrument instrument) {
+        return h.getInstrument() != null && h.getInstrument().getId().equals(instrument.getId());
+    }
+
+    /** A listed instrument is held in the currency of its market; only gold can be held in any currency. */
+    private static boolean followsMarketCurrency(Instrument instrument, String currency) {
+        return Gold.isGold(instrument.getSymbol()) || instrument.getCurrency() == null
+                || instrument.getCurrency().equals(currency);
+    }
+
     private void apply(Holding h, HoldingRequest req, Instrument instrument) {
         AssetType type = req.assetType();
         String country = req.countryCode() != null ? req.countryCode()
@@ -149,6 +160,9 @@ public class HoldingService {
         }
         if (!Labels.isCurrency(currency)) {
             throw ApiException.badRequest("currency.unknown", currency);
+        }
+        if (instrument != null && !sameInstrument(h, instrument) && !followsMarketCurrency(instrument, currency)) {
+            throw ApiException.badRequest("holding.currency_is_the_market", instrument.getCurrency());
         }
         if (h.getId() != null && !currency.equals(h.getCurrency()) && h.getQuantity().signum() != 0) {
             throw ApiException.conflict("holding.currency_change_not_allowed");

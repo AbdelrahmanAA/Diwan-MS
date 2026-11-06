@@ -6,18 +6,40 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Source of quotes, symbol lookup and company news. Implementations must not throw for an unknown symbol or
  * a provider outage: they return empty results and log, so one bad symbol never stops a job.
- * A paid provider covering more markets is added by implementing this interface (see MarketDataConfig).
+ * A provider covering another market is added by implementing this interface and routing its symbols to it
+ * (see RoutingMarketDataProvider and MarketDataConfig).
  */
 public interface MarketDataProvider {
 
     String name();
 
+    /** The provider that answers for this symbol (differs from {@link #name()} when routing). */
+    default String nameFor(String symbol) {
+        return name();
+    }
+
+    /** Credits the provider's terms require wherever its data is shown. */
+    default List<String> credits() {
+        return List.of();
+    }
+
     Optional<Quote> quote(String symbol);
+
+    /**
+     * Which of these symbols should be fetched now. A provider with a small allowance returns fewer than it
+     * was given, outside trading hours for example.
+     * @param lastFetched symbol -> time of its stored quote, null when it has none
+     */
+    default Set<String> dueForRefresh(Map<String, Instant> lastFetched) {
+        return lastFetched.keySet();
+    }
 
     List<SymbolMatch> search(String query);
 

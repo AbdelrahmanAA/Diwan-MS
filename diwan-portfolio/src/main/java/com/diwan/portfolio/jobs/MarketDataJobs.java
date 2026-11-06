@@ -70,8 +70,9 @@ public class MarketDataJobs {
     @SchedulerLock(name = "quotes", lockAtMostFor = "PT20M", lockAtLeastFor = "PT30S")
     public void refreshQuotes() {
         List<Instrument> tracked = quotes.trackedInstruments();
+        List<Instrument> due = quotes.dueForRefresh(tracked);
         int updated = 0, failed = 0, fired = 0;
-        for (Instrument i : tracked) {
+        for (Instrument i : due) {
             try {
                 var q = quotes.refresh(i);
                 if (q.isPresent()) {
@@ -88,7 +89,8 @@ public class MarketDataJobs {
         metrics.counter("portfolio.jobs.quotes.updated").increment(updated);
         metrics.counter("portfolio.jobs.quotes.failed").increment(failed);
         metrics.counter("portfolio.jobs.alerts.fired").increment(fired);
-        log.info("[Jobs] quotes: {} tracked, {} updated, {} failed, {} alerts", tracked.size(), updated, failed, fired);
+        log.info("[Jobs] quotes: {} tracked, {} due, {} updated, {} failed, {} alerts",
+                tracked.size(), due.size(), updated, failed, fired);
     }
 
     @Scheduled(cron = "${diwan.portfolio.jobs.daily-close-cron}", zone = "UTC")

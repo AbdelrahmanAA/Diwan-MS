@@ -81,6 +81,7 @@ class _WatchlistTabState extends State<WatchlistTab> {
                         ]),
                 ),
               ),
+            const DataCredits(),
           ]);
         },
       ),

@@ -10,11 +10,19 @@ import jakarta.persistence.EntityManager;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 /** Fetches and stores quotes; keeps the daily close history. */
 @Service
@@ -37,11 +45,38 @@ public class QuoteService {
 
     /** Fetches the current quote (outside any transaction: it is a network call) and stores it. */
     public Optional<InstrumentQuote> refresh(Instrument instrument) {
-        return provider.quote(instrument.getSymbol()).map(q -> store(instrument.getId(), q));
+        String symbol = instrument.getSymbol();
+        return provider.quote(symbol).map(q -> store(instrument.getId(), q, provider.nameFor(symbol)));
+    }
+
+    /** Refreshes the instrument only if its provider's allowance has room for it right now. */
+    public Optional<InstrumentQuote> refreshIfDue(Instrument instrument) {
+        List<Instrument> all = new ArrayList<>(trackedInstruments());
+        if (all.stream().noneMatch(i -> i.getId().equals(instrument.getId()))) {
+            all.add(instrument);
+        }
+        boolean due = dueForRefresh(all).stream().anyMatch(i -> i.getId().equals(instrument.getId()));
+        return due ? refresh(instrument) : Optional.empty();
+    }
+
+    /** The instruments, out of these, that their providers want fetched now. */
+    public List<Instrument> dueForRefresh(List<Instrument> instruments) {
+        Map<Long, Instant> fetched = new HashMap<>();
+        quotes.findAllById(instruments.stream().map(Instrument::getId).toList())
+                .forEach(q -> fetched.put(q.getInstrumentId(), q.getFetchedAt()));
+        Map<String, Instant> lastFetched = new LinkedHashMap<>();
+        instruments.forEach(i -> lastFetched.put(i.getSymbol(), fetched.get(i.getId())));
+        Set<String> due = provider.dueForRefresh(lastFetched);
+        return instruments.stream().filter(i -> due.contains(i.getSymbol())).toList();
+    }
+
+    public InstrumentQuote store(Long instrumentId, MarketDataProvider.Quote q) {
+        return store(instrumentId, q, provider.name());
     }
 
     @Transactional
-    public InstrumentQuote store(Long instrumentId, MarketDataProvider.Quote q) {
+    public InstrumentQuote store(Long instrumentId, MarketDataProvider.Quote quote, String providerName) {
+        MarketDataProvider.Quote q = withDayChange(instrumentId, quote);
         InstrumentQuote row = quotes.findById(instrumentId).orElseGet(() -> new InstrumentQuote(instrumentId));
         row.setPrice(q.price());
         row.setPreviousClose(q.previousClose());
@@ -51,8 +86,24 @@ public class QuoteService {
         row.setDayLow(q.low());
         row.setQuoteTime(q.time() != null ? q.time() : clock.instant());
         row.setFetchedAt(clock.instant());
-        row.setProvider(provider.name());
+        row.setProvider(providerName);
         return quotes.save(row);
+    }
+
+    /** A provider without a previous close (gold) gets its day change from the newest close in the history. */
+    private MarketDataProvider.Quote withDayChange(Long instrumentId, MarketDataProvider.Quote q) {
+        if (q.previousClose() != null && q.change() != null) {
+            return q;
+        }
+        BigDecimal previous = q.previousClose() != null ? q.previousClose()
+                : history.findFirstByInstrumentIdAndPriceDateBeforeOrderByPriceDateDesc(instrumentId, LocalDate.now(clock))
+                        .map(PriceHistory::getClosePrice).orElse(null);
+        if (previous == null || previous.signum() == 0) {
+            return q;
+        }
+        BigDecimal change = q.price().subtract(previous);
+        BigDecimal percent = change.multiply(BigDecimal.valueOf(100)).divide(previous, 4, RoundingMode.HALF_EVEN);
+        return new MarketDataProvider.Quote(q.price(), previous, change, percent, q.high(), q.low(), q.time());
     }
 
     @Transactional(readOnly = true)

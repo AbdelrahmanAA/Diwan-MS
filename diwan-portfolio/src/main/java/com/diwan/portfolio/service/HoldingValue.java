@@ -7,8 +7,9 @@ import java.math.BigDecimal;
 import java.time.Instant;
 
 /**
- * A holding valued at the current price. {@code price} and {@code marketValueLocal} are in the holding's
- * currency; every other amount is converted to the portfolio's base currency. The converted amounts are
+ * A holding valued at the current price. {@code price}, {@code marketValueLocal} and {@code dayChangeLocal}
+ * are in the holding's currency; every other amount is converted to the portfolio's base currency. The
+ * converted amounts are
  * null when no exchange rate is known for the holding's currency ({@code convertible == false}).
  */
 public record HoldingValue(
@@ -17,6 +18,7 @@ public record HoldingValue(
         PriceSource priceSource,
         Instant priceAsOf,
         BigDecimal marketValueLocal,
+        BigDecimal dayChangeLocal,
         boolean convertible,
         BigDecimal marketValue,
         BigDecimal costBasis,
@@ -25,6 +27,10 @@ public record HoldingValue(
         BigDecimal netIncome,
         BigDecimal dayChange,
         BigDecimal dayChangePercent) {
+
+    public BigDecimal unrealizedPnlLocal() {
+        return marketValueLocal.subtract(holding.costBasis());
+    }
 
     public BigDecimal unrealizedPnlPercent() {
         return Money.percent(unrealizedPnl, costBasis);

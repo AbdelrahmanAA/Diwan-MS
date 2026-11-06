@@ -175,7 +175,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get symbol => 'Market symbol';
 
   @override
-  String get symbolHint => 'e.g. AAPL - search by name or symbol';
+  String get symbolHint => 'e.g. AAPL or 2222.SR - search by name or symbol';
 
   @override
   String get search => 'Search';
@@ -969,4 +969,25 @@ class AppLocalizationsEn extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get byMarketCurrency => 'By market currency';
+
+  @override
+  String get goldByKarat => 'Gold by karat';
+
+  @override
+  String goldKarat(int karat) {
+    return 'Gold ${karat}K';
+  }
+
+  @override
+  String get goldPriceNote =>
+      'Valued from the global gold price, without shop premiums or making charges.';
+
+  @override
+  String get grams => 'Grams';
+
+  @override
+  String get pricePerGram => 'Price per gram';
 }

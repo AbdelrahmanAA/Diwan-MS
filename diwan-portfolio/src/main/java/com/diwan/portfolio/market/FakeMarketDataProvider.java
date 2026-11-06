@@ -36,8 +36,17 @@ public class FakeMarketDataProvider implements MarketDataProvider {
             Map.entry("GLD", new Known("SPDR Gold Shares", "NYSE ARCA", "US", "USD", AssetType.COMMODITY, 220)),
             Map.entry("COMI.CA", new Known("Commercial International Bank", "EGX", "EG", "EGP", AssetType.STOCK, 80)),
             Map.entry("2222.SR", new Known("Saudi Arabian Oil Co", "TADAWUL", "SA", "SAR", AssetType.STOCK, 28)),
+            Map.entry("1120.SR", new Known("Al Rajhi Bank", "TADAWUL", "SA", "SAR", AssetType.STOCK, 90)),
+            Map.entry("GOLD-24K", gold(24, 130)),
+            Map.entry("GOLD-22K", gold(22, 119)),
+            Map.entry("GOLD-21K", gold(21, 114)),
+            Map.entry("GOLD-18K", gold(18, 98)),
             Map.entry("EMAAR.AE", new Known("Emaar Properties", "DFM", "AE", "AED", AssetType.STOCK, 9)),
             Map.entry("BTC-USD", new Known("Bitcoin", "CRYPTO", null, "USD", AssetType.CRYPTO, 60000)));
+
+    private static Known gold(int karat, double perGram) {
+        return new Known(Gold.name(karat), Gold.EXCHANGE, null, Gold.CURRENCY, AssetType.COMMODITY, perGram);
+    }
 
     private final Clock clock;
 

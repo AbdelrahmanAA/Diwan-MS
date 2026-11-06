@@ -9,6 +9,7 @@
 //   diwan-db                                                       (Username with password)
 //   diwan-data-key        (Secret text, portfolio only) column encryption key "v1:<base64 32 bytes>" - keep a copy!
 //   diwan-market-data-key (Secret text, portfolio only, optional) Finnhub API key; without it: demo prices
+//   diwan-sahmk-key (Secret text, portfolio only, optional) SAHMK API key for Saudi stock prices
 
 pipeline {
     agent any
@@ -220,6 +221,7 @@ def deployService(String module, String tag) {
     if (module == 'diwan-portfolio') {
         credentials << string(credentialsId: 'diwan-data-key', variable: 'DATA_ENCRYPTION_KEYS')
         credentials += optionalSecret('diwan-market-data-key', 'FINNHUB_API_KEY')
+        credentials += optionalSecret('diwan-sahmk-key', 'SAHMK_API_KEY')
     }
 
     withCredentials(credentials) {
@@ -267,7 +269,7 @@ def runContainer(String module, String name, String image) {
               -e PORTFOLIO_SERVICE_URL=http://diwan-portfolio-api:8080 \\
               ${image}"""
     } else if (module == 'diwan-portfolio') {
-        sh "${common} -e DATA_ENCRYPTION_KEYS -e FINNHUB_API_KEY ${image}"
+        sh "${common} -e DATA_ENCRYPTION_KEYS -e FINNHUB_API_KEY -e SAHMK_API_KEY ${image}"
     } else {
         sh "${common} -e ALEXA_LAMBDA_SHARED_SECRET -e MQTT_BROKER_URL ${image}"
     }

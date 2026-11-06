@@ -40,7 +40,7 @@ public class MarketService {
         Instrument i = instruments.resolve(symbol);
         InstrumentQuote q = quotes.latest(i.getId())
                 .filter(x -> x.getFetchedAt().plus(STALE).isAfter(clock.instant()))
-                .or(() -> quotes.refresh(i))
+                .or(() -> quotes.refreshIfDue(i))
                 .or(() -> quotes.latest(i.getId()))
                 .orElse(null);
         return views.instrument(i, q);

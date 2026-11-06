@@ -10,14 +10,20 @@ import 'format.dart';
 import 'widgets.dart';
 
 const _marketTraded = {'STOCK', 'ETF', 'MUTUAL_FUND', 'BOND', 'CRYPTO', 'COMMODITY'};
+const _goldKarats = [24, 22, 21, 18];
+
+/// The gold symbols are priced per gram, one per karat.
+bool isGold(String? symbol) => symbol != null && RegExp(r'^GOLD-\d+K$').hasMatch(symbol);
 
 /// Add (or edit) an investment. Market-traded types can be linked to a symbol, which fills in country,
-/// currency and the live price; everything else is valued from manual valuations.
+/// currency and the live price; everything else is valued from manual valuations. A listed symbol stays in
+/// the currency of its market; gold can be held in any currency.
 class HoldingForm extends StatefulWidget {
-  const HoldingForm({super.key, required this.portfolioId, this.holding});
+  const HoldingForm({super.key, required this.portfolioId, this.holding, this.baseCurrency});
 
   final int portfolioId;
   final Holding? holding;
+  final String? baseCurrency; // suggested for gold, which has no market currency
 
   @override
   State<HoldingForm> createState() => _HoldingFormState();
@@ -29,6 +35,7 @@ class _HoldingFormState extends State<HoldingForm> {
   late String? _country = widget.holding?.countryCode;
   late String? _currency = widget.holding?.currency;
   late String? _symbol = widget.holding?.symbol;
+  String? _marketCurrency;
   late final _name = TextEditingController(text: widget.holding?.name);
   late final _notes = TextEditingController(text: widget.holding?.notes);
   late final _address = TextEditingController(text: widget.holding?.attributes['address']?.toString());
@@ -41,20 +48,35 @@ class _HoldingFormState extends State<HoldingForm> {
   bool get _editing => widget.holding != null;
   bool get _isCash => _type == 'CASH';
   bool get _isProperty => _type == 'REAL_ESTATE';
+  bool get _isCommodity => _type == 'COMMODITY';
+  bool get _currencyLocked => _symbol != null && !isGold(_symbol) && (_marketCurrency != null || _editing);
 
   Future<void> _pickSymbol() async {
     final match = await showModalBottomSheet<SymbolMatch>(
         context: context, isScrollControlled: true, builder: (_) => const _SymbolSearch());
     if (match == null || !mounted) return;
-    setState(() => _symbol = match.symbol);
+    await _useSymbol(match.symbol);
+  }
+
+  Future<void> _useSymbol(String symbol, {String? name}) async {
+    setState(() {
+      _symbol = symbol;
+      _marketCurrency = null;
+    });
     try {
-      final i = await context.read<Session>().api.instrument(match.symbol);
+      final i = await context.read<Session>().api.instrument(symbol);
       if (!mounted) return;
       setState(() {
-        if (_name.text.trim().isEmpty) _name.text = i.name ?? i.symbol;
-        _country ??= i.countryCode;
-        _currency ??= i.currency;
-        if (_price.text.isEmpty && i.quote != null) _price.text = i.quote!.price.toString();
+        if (_name.text.trim().isEmpty) _name.text = name ?? i.name ?? i.symbol;
+        if (isGold(symbol)) {
+          _currency ??= widget.baseCurrency ?? i.currency;
+        } else {
+          _marketCurrency = i.currency;
+          _country = i.countryCode ?? _country;
+          _currency = i.currency ?? _currency;
+        }
+        // The quote is in the symbol's currency: a price in another currency would be wrong
+        if (_price.text.isEmpty && i.quote != null && i.currency == _currency) _price.text = i.quote!.price.toString();
       });
     } catch (e) {
       if (mounted) showError(context, e);
@@ -136,9 +158,25 @@ class _HoldingFormState extends State<HoldingForm> {
                   leading: const Icon(Icons.search),
                   title: Text(_symbol ?? t.symbol),
                   subtitle: Text(t.symbolHint),
-                  trailing: _symbol == null ? null : IconButton(icon: const Icon(Icons.clear), onPressed: () => setState(() => _symbol = null)),
+                  trailing: _symbol == null ? null : IconButton(icon: const Icon(Icons.clear), onPressed: () => setState(() {
+                    _symbol = null;
+                    _marketCurrency = null;
+                  })),
                   onTap: _pickSymbol,
                 ),
+                const SizedBox(height: 8),
+              ],
+              if (_isCommodity) ...[
+                Text(t.goldByKarat, style: Theme.of(context).textTheme.titleSmall),
+                Wrap(spacing: 8, children: [
+                  for (final k in _goldKarats)
+                    ChoiceChip(
+                      label: Text(t.goldKarat(k)),
+                      selected: _symbol == 'GOLD-${k}K',
+                      onSelected: (_) => _useSymbol('GOLD-${k}K', name: t.goldKarat(k)),
+                    ),
+                ]),
+                if (isGold(_symbol)) Text(t.goldPriceNote, style: Theme.of(context).textTheme.bodySmall),
                 const SizedBox(height: 8),
               ],
               TextFormField(
@@ -158,8 +196,8 @@ class _HoldingFormState extends State<HoldingForm> {
                 contentPadding: EdgeInsets.zero,
                 title: Text(t.currency),
                 subtitle: Text(_currency ?? '-'),
-                trailing: const Icon(Icons.arrow_drop_down),
-                onTap: () => _pick(t.currency, ref.currencies, (v) => _currency = v),
+                trailing: _currencyLocked ? const Icon(Icons.lock_outline) : const Icon(Icons.arrow_drop_down),
+                onTap: _currencyLocked ? null : () => _pick(t.currency, ref.currencies, (v) => _currency = v),
               ),
               if (_isProperty)
                 TextFormField(
@@ -182,7 +220,7 @@ class _HoldingFormState extends State<HoldingForm> {
                     child: TextFormField(
                       controller: _quantity,
                       keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                      decoration: InputDecoration(labelText: _isCash ? t.amount : t.quantity, border: const OutlineInputBorder()),
+                      decoration: InputDecoration(labelText: _isCash ? t.amount : isGold(_symbol) ? t.grams : t.quantity, border: const OutlineInputBorder()),
                       validator: number,
                     ),
                   ),
@@ -192,7 +230,7 @@ class _HoldingFormState extends State<HoldingForm> {
                       child: TextFormField(
                         controller: _price,
                         keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                        decoration: InputDecoration(labelText: t.price, border: const OutlineInputBorder()),
+                        decoration: InputDecoration(labelText: isGold(_symbol) ? t.pricePerGram : t.price, border: const OutlineInputBorder()),
                         validator: number,
                       ),
                     ),

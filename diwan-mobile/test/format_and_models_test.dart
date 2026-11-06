@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:diwan_mobile/api/api_client.dart';
 import 'package:diwan_mobile/api/models.dart';
 import 'package:diwan_mobile/ui/format.dart';
+import 'package:diwan_mobile/ui/holding_form.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -20,6 +21,31 @@ void main() {
       expect(normalizeNumber('abc'), isNull);
       expect(normalizeNumber(''), isNull);
     });
+  });
+
+  test('summary carries totals per currency and groups in their own currency', () {
+    final s = Summary.fromJson(jsonDecode('''
+      {"portfolio":{"id":1,"name":"Markets","baseCurrency":"USD"},"groupBy":["COUNTRY"],
+       "totals":{"marketValue":1000},
+       "currencyTotals":[{"currency":"SAR","currencyLabel":"Saudi Riyal","totals":{"marketValue":3750,"dayChange":-20}}],
+       "groups":[{"dimension":"COUNTRY","key":"SA","label":"Saudi Arabia","weightPercent":100,"totals":{"marketValue":1000},
+                  "currency":"SAR","localTotals":{"marketValue":3750},"groups":[],"holdings":[]},
+                 {"dimension":"COUNTRY","key":"EG","label":"Egypt","totals":{"marketValue":0},"currency":null,
+                  "localTotals":null,"groups":[],"holdings":[]}],
+       "missingRates":[]}''') as Map<String, dynamic>);
+
+    expect(s.currencyTotals.single.currency, 'SAR');
+    expect(s.currencyTotals.single.totals.marketValue, 3750);
+    expect(s.groups.first.currency, 'SAR');
+    expect(s.groups.first.localTotals!.marketValue, 3750);
+    expect(s.groups.last.localTotals, isNull);
+  });
+
+  test('gold symbols are told apart from other commodities', () {
+    expect(isGold('GOLD-21K'), isTrue);
+    expect(isGold('GLD'), isFalse);
+    expect(isGold('2222.SR'), isFalse);
+    expect(isGold(null), isFalse);
   });
 
   test('summary JSON from the API parses into nested groups', () {

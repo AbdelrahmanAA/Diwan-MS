@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../api/api_client.dart';
+import '../api/models.dart';
 import '../l10n/app_localizations.dart';
+import '../state/session.dart';
 import 'format.dart';
 
 /// The message to show for an error: the server's (already localized) text, or a local one for network errors.
@@ -90,6 +93,26 @@ class ErrorView extends StatelessWidget {
 }
 
 /// A scrollable empty state (so pull-to-refresh still works).
+/// Credits the market data providers require next to their prices (nothing when none applies).
+class DataCredits extends StatelessWidget {
+  const DataCredits({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<Reference>(
+      future: context.read<Session>().reference(),
+      builder: (context, snap) {
+        final credits = snap.data?.dataCredits ?? const <String>[];
+        if (credits.isEmpty) return const SizedBox.shrink();
+        return Padding(
+          padding: const EdgeInsets.all(16),
+          child: Text(credits.join(' · '), textAlign: TextAlign.center, style: Theme.of(context).textTheme.bodySmall),
+        );
+      },
+    );
+  }
+}
+
 class EmptyState extends StatelessWidget {
   const EmptyState({super.key, required this.icon, required this.text});
 

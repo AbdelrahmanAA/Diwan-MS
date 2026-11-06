@@ -304,6 +304,7 @@ services:
       DATA_ENCRYPTION_KEYS: ${DATA_ENCRYPTION_KEYS:?Set DATA_ENCRYPTION_KEYS in .env (see .env.example)}
       # Empty = built-in fake prices and news; set a free key from finnhub.io for real market data
       FINNHUB_API_KEY: ${FINNHUB_API_KEY:-}
+      SAHMK_API_KEY: ${SAHMK_API_KEY:-}
       FX_PROVIDER: ${FX_PROVIDER:-open-er-api}
       JPA_DDL_AUTO: ${JPA_DDL_AUTO:-validate}
     depends_on:

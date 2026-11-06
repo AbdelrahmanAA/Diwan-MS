@@ -4,6 +4,7 @@ import com.diwan.portfolio.domain.AlertType;
 import com.diwan.portfolio.domain.AllocationDimension;
 import com.diwan.portfolio.entity.AlertRule;
 import com.diwan.portfolio.entity.Holding;
+import com.diwan.portfolio.entity.Instrument;
 import com.diwan.portfolio.entity.InstrumentQuote;
 import com.diwan.common.web.ApiException;
 import com.diwan.portfolio.web.dto.Requests.TargetItem;
@@ -11,12 +12,35 @@ import com.diwan.portfolio.web.dto.Requests.TargetsRequest;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class AlertRulesTest {
+
+    private static final FxService.Snapshot NO_RATES = new FxService.Snapshot(Map.of(), LocalDate.now());
+
+    @Test
+    void gainOfAHoldingInAnotherCurrencyThanItsQuoteComparesLikeWithLike() {
+        Instrument gold = new Instrument("GOLD-21K");
+        gold.setCurrency("USD");
+        Holding h = new Holding();
+        h.setInstrument(gold);
+        h.setCurrency("EGP");
+        h.setQuantity(d("10"));
+        h.setAverageCost(d("5000")); // EGP per gram
+        AlertRule r = new AlertRule();
+        r.setType(AlertType.GAIN_PERCENT);
+        r.setHolding(h);
+        var rates = new FxService.Snapshot(Map.of("EGP", d("50")), LocalDate.now());
+
+        // 110 USD = 5500 EGP: 10% up, not 98% down
+        assertThat(AlertService.observed(r, quote("110", null), rates).orElseThrow()).isEqualByComparingTo("10");
+        assertThat(AlertService.observed(r, quote("110", null), NO_RATES)).isEmpty();
+    }
 
     private static BigDecimal d(String v) {
         return new BigDecimal(v);
@@ -41,7 +65,7 @@ class AlertRulesTest {
     void dailyMoveWatchesBothDirections() {
         AlertRule r = new AlertRule();
         r.setType(AlertType.DAILY_MOVE_PERCENT);
-        BigDecimal down = AlertService.observed(r, quote("90", "-6.5")).orElseThrow();
+        BigDecimal down = AlertService.observed(r, quote("90", "-6.5"), NO_RATES).orElseThrow();
         assertThat(down).isEqualByComparingTo("6.5");
         assertThat(AlertService.breached(AlertType.DAILY_MOVE_PERCENT, down, d("5"))).isTrue();
     }
@@ -55,11 +79,11 @@ class AlertRulesTest {
         loss.setType(AlertType.LOSS_PERCENT);
         loss.setHolding(h);
 
-        BigDecimal pct = AlertService.observed(loss, quote("85", null)).orElseThrow();
+        BigDecimal pct = AlertService.observed(loss, quote("85", null), NO_RATES).orElseThrow();
         assertThat(pct).isEqualByComparingTo("-15");
         assertThat(AlertService.breached(AlertType.LOSS_PERCENT, pct, d("10"))).isTrue();
         assertThat(AlertService.breached(AlertType.LOSS_PERCENT, pct, d("20"))).isFalse();
-        assertThat(AlertService.breached(AlertType.GAIN_PERCENT, AlertService.observed(loss, quote("130", null)).orElseThrow(), d("25"))).isTrue();
+        assertThat(AlertService.breached(AlertType.GAIN_PERCENT, AlertService.observed(loss, quote("130", null), NO_RATES).orElseThrow(), d("25"))).isTrue();
     }
 
     @Test
@@ -70,7 +94,7 @@ class AlertRulesTest {
         AlertRule r = new AlertRule();
         r.setType(AlertType.GAIN_PERCENT);
         r.setHolding(h);
-        assertThat(AlertService.observed(r, quote("10", null))).isEmpty();
+        assertThat(AlertService.observed(r, quote("10", null), NO_RATES)).isEmpty();
     }
 
     @Test
