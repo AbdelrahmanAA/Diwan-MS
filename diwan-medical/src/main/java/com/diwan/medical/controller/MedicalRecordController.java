@@ -10,6 +10,8 @@ import com.diwan.medical.dto.ReminderDtos.DoseRequest;
 import com.diwan.medical.dto.ReminderDtos.DoseResponse;
 import com.diwan.medical.dto.ReminderDtos.ReminderPlan;
 import com.diwan.medical.service.MedicalRecordService;
+import com.diwan.medical.service.MedicineCatalog;
+import com.diwan.medical.service.MedicineCatalog.Medicine;
 import com.diwan.medical.service.ProfileService;
 import com.diwan.medical.service.ReminderService;
 import jakarta.validation.Valid;
@@ -27,12 +29,23 @@ public class MedicalRecordController {
     private final MedicalRecordService records;
     private final ProfileService profiles;
     private final ReminderService reminders;
+    private final MedicineCatalog medicines;
 
-    public MedicalRecordController(MedicalRecordService records, ProfileService profiles, ReminderService reminders) {
+    public MedicalRecordController(MedicalRecordService records, ProfileService profiles, ReminderService reminders,
+                                   MedicineCatalog medicines) {
         this.records = records;
         this.profiles = profiles;
         this.reminders = reminders;
+        this.medicines = medicines;
     }
+
+    /** Registered medicines matching a trade or scientific name (at least 2 letters). */
+    @GetMapping("/medicines")
+    public MedicineResults medicines(@RequestParam String q) {
+        return new MedicineResults(medicines.search(q), MedicineCatalog.SOURCE);
+    }
+
+    public record MedicineResults(List<Medicine> items, String source) {}
 
     /** What the phone should remind about, for every person of the account. */
     @GetMapping("/reminders")

@@ -1846,6 +1846,52 @@
       "name": "3. Medical records (8 categories)",
       "item": [
         {
+          "name": "Search Saudi registered medicines",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/medical/medicines?q=panadol",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "medical",
+                "medicines"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "panadol"
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenA}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Panadol found, source credited', () => { const r = pm.response.json(); pm.expect(r.items[0].trade).to.match(/PANADOL/); pm.expect(r.source).to.match(/SFDA/); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
           "name": "Create medications",
           "request": {
             "method": "POST",
