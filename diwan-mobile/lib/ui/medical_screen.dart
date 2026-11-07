@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -5,12 +7,13 @@ import 'package:url_launcher/url_launcher.dart';
 import '../api/models.dart';
 import '../l10n/app_localizations.dart';
 import '../platform/contact_picker.dart';
+import '../platform/reminders.dart';
 import '../state/session.dart';
 import 'format.dart';
 import 'medical_suggestions.dart';
 import 'widgets.dart';
 
-enum _Kind { text, date, integer, bloodType, severity, phone }
+enum _Kind { text, date, dateTime, integer, bloodType, severity, phone, times, toggle }
 
 /// One field of a medical record category, named as in diwan-medical's MedicalRecordRequest.
 class _Field {
@@ -67,6 +70,13 @@ final List<_Category> _categories = [
         presets: (t) => [t.freqOnce, t.freqTwice, t.freqThree, t.freqAsNeeded]),
     _Field('startDate', (t) => t.fStartDate, kind: _Kind.date),
     _Field('endDate', (t) => t.fEndDate, kind: _Kind.date),
+    _Field('times', (t) => t.fDoseTimes, kind: _Kind.times),
+    _Field('reminders', (t) => t.fReminders, kind: _Kind.toggle),
+  ]),
+  _Category('appointments', (t) => t.medAppointments, Icons.event_outlined, [
+    _Field('appointmentWith', (t) => t.fAppointmentWith),
+    _Field('appointmentAt', (t) => t.fAppointmentAt, kind: _Kind.dateTime),
+    _Field('location', (t) => t.fLocation),
   ]),
   _Category('allergies', (t) => t.medAllergies, Icons.coronavirus_outlined, [
     _Field('allergen', (t) => t.fAllergen, suggestions: allergenSuggestions),
@@ -115,11 +125,20 @@ _Category _categoryOf(String code) => _categories.firstWhere((c) => c.code == co
 
 /// What the home page shows: the people of the account and the selected person.
 class _Home {
-  _Home(this.people, this.overview, {this.savedAt});
+  _Home(this.people, this.overview, {this.doses = const [], this.savedAt});
 
   final List<MedicalProfile> people;
   final MedicalOverview overview;
+  final List<MedicalDose> doses; // answered today
   final DateTime? savedAt; // set when this is the copy kept on the phone
+}
+
+/// Replaces the phone's reminders with the server's plan. Failing is not fatal: the last plan stays scheduled.
+Future<void> syncMedicalReminders(Session session) async {
+  try {
+    final plan = await session.api.medicalReminders();
+    await Reminders.instance.sync(plan, lookupAppLocalizations(session.locale));
+  } catch (_) {}
 }
 
 /// Medical history (diwan-medical): one person at a time, the essentials first.
@@ -143,8 +162,10 @@ class _MedicalScreenState extends State<MedicalScreen> {
       final people = await session.api.medicalProfiles();
       final selected = people.where((p) => p.id == _personId).firstOrNull ?? people.first;
       final overview = await session.api.medicalOverview(profileId: selected.id);
+      final doses = await session.api.medicalDoses(profileId: selected.id, day: DateTime.now());
       await session.saveMedicalCard(overview);
-      return _Home(people, overview);
+      unawaited(syncMedicalReminders(session));
+      return _Home(people, overview, doses: doses);
     } catch (_) {
       final saved = await session.savedMedicalCards();
       if (saved.isEmpty) rethrow;
@@ -205,6 +226,7 @@ class _MedicalScreenState extends State<MedicalScreen> {
                       MaterialPageRoute(builder: (_) => EmergencyCardScreen(overview: o, savedAt: home.savedAt))),
                 ),
               ),
+              if (!offline) _TodaysDoses(overview: o, doses: home.doses),
               _Essentials(overview: o),
               if (!offline) ...[
                 const Divider(),
@@ -299,8 +321,84 @@ class _Essentials extends StatelessWidget {
         ]),
         _Summary(title: t.medChronicDiseases, lines: [for (final c in o.conditions) c.text('diseaseName') ?? '-']),
         _Summary(title: t.upcoming, lines: [
-          for (final v in o.upcoming) '${v.text('vaccineName')} · ${f.date(DateTime.tryParse(v.text('nextDoseDate') ?? ''))}',
+          for (final u in o.upcoming)
+            u.category == 'appointments'
+                ? '${u.text('appointmentWith')} · ${f.dateTime(DateTime.tryParse(u.text('appointmentAt') ?? ''))}'
+                : '${u.text('vaccineName')} · ${f.date(DateTime.tryParse(u.text('nextDoseDate') ?? ''))}',
         ]),
+      ]),
+    );
+  }
+}
+
+/// The doses due today and whether they were taken. Only records what the user says; no judgement.
+class _TodaysDoses extends StatefulWidget {
+  const _TodaysDoses({required this.overview, required this.doses});
+
+  final MedicalOverview overview;
+  final List<MedicalDose> doses;
+
+  @override
+  State<_TodaysDoses> createState() => _TodaysDosesState();
+}
+
+class _TodaysDosesState extends State<_TodaysDoses> {
+  /// Answers given on this screen since the last load, by "medicationId@time"
+  final Map<String, String> _answered = {};
+
+  @override
+  void didUpdateWidget(_TodaysDoses old) {
+    super.didUpdateWidget(old);
+    if (old.doses != widget.doses) _answered.clear();
+  }
+
+  static String _key(MedicalRecord m, DateTime at) => '${m.id}@${at.toIso8601String()}';
+
+  String? _statusOf(MedicalRecord m, DateTime at) =>
+      _answered[_key(m, at)] ??
+      widget.doses.where((d) => d.medicationId == m.id && d.scheduledAt == at).firstOrNull?.status;
+
+  Future<void> _mark(MedicalRecord m, DateTime at, String status) async {
+    try {
+      await context.read<Session>().api.recordDose(m.id, at, status);
+      if (mounted) setState(() => _answered[_key(m, at)] = status);
+    } catch (e) {
+      if (mounted) showError(context, e);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
+    final now = DateTime.now();
+    final slots = [
+      for (final m in widget.overview.currentMedications)
+        for (final time in m.times)
+          (m, DateTime(now.year, now.month, now.day, int.parse(time.split(':')[0]), int.parse(time.split(':')[1]))),
+    ]..sort((a, b) => a.$2.compareTo(b.$2));
+    if (slots.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text(t.todaysDoses, style: Theme.of(context).textTheme.titleSmall),
+        for (final (m, at) in slots)
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: Text(TimeOfDay.fromDateTime(at).format(context)),
+            title: Text([m.text('name'), m.text('dosage')].nonNulls.join(' · ')),
+            trailing: Wrap(spacing: 4, children: [
+              ChoiceChip(
+                label: Text(t.doseTaken),
+                selected: _statusOf(m, at) == 'TAKEN',
+                onSelected: (_) => _mark(m, at, 'TAKEN'),
+              ),
+              ChoiceChip(
+                label: Text(t.doseSkipped),
+                selected: _statusOf(m, at) == 'SKIPPED',
+                onSelected: (_) => _mark(m, at, 'SKIPPED'),
+              ),
+            ]),
+          ),
       ]),
     );
   }
@@ -566,7 +664,8 @@ class _CategoryScreenState extends State<_CategoryScreen> {
               final r = list[i];
               final details = [
                 for (final field in c.fields.skip(1))
-                  if (r.text(field.key) != null) '${field.label(t)}: ${_display(t, f, field, r.text(field.key)!)}',
+                  if (r.text(field.key) != null && !(field.kind == _Kind.toggle && r.text(field.key) == 'false'))
+                    '${field.label(t)}: ${_display(t, f, field, r.text(field.key)!)}',
               ];
               return ListTile(
                 leading: CircleAvatar(child: Icon(c.icon)),
@@ -587,6 +686,9 @@ class _CategoryScreenState extends State<_CategoryScreen> {
 
 String _display(AppLocalizations t, Fmt f, _Field field, String value) => switch (field.kind) {
       _Kind.date => f.date(DateTime.tryParse(value)),
+      _Kind.dateTime => f.dateTime(DateTime.tryParse(value)),
+      _Kind.times => value.replaceAll(RegExp(r'[\[\]]'), ''),
+      _Kind.toggle => value == 'true' ? '✓' : '-',
       _Kind.severity => _severityLabel(t, value),
       _ => value,
     };
@@ -611,9 +713,11 @@ class _RecordFormState extends State<_RecordForm> {
       field.key: TextEditingController(text: widget.record?.text(field.key) ?? ''),
   };
   late final Map<String, DateTime?> _dates = {
-    for (final field in widget.category.fields.where((f) => f.kind == _Kind.date))
+    for (final field in widget.category.fields.where((f) => f.kind == _Kind.date || f.kind == _Kind.dateTime))
       field.key: DateTime.tryParse(widget.record?.text(field.key) ?? ''),
   };
+  late final List<String> _times = [...?widget.record?.times];
+  late bool _reminders = widget.record?.reminders ?? false;
   late String? _bloodType = widget.record?.text('bloodType');
   late String? _severity = widget.record?.text('severity');
   late final _notes = TextEditingController(text: widget.record?.notes ?? '');
@@ -639,13 +743,18 @@ class _RecordFormState extends State<_RecordForm> {
         _Kind.text || _Kind.phone => _text[field.key]!.text.trim().isEmpty ? null : _text[field.key]!.text.trim(),
         _Kind.integer => int.tryParse(normalizeNumber(_text[field.key]!.text) ?? ''),
         _Kind.date => _dates[field.key] == null ? null : Fmt.isoDate(_dates[field.key]!),
+        _Kind.dateTime => _dates[field.key]?.toIso8601String().substring(0, 16),
+        _Kind.times => _times,
+        _Kind.toggle => _reminders && _times.isNotEmpty,
         _Kind.bloodType => _bloodType,
         _Kind.severity => _severity,
       };
     }
     body['notes'] = _notes.text.trim().isEmpty ? null : _notes.text.trim();
     try {
-      await context.read<Session>().api.saveMedicalRecord(widget.record?.id, body);
+      final session = context.read<Session>();
+      await session.api.saveMedicalRecord(widget.record?.id, body);
+      unawaited(syncMedicalReminders(session));
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
       if (mounted) showError(context, e);
@@ -654,11 +763,33 @@ class _RecordFormState extends State<_RecordForm> {
     }
   }
 
+  /// Turning reminders on asks for notification permission once, and says so when it is refused.
+  Future<void> _setReminders(bool on) async {
+    setState(() => _reminders = on);
+    if (!on) return;
+    final allowed = await Reminders.instance.requestPermission().catchError((_) => false);
+    if (!allowed && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context).notificationsOff)));
+    }
+  }
+
+  Future<void> _addTime() async {
+    final picked = await showTimePicker(context: context, initialTime: const TimeOfDay(hour: 8, minute: 0));
+    if (picked == null) return;
+    final value = '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
+    setState(() {
+      if (!_times.contains(value)) _times.add(value);
+      _times.sort();
+    });
+  }
+
   Future<void> _delete() async {
     final t = AppLocalizations.of(context);
     if (!await confirm(context, t.confirmDelete) || !mounted) return;
     try {
-      await context.read<Session>().api.deleteMedicalRecord(widget.record!.id, widget.category.code);
+      final session = context.read<Session>();
+      await session.api.deleteMedicalRecord(widget.record!.id, widget.category.code);
+      unawaited(syncMedicalReminders(session));
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
       if (mounted) showError(context, e);
@@ -773,6 +904,48 @@ class _RecordFormState extends State<_RecordForm> {
                     decoration: InputDecoration(labelText: field.label(t)),
                     items: [for (final s in _severities) DropdownMenuItem(value: s, child: Text(_severityLabel(t, s)))],
                     onChanged: (v) => setState(() => _severity = v),
+                  ),
+                ),
+              _Kind.times => Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: InputDecorator(
+                    decoration: InputDecoration(labelText: field.label(t), border: InputBorder.none),
+                    child: Wrap(spacing: 8, runSpacing: 4, children: [
+                      for (final time in _times)
+                        InputChip(
+                          label: Text(time, textDirection: TextDirection.ltr),
+                          onDeleted: () => setState(() => _times.remove(time)),
+                        ),
+                      if (_times.length < 8)
+                        ActionChip(avatar: const Icon(Icons.add_alarm, size: 18), label: Text(t.addTime), onPressed: _addTime),
+                    ]),
+                  ),
+                ),
+              _Kind.toggle => SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(field.label(t)),
+                  value: _reminders && _times.isNotEmpty,
+                  onChanged: _times.isEmpty ? null : _setReminders,
+                ),
+              _Kind.dateTime => FormField<DateTime>(
+                  initialValue: _dates[field.key],
+                  validator: (_) => _dates[field.key] == null ? t.required : null,
+                  builder: (state) => ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: const Icon(Icons.schedule),
+                    title: Text(field.label(t)),
+                    subtitle: Text(state.errorText ?? f.dateTime(_dates[field.key]),
+                        style: state.errorText == null ? null : TextStyle(color: Theme.of(context).colorScheme.error)),
+                    onTap: () async {
+                      final current = _dates[field.key] ?? DateTime.now();
+                      final day = await showDatePicker(
+                          context: context, initialDate: current, firstDate: DateTime(1900), lastDate: DateTime(DateTime.now().year + 5));
+                      if (day == null || !context.mounted) return;
+                      final time = await showTimePicker(context: context, initialTime: TimeOfDay.fromDateTime(current));
+                      if (time == null) return;
+                      setState(() => _dates[field.key] = DateTime(day.year, day.month, day.day, time.hour, time.minute));
+                      state.didChange(_dates[field.key]);
+                    },
                   ),
                 ),
               _Kind.date => ListTile(

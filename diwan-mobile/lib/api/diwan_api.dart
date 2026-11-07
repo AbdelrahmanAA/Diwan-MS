@@ -1,6 +1,7 @@
 import 'package:intl/intl.dart';
 
 import 'api_client.dart';
+import '../ui/format.dart';
 import 'models.dart';
 
 /// Every call the app makes. Amount fields are sent as strings so decimals reach the server unchanged.
@@ -212,6 +213,20 @@ class DiwanApi {
             'size': size,
           }) as Map<String, dynamic>,
           MedicalRecord.fromJson);
+
+  Future<ReminderPlan> medicalReminders() async =>
+      ReminderPlan.fromJson(await http.get('$_med/reminders') as Map<String, dynamic>);
+
+  Future<List<MedicalDose>> medicalDoses({int? profileId, required DateTime day}) async =>
+      (await http.get('$_med/doses', query: {'profileId': profileId, 'date': Fmt.isoDate(day)}) as List)
+          .map((e) => MedicalDose.fromJson(e as Map<String, dynamic>))
+          .toList();
+
+  Future<void> recordDose(int medicationId, DateTime scheduledAt, String status) => http.post('$_med/doses', {
+        'medicationId': medicationId,
+        'scheduledAt': scheduledAt.toIso8601String().substring(0, 16),
+        'status': status,
+      });
 
   Future<List<MedicalRecord>> medicalRecords({String? category, int? profileId}) async =>
       (await http.get(_med, query: {'category': category, 'profileId': profileId}) as List)

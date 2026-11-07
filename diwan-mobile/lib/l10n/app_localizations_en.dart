@@ -566,6 +566,54 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fPhone => 'Phone';
 
   @override
+  String get medAppointments => 'Appointments';
+
+  @override
+  String get fAppointmentWith => 'Doctor or clinic';
+
+  @override
+  String get fAppointmentAt => 'Date and time';
+
+  @override
+  String get fLocation => 'Location';
+
+  @override
+  String get fDoseTimes => 'Dose times';
+
+  @override
+  String get addTime => 'Add a time';
+
+  @override
+  String get fReminders => 'Remind me at these times';
+
+  @override
+  String get todaysDoses => 'Today\'s doses';
+
+  @override
+  String get doseTaken => 'Taken';
+
+  @override
+  String get doseSkipped => 'Skipped';
+
+  @override
+  String get reminderDose => 'Time for a dose';
+
+  @override
+  String get reminderAppointmentTomorrow => 'Appointment tomorrow';
+
+  @override
+  String get reminderAppointmentSoon => 'Appointment in 2 hours';
+
+  @override
+  String get notificationsOff =>
+      'Notifications are off for Diwan. Turn them on in the phone settings to get reminders.';
+
+  @override
+  String reminderDoseFor(String person) {
+    return 'Dose for $person';
+  }
+
+  @override
   String get pickFromContacts => 'Choose from contacts';
 
   @override

@@ -8,7 +8,7 @@ on the server without a new app release). Each tile opens its section by the fea
 |---|---|---|
 | `Portfolio` | Investments: portfolios, watchlist, news, alerts (bottom tabs) | `/api/portfolio` |
 | `Transactions` | Financial history: income/expense totals per currency, list, add/edit/delete | `/api/transactions` |
-| `MedicalHistory` | Medical records per person (you and family): overview, emergency card that works offline, searchable history, a list and form per category | `/api/medical` |
+| `MedicalHistory` | Medical records per person (you and family): overview, emergency card that works offline, searchable history, a list and form per category, dose times with reminders scheduled on the phone, today's doses, appointments | `/api/medical` |
 | `SmartHome` | Devices with an on/off switch (the server sends the MQTT command), add/rename/remove | `/api/smart-home/devices` |
 | `UpdateUserInfo` | My account: profile, language, fingerprint lock, sign out, deactivate/delete account | `/api/users` |
 

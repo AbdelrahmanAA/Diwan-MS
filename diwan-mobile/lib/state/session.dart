@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import 'package:local_auth/local_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../platform/reminders.dart';
 import '../api/api_client.dart';
 import '../api/diwan_api.dart';
 import '../api/models.dart';
@@ -113,6 +114,7 @@ class Session extends ChangeNotifier {
     if (sms?.enabled ?? false) await sms!.disable().catchError((_) {});
     await _storage.delete(key: userKey);
     await _storage.delete(key: _medicalCardsKey);
+    await Reminders.instance.cancelAll().catchError((_) {}); // the next user of this phone must not get them
     _user = null;
     _reference = null;
     locked = false;

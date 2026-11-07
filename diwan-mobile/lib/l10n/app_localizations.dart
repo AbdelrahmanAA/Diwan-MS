@@ -1136,6 +1136,96 @@ abstract class AppLocalizations {
   /// **'Phone'**
   String get fPhone;
 
+  /// No description provided for @medAppointments.
+  ///
+  /// In en, this message translates to:
+  /// **'Appointments'**
+  String get medAppointments;
+
+  /// No description provided for @fAppointmentWith.
+  ///
+  /// In en, this message translates to:
+  /// **'Doctor or clinic'**
+  String get fAppointmentWith;
+
+  /// No description provided for @fAppointmentAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Date and time'**
+  String get fAppointmentAt;
+
+  /// No description provided for @fLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Location'**
+  String get fLocation;
+
+  /// No description provided for @fDoseTimes.
+  ///
+  /// In en, this message translates to:
+  /// **'Dose times'**
+  String get fDoseTimes;
+
+  /// No description provided for @addTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a time'**
+  String get addTime;
+
+  /// No description provided for @fReminders.
+  ///
+  /// In en, this message translates to:
+  /// **'Remind me at these times'**
+  String get fReminders;
+
+  /// No description provided for @todaysDoses.
+  ///
+  /// In en, this message translates to:
+  /// **'Today\'s doses'**
+  String get todaysDoses;
+
+  /// No description provided for @doseTaken.
+  ///
+  /// In en, this message translates to:
+  /// **'Taken'**
+  String get doseTaken;
+
+  /// No description provided for @doseSkipped.
+  ///
+  /// In en, this message translates to:
+  /// **'Skipped'**
+  String get doseSkipped;
+
+  /// No description provided for @reminderDose.
+  ///
+  /// In en, this message translates to:
+  /// **'Time for a dose'**
+  String get reminderDose;
+
+  /// No description provided for @reminderAppointmentTomorrow.
+  ///
+  /// In en, this message translates to:
+  /// **'Appointment tomorrow'**
+  String get reminderAppointmentTomorrow;
+
+  /// No description provided for @reminderAppointmentSoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Appointment in 2 hours'**
+  String get reminderAppointmentSoon;
+
+  /// No description provided for @notificationsOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications are off for Diwan. Turn them on in the phone settings to get reminders.'**
+  String get notificationsOff;
+
+  /// No description provided for @reminderDoseFor.
+  ///
+  /// In en, this message translates to:
+  /// **'Dose for {person}'**
+  String reminderDoseFor(String person);
+
   /// No description provided for @pickFromContacts.
   ///
   /// In en, this message translates to:

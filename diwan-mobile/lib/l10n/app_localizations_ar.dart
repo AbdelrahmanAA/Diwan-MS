@@ -568,6 +568,54 @@ class AppLocalizationsAr extends AppLocalizations {
   String get fPhone => 'الهاتف';
 
   @override
+  String get medAppointments => 'المواعيد';
+
+  @override
+  String get fAppointmentWith => 'الطبيب أو العيادة';
+
+  @override
+  String get fAppointmentAt => 'التاريخ والوقت';
+
+  @override
+  String get fLocation => 'المكان';
+
+  @override
+  String get fDoseTimes => 'أوقات الجرعات';
+
+  @override
+  String get addTime => 'إضافة وقت';
+
+  @override
+  String get fReminders => 'ذكّرني في هذه الأوقات';
+
+  @override
+  String get todaysDoses => 'جرعات اليوم';
+
+  @override
+  String get doseTaken => 'تم أخذها';
+
+  @override
+  String get doseSkipped => 'تم تخطيها';
+
+  @override
+  String get reminderDose => 'حان وقت الجرعة';
+
+  @override
+  String get reminderAppointmentTomorrow => 'لديك موعد غدًا';
+
+  @override
+  String get reminderAppointmentSoon => 'لديك موعد بعد ساعتين';
+
+  @override
+  String get notificationsOff =>
+      'الإشعارات متوقفة لتطبيق ديوان. فعّلها من إعدادات الهاتف لتصلك التذكيرات.';
+
+  @override
+  String reminderDoseFor(String person) {
+    return 'جرعة $person';
+  }
+
+  @override
   String get pickFromContacts => 'اختيار من جهات الاتصال';
 
   @override

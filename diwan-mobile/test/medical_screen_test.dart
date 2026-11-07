@@ -1,7 +1,10 @@
 import 'dart:convert';
 
 import 'package:diwan_mobile/l10n/app_localizations.dart';
+import 'package:diwan_mobile/api/models.dart';
+import 'package:diwan_mobile/l10n/app_localizations.dart' show AppLocalizations;
 import 'package:diwan_mobile/platform/contact_picker.dart';
+import 'package:diwan_mobile/platform/reminders.dart';
 import 'package:diwan_mobile/state/session.dart';
 import 'package:diwan_mobile/ui/medical_screen.dart';
 import 'package:flutter/material.dart';
@@ -21,7 +24,7 @@ Map<String, Object?> _overview(Map<String, Object?> person, {String? bloodType, 
       'bloodType': bloodType,
       'allergies': allergies,
       'currentMedications': [
-        {'id': 5, 'category': 'medications', 'name': 'Metformin', 'dosage': '500mg'},
+        {'id': 5, 'category': 'medications', 'name': 'Metformin', 'dosage': '500mg', 'times': ['08:00', '20:00']},
       ],
       'conditions': [],
       'emergencyContacts': [
@@ -31,9 +34,29 @@ Map<String, Object?> _overview(Map<String, Object?> person, {String? bloodType, 
       'counts': {'medications': 1, 'allergies': allergies.length},
     };
 
+class _FakeReminders implements Reminders {
+  final synced = <ReminderPlan>[];
+  bool permission = true;
+  int asked = 0;
+
+  @override
+  Future<bool> requestPermission() async {
+    asked++;
+    return permission;
+  }
+
+  @override
+  Future<void> sync(ReminderPlan plan, AppLocalizations t) async => synced.add(plan);
+
+  @override
+  Future<void> cancelAll() async {}
+}
+
 class _Server {
   bool down = false;
   final saved = <Map<String, dynamic>>[];
+  final doses = <Map<String, dynamic>>[];
+  final gets = <String>[];
 
   late final client = MockClient((request) async {
     if (down) throw http.ClientException('offline');
@@ -45,6 +68,22 @@ class _Server {
           : _overview(_me, bloodType: 'O-', allergies: [
               {'id': 7, 'category': 'allergies', 'allergen': 'Penicillin', 'severity': 'LIFE_THREATENING'},
             ]));
+    }
+    if (path.endsWith('/reminders')) {
+      return _json({
+        'medications': [
+          {'id': 5, 'profileId': 1, 'self': true, 'name': 'Metformin', 'times': ['08:00']},
+        ],
+        'appointments': [],
+      });
+    }
+    if (path.endsWith('/doses') && request.method == 'POST') {
+      doses.add(jsonDecode(request.body) as Map<String, dynamic>);
+      return _json({});
+    }
+    if (path.endsWith('/doses')) {
+      gets.add(request.url.toString());
+      return _json(doses);
     }
     if (path.endsWith('/timeline')) {
       return _json({
@@ -86,13 +125,19 @@ Future<void> _open(WidgetTester tester, _Server server) async {
 }
 
 void main() {
-  setUp(() => FlutterSecureStorage.setMockInitialValues({}));
+  late _FakeReminders reminders;
+
+  setUp(() {
+    FlutterSecureStorage.setMockInitialValues({});
+    reminders = _FakeReminders();
+    Reminders.instance = reminders;
+  });
 
   testWidgets('the overview shows the essentials of the account holder', (tester) async {
     await _open(tester, _Server());
     expect(find.text('O-'), findsOneWidget);
     expect(find.text('Penicillin · Life-threatening'), findsOneWidget);
-    expect(find.text('Metformin · 500mg'), findsOneWidget);
+    expect(find.text('Metformin · 500mg'), findsWidgets); // today's doses and current medications
     expect(find.textContaining('not a medical device'), findsOneWidget);
   });
 
@@ -201,6 +246,81 @@ void main() {
     await tester.tap(find.byType(FloatingActionButton));
     await tester.pumpAndSettle();
     expect(find.text('Choose from contacts'), findsNothing);
+  });
+
+  testWidgets('opening the page schedules the reminders of the plan', (tester) async {
+    await _open(tester, _Server());
+    expect(reminders.synced, isNotEmpty);
+    expect(reminders.synced.last.medications.single.name, 'Metformin');
+  });
+
+  testWidgets("today's doses can be marked as taken", (tester) async {
+    final server = _Server();
+    await _open(tester, server);
+    expect(find.text("Today's doses"), findsOneWidget);
+    await tester.tap(find.widgetWithText(ChoiceChip, 'Taken').first);
+    await tester.pumpAndSettle();
+
+    final now = DateTime.now();
+    expect(server.doses.single['medicationId'], 5);
+    expect(server.doses.single['status'], 'TAKEN');
+    expect(server.doses.single['scheduledAt'], '${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}T08:00');
+    expect(tester.widget<ChoiceChip>(find.widgetWithText(ChoiceChip, 'Taken').first).selected, isTrue);
+  });
+
+  testWidgets('dose times and reminders are saved with a medication', (tester) async {
+    final server = _Server();
+    await _open(tester, server);
+    await tester.tap(find.text('Medications'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(FloatingActionButton));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextFormField).first, 'Vitamin D');
+    await tester.pumpAndSettle();
+
+    expect(tester.widget<SwitchListTile>(find.byType(SwitchListTile)).onChanged, isNull); // no time yet
+    await tester.tap(find.text('Add a time'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('OK'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(SwitchListTile));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    expect(reminders.asked, 1);
+    expect(server.saved.single['times'], ['08:00']);
+    expect(server.saved.single['reminders'], true);
+  });
+
+  testWidgets('refused notifications are explained', (tester) async {
+    reminders.permission = false;
+    await _open(tester, _Server());
+    await tester.tap(find.text('Medications'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(FloatingActionButton));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Add a time'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('OK'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(SwitchListTile));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Notifications are off'), findsOneWidget);
+  });
+
+  testWidgets('an appointment needs a date and time', (tester) async {
+    final server = _Server();
+    await _open(tester, server);
+    await tester.tap(find.text('Appointments'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(FloatingActionButton));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextFormField).first, 'Dr. Ahmed');
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+    expect(find.text('Required'), findsOneWidget);
+    expect(server.saved, isEmpty);
   });
 
   testWidgets('the history lists records', (tester) async {

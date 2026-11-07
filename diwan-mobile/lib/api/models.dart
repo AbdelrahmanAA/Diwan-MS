@@ -636,6 +636,73 @@ class MedicalRecord {
     final v = fields[key];
     return v == null || v.toString().isEmpty ? null : v.toString();
   }
+
+  /// Dose times of a medication, "HH:mm", earliest first.
+  List<String> get times => (fields['times'] as List?)?.cast<String>() ?? const [];
+
+  bool get reminders => fields['reminders'] as bool? ?? false;
+}
+
+/// A dose of a medication that was answered as taken or skipped.
+class MedicalDose {
+  MedicalDose.fromJson(Map<String, dynamic> j)
+      : medicationId = (j['medicationId'] as num).toInt(),
+        scheduledAt = DateTime.parse(j['scheduledAt'] as String),
+        status = j['status'] as String;
+
+  final int medicationId;
+  final DateTime scheduledAt; // phone-local time
+  final String status; // TAKEN | SKIPPED
+}
+
+class MedicationReminder {
+  MedicationReminder.fromJson(Map<String, dynamic> j)
+      : id = (j['id'] as num).toInt(),
+        person = j['person'] as String?,
+        self = j['self'] as bool? ?? false,
+        name = j['name'] as String,
+        dosage = j['dosage'] as String?,
+        times = (j['times'] as List? ?? []).cast<String>(),
+        startDate = _t(j['startDate']),
+        endDate = _t(j['endDate']);
+
+  final int id;
+  final String? person;
+  final bool self;
+  final String name;
+  final String? dosage;
+  final List<String> times;
+  final DateTime? startDate;
+  final DateTime? endDate;
+}
+
+class AppointmentReminder {
+  AppointmentReminder.fromJson(Map<String, dynamic> j)
+      : id = (j['id'] as num).toInt(),
+        person = j['person'] as String?,
+        self = j['self'] as bool? ?? false,
+        withWhom = j['with'] as String,
+        at = DateTime.parse(j['at'] as String),
+        location = j['location'] as String?;
+
+  final int id;
+  final String? person;
+  final bool self;
+  final String withWhom;
+  final DateTime at; // phone-local time
+  final String? location;
+}
+
+/// What the phone reminds about, for every person of the account.
+class ReminderPlan {
+  ReminderPlan(this.medications, this.appointments);
+
+  ReminderPlan.fromJson(Map<String, dynamic> j)
+      : medications = _list(j['medications'], MedicationReminder.fromJson),
+        appointments = _list(j['appointments'], AppointmentReminder.fromJson);
+
+  final List<MedicationReminder> medications;
+  final List<AppointmentReminder> appointments;
 }
 
 /// A person whose records the account keeps: the account holder or a family member.

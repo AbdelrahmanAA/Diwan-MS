@@ -15,12 +15,15 @@ val keyProperties = Properties().apply {
 
 android {
     namespace = "com.diwan.diwan_mobile"
-    compileSdk = flutter.compileSdkVersion
+    // flutter_local_notifications and androidx.core 1.19 compile against 37; minSdk/targetSdk are unchanged
+    compileSdk = 37
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+        // flutter_local_notifications schedules with java.time on every Android version
+        isCoreLibraryDesugaringEnabled = true
     }
 
     defaultConfig {
@@ -65,4 +68,5 @@ flutter {
 dependencies {
     // background upload of bank SMS (SmsSyncWorker)
     implementation("androidx.work:work-runtime-ktx:2.10.1")
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
 }

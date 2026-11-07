@@ -250,6 +250,28 @@
   "noMedicalRecords": "No records in this section yet.",
   "medEmergencyContacts": "Emergency contacts",
   "fPhone": "Phone",
+  "medAppointments": "Appointments",
+  "fAppointmentWith": "Doctor or clinic",
+  "fAppointmentAt": "Date and time",
+  "fLocation": "Location",
+  "fDoseTimes": "Dose times",
+  "addTime": "Add a time",
+  "fReminders": "Remind me at these times",
+  "todaysDoses": "Today's doses",
+  "doseTaken": "Taken",
+  "doseSkipped": "Skipped",
+  "reminderDose": "Time for a dose",
+  "reminderAppointmentTomorrow": "Appointment tomorrow",
+  "reminderAppointmentSoon": "Appointment in 2 hours",
+  "notificationsOff": "Notifications are off for Diwan. Turn them on in the phone settings to get reminders.",
+  "reminderDoseFor": "Dose for {person}",
+  "@reminderDoseFor": {
+    "placeholders": {
+      "person": {
+        "type": "String"
+      }
+    }
+  },
   "pickFromContacts": "Choose from contacts",
   "invalidPhone": "Enter a valid phone number",
   "emergencyCard": "Emergency card",
