@@ -280,7 +280,7 @@ def runContainer(String module, String name, String image) {
 def waitUntilReady(String name) {
     for (int i = 0; i < 40; i++) {
         sleep(time: 3, unit: 'SECONDS')
-        def rc = sh(script: "docker exec ${name} wget -qO- http://localhost:8081/actuator/health/readiness | grep -q UP", returnStatus: true)
+        def rc = sh(script: "docker exec ${name} wget -qO- http://127.0.0.1:8081/actuator/health/readiness | grep -q UP", returnStatus: true)
         if (rc == 0) {
             return true
         }

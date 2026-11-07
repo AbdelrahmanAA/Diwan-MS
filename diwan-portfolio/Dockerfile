@@ -24,5 +24,5 @@ ENV SERVER_PORT=8080 \
 USER diwan
 EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=5s --start-period=90s --retries=3 \
-  CMD wget -qO- http://localhost:8081/actuator/health/liveness || exit 1
+  CMD wget -qO- http://127.0.0.1:8081/actuator/health/liveness || exit 1
 ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS -jar app.jar"]
