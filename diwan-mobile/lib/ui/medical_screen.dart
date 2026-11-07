@@ -17,13 +17,14 @@ enum _Kind { text, date, dateTime, integer, bloodType, severity, phone, times, t
 
 /// One field of a medical record category, named as in diwan-medical's MedicalRecordRequest.
 class _Field {
-  const _Field(this.key, this.label, {this.kind = _Kind.text, this.suggestions, this.presets});
+  const _Field(this.key, this.label, {this.kind = _Kind.text, this.suggestions, this.presets, this.medicineSearch = false});
 
   final String key;
   final String Function(AppLocalizations) label;
   final _Kind kind;
   final List<String> Function(bool arabic)? suggestions; // typed-ahead while the field is free text
   final List<String> Function(AppLocalizations)? presets; // one tap fills the field
+  final bool medicineSearch; // offers the list of medicines registered in Saudi Arabia
 }
 
 /// A record category: its code on the server, title, icon and fields (the first one is required and is the
@@ -64,10 +65,10 @@ List<String> _familyPresets(AppLocalizations t) => [t.relFather, t.relMother, t.
 
 final List<_Category> _categories = [
   _Category('medications', (t) => t.medMedications, Icons.medication_outlined, [
-    _Field('name', (t) => t.name, suggestions: medicineSuggestions),
+    _Field('name', (t) => t.name, suggestions: medicineSuggestions, medicineSearch: true),
     _Field('dosage', (t) => t.fDosage),
     _Field('frequency', (t) => t.fFrequency,
-        presets: (t) => [t.freqOnce, t.freqTwice, t.freqThree, t.freqAsNeeded]),
+        presets: (t) => [t.freqOnce, t.freqTwice, t.freqThree, t.freqFour, t.freqAsNeeded]),
     _Field('startDate', (t) => t.fStartDate, kind: _Kind.date),
     _Field('endDate', (t) => t.fEndDate, kind: _Kind.date),
     _Field('times', (t) => t.fDoseTimes, kind: _Kind.times),
@@ -120,6 +121,16 @@ final List<_Category> _categories = [
     _Field('contactRelation', (t) => t.fRelation, presets: _familyPresets),
   ]),
 ];
+
+/// [perDay] dose times evenly over 24 hours from the first one ("HH:mm"), e.g. 08:00 three times: 08:00, 16:00, 00:00.
+@visibleForTesting
+List<String> spreadDoseTimes(int firstMinute, int perDay) => [
+      for (var i = 0; i < perDay; i++)
+        () {
+          final m = (firstMinute + i * 24 * 60 ~/ perDay) % (24 * 60);
+          return '${(m ~/ 60).toString().padLeft(2, '0')}:${(m % 60).toString().padLeft(2, '0')}';
+        }(),
+    ];
 
 _Category _categoryOf(String code) => _categories.firstWhere((c) => c.code == code);
 
@@ -796,6 +807,18 @@ class _RecordFormState extends State<_RecordForm> {
     }
   }
 
+  /// Picks from the medicines registered in Saudi Arabia; fills the name, and the dosage when still empty.
+  Future<void> _pickMedicine() async {
+    final m = await showModalBottomSheet<Medicine>(
+        context: context, isScrollControlled: true, builder: (_) => const _MedicineSearch());
+    if (m == null || !mounted) return;
+    setState(() {
+      _text['name']!.text = m.trade;
+      final dosage = _text['dosage'];
+      if (dosage != null && dosage.text.trim().isEmpty) dosage.text = [m.strength, m.form].where((s) => s.isNotEmpty).join(' ');
+    });
+  }
+
   /// Fills the name (when still empty) and the number from the phone's contact picker.
   Future<void> _pickContact() async {
     try {
@@ -845,12 +868,51 @@ class _RecordFormState extends State<_RecordForm> {
             validator: (v) => _validate(field, v),
           );
     if (field.presets == null) return input;
+    final perDay = field.key == 'frequency' ? [1, 2, 3, 4, null] : null; // doses a day of each frequency preset
+    final presets = field.presets!(t);
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       input,
       Wrap(spacing: 8, children: [
-        for (final p in field.presets!(t)) ActionChip(label: Text(p), onPressed: () => setState(() => controller.text = p)),
+        for (var i = 0; i < presets.length; i++)
+          ActionChip(
+            label: Text(presets[i]),
+            onPressed: () async {
+              setState(() => controller.text = presets[i]);
+              final n = perDay?[i];
+              if (n != null) await _spreadTimes(n);
+            },
+          ),
       ]),
     ]);
+  }
+
+  /// Asks for the first dose and suggests the others evenly over the day (every 24 / [perDay] hours).
+  /// The user can change or remove any of them afterwards.
+  Future<void> _spreadTimes(int perDay) async {
+    final t = AppLocalizations.of(context);
+    final first = _times.isEmpty ? const TimeOfDay(hour: 8, minute: 0) : _timeOf(_times.first);
+    final picked = await showTimePicker(context: context, initialTime: first, helpText: t.firstDoseTime);
+    if (picked == null || !mounted) return;
+    setState(() {
+      _times
+        ..clear()
+        ..addAll(spreadDoseTimes(picked.hour * 60 + picked.minute, perDay))
+        ..sort();
+    });
+  }
+
+  static TimeOfDay _timeOf(String hhmm) =>
+      TimeOfDay(hour: int.parse(hhmm.split(':')[0]), minute: int.parse(hhmm.split(':')[1]));
+
+  Future<void> _editTime(String old) async {
+    final picked = await showTimePicker(context: context, initialTime: _timeOf(old));
+    if (picked == null || !mounted) return;
+    final value = '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
+    setState(() {
+      _times.remove(old);
+      if (!_times.contains(value)) _times.add(value);
+      _times.sort();
+    });
   }
 
   @override
@@ -867,6 +929,15 @@ class _RecordFormState extends State<_RecordForm> {
       body: Form(
         key: _form,
         child: ListView(padding: const EdgeInsets.all(16), children: [
+          if (widget.category.fields.any((f) => f.medicineSearch))
+            Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: OutlinedButton.icon(
+                icon: const Icon(Icons.search),
+                label: Text(t.searchMedicines),
+                onPressed: _pickMedicine,
+              ),
+            ),
           if (ContactPicker.available && widget.category.fields.any((f) => f.kind == _Kind.phone))
             Align(
               alignment: AlignmentDirectional.centerStart,
@@ -914,6 +985,7 @@ class _RecordFormState extends State<_RecordForm> {
                       for (final time in _times)
                         InputChip(
                           label: Text(time, textDirection: TextDirection.ltr),
+                          onPressed: () => _editTime(time),
                           onDeleted: () => setState(() => _times.remove(time)),
                         ),
                       if (_times.length < 8)
@@ -977,6 +1049,102 @@ class _RecordFormState extends State<_RecordForm> {
           ),
         ]),
       ),
+    );
+  }
+}
+
+/// Search in the medicines registered in Saudi Arabia (SFDA list), by trade or scientific name.
+class _MedicineSearch extends StatefulWidget {
+  const _MedicineSearch();
+
+  @override
+  State<_MedicineSearch> createState() => _MedicineSearchState();
+}
+
+class _MedicineSearchState extends State<_MedicineSearch> {
+  Timer? _debounce;
+  List<Medicine> _results = [];
+  String _searched = '';
+  bool _loading = false;
+  Object? _error;
+
+  void _onChanged(String q) {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 350), () => _search(q));
+  }
+
+  Future<void> _search(String q) async {
+    final query = q.trim();
+    if (query.length < 2) {
+      setState(() {
+        _results = [];
+        _searched = '';
+      });
+      return;
+    }
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final r = await context.read<Session>().api.searchMedicines(query);
+      if (mounted && query == q.trim()) {
+        setState(() {
+          _results = r;
+          _searched = query;
+        });
+      }
+    } catch (e) {
+      if (mounted) setState(() => _error = e);
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
+    return DraggableScrollableSheet(
+      expand: false,
+      initialChildSize: 0.85,
+      builder: (context, scroll) => Column(children: [
+        Padding(
+          padding: const EdgeInsets.all(16),
+          child: TextField(
+            autofocus: true,
+            textDirection: TextDirection.ltr,
+            decoration: InputDecoration(prefixIcon: const Icon(Icons.search), labelText: t.searchMedicines, helperText: t.medicineHint),
+            onChanged: _onChanged,
+            onSubmitted: _search,
+          ),
+        ),
+        if (_loading) const LinearProgressIndicator(),
+        if (_error != null) Padding(padding: const EdgeInsets.all(16), child: Text(errorText(context, _error!))),
+        if (_error == null && !_loading && _searched.isNotEmpty && _results.isEmpty)
+          Padding(padding: const EdgeInsets.all(16), child: Text(t.noMedicineFound)),
+        Expanded(
+          child: ListView(controller: scroll, children: [
+            for (final m in _results)
+              ListTile(
+                title: Text(m.trade, textDirection: TextDirection.ltr),
+                subtitle: Text([m.scientific, m.strength, m.form].where((s) => s.isNotEmpty).join(' · '),
+                    textDirection: TextDirection.ltr),
+                onTap: () => Navigator.pop(context, m),
+              ),
+            if (_results.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Text(t.medicineSource, style: Theme.of(context).textTheme.bodySmall),
+              ),
+          ]),
+        ),
+      ]),
     );
   }
 }

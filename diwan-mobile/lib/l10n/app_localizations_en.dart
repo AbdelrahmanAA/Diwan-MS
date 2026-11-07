@@ -566,6 +566,27 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fPhone => 'Phone';
 
   @override
+  String get freqFour => 'Four times a day';
+
+  @override
+  String get firstDoseTime => 'Time of the first dose';
+
+  @override
+  String get searchMedicines => 'Search Saudi registered medicines';
+
+  @override
+  String get medicineHint =>
+      'Trade or scientific name, e.g. Panadol or paracetamol';
+
+  @override
+  String get noMedicineFound =>
+      'Not on the list. You can still type the name yourself.';
+
+  @override
+  String get medicineSource =>
+      'Medicine list: SFDA (Saudi Food and Drug Authority)';
+
+  @override
   String get medAppointments => 'Appointments';
 
   @override

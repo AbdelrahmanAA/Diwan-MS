@@ -643,6 +643,20 @@ class MedicalRecord {
   bool get reminders => fields['reminders'] as bool? ?? false;
 }
 
+/// A medicine registered in Saudi Arabia (SFDA list), offered while entering a medication.
+class Medicine {
+  Medicine.fromJson(Map<String, dynamic> j)
+      : trade = j['trade'] as String,
+        scientific = (j['scientific'] ?? '') as String,
+        strength = (j['strength'] ?? '') as String,
+        form = (j['form'] ?? '') as String;
+
+  final String trade;
+  final String scientific;
+  final String strength;
+  final String form;
+}
+
 /// A dose of a medication that was answered as taken or skipped.
 class MedicalDose {
   MedicalDose.fromJson(Map<String, dynamic> j)

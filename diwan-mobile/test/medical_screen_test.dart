@@ -69,6 +69,14 @@ class _Server {
               {'id': 7, 'category': 'allergies', 'allergen': 'Penicillin', 'severity': 'LIFE_THREATENING'},
             ]));
     }
+    if (path.endsWith('/medicines')) {
+      return _json({
+        'items': request.url.queryParameters['q'] == 'pan'
+            ? [{'trade': 'PANADOL', 'scientific': 'PARACETAMOL', 'strength': '500', 'form': 'Tablet'}]
+            : [],
+        'source': 'SFDA registered drugs list',
+      });
+    }
     if (path.endsWith('/reminders')) {
       return _json({
         'medications': [
@@ -291,6 +299,85 @@ void main() {
     expect(reminders.asked, 1);
     expect(server.saved.single['times'], ['08:00']);
     expect(server.saved.single['reminders'], true);
+  });
+
+  testWidgets('a medicine is picked from the Saudi list and fills name and dosage', (tester) async {
+    final server = _Server();
+    await _open(tester, server);
+    await tester.tap(find.text('Medications'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(FloatingActionButton));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Search Saudi registered medicines'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField).last, 'pan');
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('SFDA'), findsOneWidget);
+    await tester.tap(find.text('PANADOL'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    expect(server.saved.single['name'], 'PANADOL');
+    expect(server.saved.single['dosage'], '500 Tablet');
+  });
+
+  testWidgets('a medicine not on the list says so and can still be typed', (tester) async {
+    await _open(tester, _Server());
+    await tester.tap(find.text('Medications'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(FloatingActionButton));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Search Saudi registered medicines'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField).last, 'zzz');
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Not on the list'), findsOneWidget);
+  });
+
+  test('dose times are spread evenly over the day', () {
+    expect(spreadDoseTimes(8 * 60, 1), ['08:00']);
+    expect(spreadDoseTimes(8 * 60, 2), ['08:00', '20:00']);
+    expect(spreadDoseTimes(8 * 60, 3), ['08:00', '16:00', '00:00']);
+    expect(spreadDoseTimes(7 * 60 + 30, 4), ['07:30', '13:30', '19:30', '01:30']);
+  });
+
+  testWidgets('choosing three times a day suggests a dose every 8 hours', (tester) async {
+    final server = _Server();
+    await _open(tester, server);
+    await tester.tap(find.text('Medications'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(FloatingActionButton));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextFormField).first, 'Antibiotic');
+    await tester.tap(find.text('Three times a day'));
+    await tester.pumpAndSettle();
+    expect(find.text('Time of the first dose'), findsOneWidget);
+    await tester.tap(find.text('OK'));
+    await tester.pumpAndSettle();
+    expect(find.text('16:00'), findsOneWidget);
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    expect(server.saved.single['frequency'], 'Three times a day');
+    expect(server.saved.single['times'], ['00:00', '08:00', '16:00']);
+  });
+
+  testWidgets('a suggested time can be changed by tapping it', (tester) async {
+    await _open(tester, _Server());
+    await tester.tap(find.text('Medications'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(FloatingActionButton));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Twice a day'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('OK'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('20:00'));
+    await tester.pumpAndSettle();
+    expect(find.byType(TimePickerDialog), findsOneWidget);
   });
 
   testWidgets('refused notifications are explained', (tester) async {

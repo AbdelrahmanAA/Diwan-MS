@@ -568,6 +568,25 @@ class AppLocalizationsAr extends AppLocalizations {
   String get fPhone => 'الهاتف';
 
   @override
+  String get freqFour => 'أربع مرات يوميًا';
+
+  @override
+  String get firstDoseTime => 'وقت الجرعة الأولى';
+
+  @override
+  String get searchMedicines => 'البحث في الأدوية المسجلة في السعودية';
+
+  @override
+  String get medicineHint => 'الاسم التجاري أو العلمي بالإنجليزية، مثل Panadol';
+
+  @override
+  String get noMedicineFound =>
+      'غير موجود في القائمة. يمكنك كتابة الاسم بنفسك.';
+
+  @override
+  String get medicineSource => 'قائمة الأدوية: الهيئة العامة للغذاء والدواء';
+
+  @override
   String get medAppointments => 'المواعيد';
 
   @override

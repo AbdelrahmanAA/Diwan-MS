@@ -214,6 +214,11 @@ class DiwanApi {
           }) as Map<String, dynamic>,
           MedicalRecord.fromJson);
 
+  Future<List<Medicine>> searchMedicines(String q) async =>
+      ((await http.get('$_med/medicines', query: {'q': q}) as Map<String, dynamic>)['items'] as List)
+          .map((e) => Medicine.fromJson(e as Map<String, dynamic>))
+          .toList();
+
   Future<ReminderPlan> medicalReminders() async =>
       ReminderPlan.fromJson(await http.get('$_med/reminders') as Map<String, dynamic>);
 

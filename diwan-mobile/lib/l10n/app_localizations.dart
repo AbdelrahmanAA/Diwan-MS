@@ -1136,6 +1136,42 @@ abstract class AppLocalizations {
   /// **'Phone'**
   String get fPhone;
 
+  /// No description provided for @freqFour.
+  ///
+  /// In en, this message translates to:
+  /// **'Four times a day'**
+  String get freqFour;
+
+  /// No description provided for @firstDoseTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Time of the first dose'**
+  String get firstDoseTime;
+
+  /// No description provided for @searchMedicines.
+  ///
+  /// In en, this message translates to:
+  /// **'Search Saudi registered medicines'**
+  String get searchMedicines;
+
+  /// No description provided for @medicineHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Trade or scientific name, e.g. Panadol or paracetamol'**
+  String get medicineHint;
+
+  /// No description provided for @noMedicineFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Not on the list. You can still type the name yourself.'**
+  String get noMedicineFound;
+
+  /// No description provided for @medicineSource.
+  ///
+  /// In en, this message translates to:
+  /// **'Medicine list: SFDA (Saudi Food and Drug Authority)'**
+  String get medicineSource;
+
   /// No description provided for @medAppointments.
   ///
   /// In en, this message translates to:
