@@ -17,9 +17,10 @@ RUN addgroup -S diwan && adduser -S diwan -G diwan
 WORKDIR /app
 COPY --from=builder --chown=diwan:diwan /build/diwan-portfolio/target/diwan-portfolio-*.jar app.jar
 # Heap follows the container memory limit (docker run --memory); override JAVA_OPTS to tune
+# IPv4 only: api.gold-api.com answers NXDOMAIN for AAAA, and on Alpine (musl) that fails the whole lookup
 ENV SERVER_PORT=8080 \
     MANAGEMENT_PORT=8081 \
-    JAVA_OPTS="-XX:MaxRAMPercentage=70 -XX:+ExitOnOutOfMemoryError"
+    JAVA_OPTS="-XX:MaxRAMPercentage=70 -XX:+ExitOnOutOfMemoryError -Djava.net.preferIPv4Stack=true"
 USER diwan
 EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=5s --start-period=90s --retries=3 \
