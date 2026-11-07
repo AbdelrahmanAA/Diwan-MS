@@ -6,6 +6,7 @@ import jakarta.validation.constraints.Size;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 /** A record of any category; the category decides which fields apply (see RecordCategories). */
 public class MedicalRecordRequest {
@@ -44,6 +45,11 @@ public class MedicalRecordRequest {
     @Size(max = 255, message = "{validation.size}") private String contactName;
     @Size(max = 255, message = "{validation.size}") private String phone;
     @Size(max = 255, message = "{validation.size}") private String contactRelation;
+    @Size(max = 8, message = "{validation.size}") private List<String> times;
+    private Boolean reminders;
+    @Size(max = 255, message = "{validation.size}") private String appointmentWith;
+    private LocalDateTime appointmentAt;
+    @Size(max = 255, message = "{validation.size}") private String location;
 
     public Long getProfileId() { return profileId; }
     public void setProfileId(Long v) { profileId = v; }
@@ -113,4 +119,14 @@ public class MedicalRecordRequest {
     public void setPhone(String v) { phone = v; }
     public String getContactRelation() { return contactRelation; }
     public void setContactRelation(String v) { contactRelation = v; }
+    public List<String> getTimes() { return times; }
+    public void setTimes(List<String> v) { times = v; }
+    public Boolean getReminders() { return reminders; }
+    public void setReminders(Boolean v) { reminders = v; }
+    public String getAppointmentWith() { return appointmentWith; }
+    public void setAppointmentWith(String v) { appointmentWith = v; }
+    public LocalDateTime getAppointmentAt() { return appointmentAt; }
+    public void setAppointmentAt(LocalDateTime v) { appointmentAt = v; }
+    public String getLocation() { return location; }
+    public void setLocation(String v) { location = v; }
 }

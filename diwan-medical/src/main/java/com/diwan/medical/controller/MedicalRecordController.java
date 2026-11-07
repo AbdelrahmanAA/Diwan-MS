@@ -6,12 +6,17 @@ import com.diwan.medical.dto.OverviewResponse;
 import com.diwan.medical.dto.PageResponse;
 import com.diwan.medical.dto.ProfileDtos.ProfileRequest;
 import com.diwan.medical.dto.ProfileDtos.ProfileResponse;
+import com.diwan.medical.dto.ReminderDtos.DoseRequest;
+import com.diwan.medical.dto.ReminderDtos.DoseResponse;
+import com.diwan.medical.dto.ReminderDtos.ReminderPlan;
 import com.diwan.medical.service.MedicalRecordService;
 import com.diwan.medical.service.ProfileService;
+import com.diwan.medical.service.ReminderService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 /** Without a profileId everything refers to the account holder. */
@@ -21,10 +26,30 @@ public class MedicalRecordController {
 
     private final MedicalRecordService records;
     private final ProfileService profiles;
+    private final ReminderService reminders;
 
-    public MedicalRecordController(MedicalRecordService records, ProfileService profiles) {
+    public MedicalRecordController(MedicalRecordService records, ProfileService profiles, ReminderService reminders) {
         this.records = records;
         this.profiles = profiles;
+        this.reminders = reminders;
+    }
+
+    /** What the phone should remind about, for every person of the account. */
+    @GetMapping("/reminders")
+    public ReminderPlan reminders(@RequestHeader("X-User-Id") Long userId) {
+        return reminders.plan(userId);
+    }
+
+    @PostMapping("/doses")
+    public DoseResponse recordDose(@RequestHeader("X-User-Id") Long userId, @Valid @RequestBody DoseRequest req) {
+        return reminders.record(userId, req);
+    }
+
+    @GetMapping("/doses")
+    public List<DoseResponse> doses(@RequestHeader("X-User-Id") Long userId,
+                                    @RequestParam(required = false) Long profileId,
+                                    @RequestParam LocalDate date) {
+        return reminders.doses(userId, profileId, date);
     }
 
     @PostMapping

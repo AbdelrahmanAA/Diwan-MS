@@ -22,6 +22,8 @@ public interface MedicalEntryRepository<T extends MedicalEntry> extends JpaRepos
 
     long countByProfileId(Long profileId);
 
+    List<T> findByUserIdOrderByIdAsc(Long userId);
+
     @Modifying
     @Query("delete from #{#entityName} e where e.userId = :userId")
     int deleteAllOfUser(@Param("userId") Long userId);

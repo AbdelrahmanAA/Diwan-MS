@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
@@ -139,6 +140,7 @@ public class MedicalRecordService {
     public OverviewResponse overview(Long userId, Long profileId) {
         MedicalProfile profile = profiles.require(userId, profileId);
         LocalDate today = LocalDate.now(clock);
+        LocalDateTime now = LocalDateTime.now(clock);
         Map<String, Long> counts = new LinkedHashMap<>();
         categories.all().forEach(c -> counts.put(c.code(), c.repository().countByProfileId(profile.getId())));
         return new OverviewResponse(ProfileService.view(profile),
@@ -149,10 +151,18 @@ public class MedicalRecordService {
                         .filter(r -> r.getEndDate() == null || !r.getEndDate().isBefore(today)).toList(),
                 of(RecordCategories.CHRONIC_DISEASES, profile),
                 of(RecordCategories.EMERGENCY_CONTACTS, profile),
-                of(RecordCategories.VACCINES, profile).stream()
-                        .filter(r -> r.getNextDoseDate() != null && !r.getNextDoseDate().isBefore(today))
-                        .sorted(Comparator.comparing(MedicalRecordResponse::getNextDoseDate)).toList(),
+                Stream.concat(
+                        of(RecordCategories.VACCINES, profile).stream()
+                                .filter(r -> r.getNextDoseDate() != null && !r.getNextDoseDate().isBefore(today)),
+                        of(RecordCategories.APPOINTMENTS, profile).stream()
+                                .filter(r -> !r.getAppointmentAt().isBefore(now.minusHours(2))))
+                        .sorted(Comparator.comparing(MedicalRecordService::dueAt)).toList(),
                 counts);
+    }
+
+    /** When something coming up is due: an appointment's time or a vaccine's next dose day. */
+    private static LocalDateTime dueAt(MedicalRecordResponse r) {
+        return r.getAppointmentAt() != null ? r.getAppointmentAt() : r.getNextDoseDate().atStartOfDay();
     }
 
     private List<MedicalRecordResponse> of(String category, MedicalProfile profile) {

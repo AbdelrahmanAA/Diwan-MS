@@ -14,6 +14,10 @@ public class MedicalMedication extends MedicalEntry {
     @Convert(converter = EncryptedStringConverter.class) @Column(columnDefinition = "TEXT") private String frequency;
     private LocalDate startDate;
     private LocalDate endDate;
+    /** Dose times of the day, "HH:mm" separated by commas, earliest first; null without a schedule */
+    @Column(length = 100) private String scheduleTimes;
+    /** Remind on the phone at the dose times */
+    @Column(nullable = false) private boolean reminders;
 
     public String getName() { return name; }
     public void setName(String v) { name = v; }
@@ -25,4 +29,8 @@ public class MedicalMedication extends MedicalEntry {
     public void setStartDate(LocalDate v) { startDate = v; }
     public LocalDate getEndDate() { return endDate; }
     public void setEndDate(LocalDate v) { endDate = v; }
+    public String getScheduleTimes() { return scheduleTimes; }
+    public void setScheduleTimes(String v) { scheduleTimes = v; }
+    public boolean isReminders() { return reminders; }
+    public void setReminders(boolean v) { reminders = v; }
 }

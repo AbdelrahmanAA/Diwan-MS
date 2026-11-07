@@ -289,6 +289,69 @@ class MedicalApiIT {
     }
 
     @Test
+    void doseTimesAreKeptSortedAndValidated() throws Exception {
+        JsonNode m = add(record("medications", "name", "Metformin", "times", List.of("20:00", "08:00", "08:00"), "reminders", true));
+        assertThat(m.get("times")).extracting(JsonNode::asText).containsExactly("08:00", "20:00");
+        assertThat(m.get("reminders").asBoolean()).isTrue();
+
+        call(post("/api/medical"), record("medications", "name", "X", "times", List.of("25:00")))
+                .andExpect(jsonPath("$.code").value("medical.times.invalid"));
+        call(post("/api/medical"), record("medications", "name", "X", "reminders", true))
+                .andExpect(jsonPath("$.code").value("medical.reminders.need_times"));
+    }
+
+    @Test
+    void theReminderPlanCoversEveryPersonAndOnlyWhatIsDue() throws Exception {
+        long child = addPerson("Sara", "CHILD");
+        LocalDate today = LocalDate.now();
+        add(record("medications", "name", "Mine", "times", List.of("08:00"), "reminders", true));
+        add(record("medications", "name", "Hers", "times", List.of("09:00"), "reminders", true, "profileId", child));
+        add(record("medications", "name", "Silent", "times", List.of("10:00")));
+        add(record("medications", "name", "Ended", "times", List.of("11:00"), "reminders", true,
+                "endDate", today.minusDays(1).toString()));
+        add(record("appointments", "appointmentWith", "Dr. Ahmed", "appointmentAt", today.plusDays(2) + "T10:30"));
+        add(record("appointments", "appointmentWith", "Past", "appointmentAt", today.minusDays(2) + "T10:30"));
+
+        JsonNode plan = body(call(get("/api/medical/reminders"), null).andExpect(status().isOk()));
+
+        assertThat(plan.get("medications").findValuesAsText("name")).containsExactly("Mine", "Hers");
+        assertThat(plan.get("medications").get(1).get("person").asText()).isEqualTo("Sara");
+        assertThat(plan.get("appointments").findValuesAsText("with")).containsExactly("Dr. Ahmed");
+        assertThat(jdbc.queryForObject("select appointment_with from medical_appointments where user_id = ? limit 1",
+                String.class, user)).startsWith("enc:");
+    }
+
+    @Test
+    void anAppointmentIsUpcomingInTheOverview() throws Exception {
+        LocalDate today = LocalDate.now();
+        add(record("vaccines", "vaccineName", "Flu", "nextDoseDate", today.plusDays(10).toString()));
+        add(record("appointments", "appointmentWith", "Dentist", "appointmentAt", today.plusDays(1) + "T09:00"));
+
+        JsonNode o = body(call(get("/api/medical/overview"), null));
+
+        assertThat(o.get("upcoming").findValuesAsText("title")).containsExactly("Dentist", "Flu");
+    }
+
+    @Test
+    void aDoseCanBeMarkedAndChangedButOnlyByTheOwner() throws Exception {
+        long id = add(record("medications", "name", "Metformin", "times", List.of("08:00"))).get("id").asLong();
+        String at = LocalDate.now() + "T08:00";
+
+        call(post("/api/medical/doses"), Map.of("medicationId", id, "scheduledAt", at, "status", "SKIPPED")).andExpect(status().isOk());
+        call(post("/api/medical/doses"), Map.of("medicationId", id, "scheduledAt", at, "status", "taken")).andExpect(status().isOk());
+        call(post("/api/medical/doses"), Map.of("medicationId", id, "scheduledAt", at, "status", "MAYBE"))
+                .andExpect(jsonPath("$.code").value("medical.dose.status_invalid"));
+        call(post("/api/medical/doses"), Map.of("medicationId", id, "scheduledAt", at, "status", "TAKEN"),
+                USERS.incrementAndGet(), "en").andExpect(status().isNotFound());
+
+        JsonNode today = body(call(get("/api/medical/doses?date=" + LocalDate.now()), null).andExpect(status().isOk()));
+        assertThat(today.findValuesAsText("status")).containsExactly("TAKEN");
+
+        call(delete("/api/medical/" + id + "?category=medications"), null).andExpect(status().isNoContent());
+        assertThat(body(call(get("/api/medical/doses?date=" + LocalDate.now()), null))).isEmpty();
+    }
+
+    @Test
     void requestsWithoutAGatewaySignatureAreRejected() throws Exception {
         mvc.perform(get("/api/medical").header("X-User-Id", String.valueOf(user))).andExpect(status().isUnauthorized());
     }

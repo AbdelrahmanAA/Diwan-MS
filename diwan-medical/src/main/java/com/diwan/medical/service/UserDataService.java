@@ -1,6 +1,7 @@
 package com.diwan.medical.service;
 
 import com.diwan.medical.repository.MedicalAuditRepository;
+import com.diwan.medical.repository.MedicalDoseRepository;
 import com.diwan.medical.repository.MedicalProfileRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,15 +17,19 @@ public class UserDataService {
     private final RecordCategories categories;
     private final MedicalProfileRepository profiles;
     private final MedicalAuditRepository audit;
+    private final MedicalDoseRepository doses;
 
-    public UserDataService(RecordCategories categories, MedicalProfileRepository profiles, MedicalAuditRepository audit) {
+    public UserDataService(RecordCategories categories, MedicalProfileRepository profiles, MedicalAuditRepository audit,
+                           MedicalDoseRepository doses) {
         this.categories = categories;
         this.profiles = profiles;
         this.audit = audit;
+        this.doses = doses;
     }
 
     @Transactional
     public void deleteAll(Long userId) {
+        doses.deleteAllOfUser(userId);
         int records = categories.all().stream().mapToInt(c -> c.repository().deleteAllOfUser(userId)).sum();
         int people = profiles.deleteAllOfUser(userId);
         audit.deleteAllOfUser(userId);

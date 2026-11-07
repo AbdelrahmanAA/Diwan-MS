@@ -2,6 +2,7 @@ package com.diwan.medical.dto;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 /** A record of any category; fields of other categories stay null. */
 public class MedicalRecordResponse {
@@ -45,6 +46,11 @@ public class MedicalRecordResponse {
     private String contactName;
     private String phone;
     private String contactRelation;
+    private List<String> times;
+    private Boolean reminders;
+    private String appointmentWith;
+    private LocalDateTime appointmentAt;
+    private String location;
 
     public Long getId() { return id; }
     public void setId(Long v) { id = v; }
@@ -124,4 +130,14 @@ public class MedicalRecordResponse {
     public void setPhone(String v) { phone = v; }
     public String getContactRelation() { return contactRelation; }
     public void setContactRelation(String v) { contactRelation = v; }
+    public List<String> getTimes() { return times; }
+    public void setTimes(List<String> v) { times = v; }
+    public Boolean getReminders() { return reminders; }
+    public void setReminders(Boolean v) { reminders = v; }
+    public String getAppointmentWith() { return appointmentWith; }
+    public void setAppointmentWith(String v) { appointmentWith = v; }
+    public LocalDateTime getAppointmentAt() { return appointmentAt; }
+    public void setAppointmentAt(LocalDateTime v) { appointmentAt = v; }
+    public String getLocation() { return location; }
+    public void setLocation(String v) { location = v; }
 }

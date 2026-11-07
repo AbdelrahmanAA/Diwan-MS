@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -24,9 +25,12 @@ public class RecordCategories {
     public static final String CHRONIC_DISEASES = "chronicDiseases";
     public static final String VACCINES = "vaccines";
     public static final String EMERGENCY_CONTACTS = "emergencyContacts";
+    public static final String APPOINTMENTS = "appointments";
+    static final int MAX_DOSE_TIMES = 8;
 
     private static final Set<String> BLOOD_TYPES = Set.of("A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-");
     private static final Pattern PHONE = Pattern.compile("[+0-9 ()-]{5,20}");
+    private static final Pattern TIME = Pattern.compile("([01][0-9]|2[0-3]):[0-5][0-9]");
 
     private final Map<String, RecordCategory<?>> byCode = new LinkedHashMap<>();
 
@@ -34,12 +38,17 @@ public class RecordCategories {
                             MedicalBloodTypeRepository bloodTypes, MedicalSurgeryRepository surgeries,
                             MedicalChronicDiseaseRepository chronicDiseases, MedicalLabResultRepository labResults,
                             MedicalVaccineRepository vaccines, MedicalFamilyHistoryRepository familyHistory,
-                            MedicalEmergencyContactRepository emergencyContacts) {
+                            MedicalEmergencyContactRepository emergencyContacts,
+                            MedicalAppointmentRepository appointments) {
         add(new RecordCategory<>(MEDICATIONS, medications, MedicalMedication::new, false, true,
                 MedicalMedication::getName, MedicalMedication::getStartDate,
                 r -> {
                     required(r.getName());
                     inOrder(r.getStartDate(), r.getEndDate());
+                    doseTimes(r.getTimes());
+                    if (Boolean.TRUE.equals(r.getReminders()) && doseTimes(r.getTimes()) == null) {
+                        throw ApiException.badRequest("medical.reminders.need_times");
+                    }
                 },
                 (r, e) -> {
                     e.setName(clean(r.getName()));
@@ -47,6 +56,8 @@ public class RecordCategories {
                     e.setFrequency(clean(r.getFrequency()));
                     e.setStartDate(r.getStartDate());
                     e.setEndDate(r.getEndDate());
+                    e.setScheduleTimes(doseTimes(r.getTimes()));
+                    e.setReminders(Boolean.TRUE.equals(r.getReminders()));
                 },
                 (e, v) -> {
                     v.setName(e.getName());
@@ -54,6 +65,8 @@ public class RecordCategories {
                     v.setFrequency(e.getFrequency());
                     v.setStartDate(e.getStartDate());
                     v.setEndDate(e.getEndDate());
+                    v.setTimes(timesOf(e.getScheduleTimes()));
+                    v.setReminders(e.isReminders());
                 }));
         add(new RecordCategory<>(ALLERGIES, allergies, MedicalAllergy::new, false, true,
                 MedicalAllergy::getAllergen, e -> null,
@@ -173,6 +186,39 @@ public class RecordCategories {
                     v.setPhone(e.getPhone());
                     v.setContactRelation(e.getContactRelation());
                 }));
+        add(new RecordCategory<>(APPOINTMENTS, appointments, MedicalAppointment::new, false, true,
+                MedicalAppointment::getAppointmentWith, e -> e.getAppointmentAt().toLocalDate(),
+                r -> {
+                    required(r.getAppointmentWith());
+                    if (r.getAppointmentAt() == null) {
+                        throw ApiException.badRequest("validation.required");
+                    }
+                },
+                (r, e) -> {
+                    e.setAppointmentWith(clean(r.getAppointmentWith()));
+                    e.setAppointmentAt(r.getAppointmentAt().withSecond(0).withNano(0));
+                    e.setLocation(clean(r.getLocation()));
+                },
+                (e, v) -> {
+                    v.setAppointmentWith(e.getAppointmentWith());
+                    v.setAppointmentAt(e.getAppointmentAt());
+                    v.setLocation(e.getLocation());
+                }));
+    }
+
+    /** The stored form of dose times: distinct "HH:mm", earliest first, comma separated; null when none. */
+    static String doseTimes(List<String> times) {
+        if (times == null || times.isEmpty()) {
+            return null;
+        }
+        if (times.size() > MAX_DOSE_TIMES || times.stream().anyMatch(t -> t == null || !TIME.matcher(t.trim()).matches())) {
+            throw ApiException.badRequest("medical.times.invalid", MAX_DOSE_TIMES);
+        }
+        return String.join(",", times.stream().map(String::trim).distinct().sorted().toList());
+    }
+
+    public static List<String> timesOf(String stored) {
+        return stored == null || stored.isBlank() ? List.of() : List.of(stored.split(","));
     }
 
     private void add(RecordCategory<?> category) {
