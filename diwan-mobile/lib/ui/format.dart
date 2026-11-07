@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 /// Number, money and date formatting in the app's language (Arabic gets Arabic digits and RTL-aware symbols).
+/// Saudi stocks are known by their number: the exchange suffix is only the server's way of routing them.
+String displaySymbol(String symbol) => symbol.endsWith('.SR') ? symbol.substring(0, symbol.length - 3) : symbol;
+
 class Fmt {
   Fmt(BuildContext context) : locale = Localizations.localeOf(context).toLanguageTag();
 

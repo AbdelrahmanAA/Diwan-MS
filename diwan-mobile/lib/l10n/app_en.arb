@@ -65,7 +65,7 @@
   "country": "Country",
   "currency": "Currency",
   "symbol": "Market symbol",
-  "symbolHint": "e.g. AAPL or 2222.SR - search by name or symbol",
+  "symbolHint": "Search by company name or number, e.g. Aramco, 2222 or AAPL",
   "search": "Search",
   "quantity": "Quantity",
   "price": "Price per unit",
@@ -156,6 +156,18 @@
   "thresholdPercent": "Threshold (%)",
   "markAllRead": "Mark all as read",
   "addSymbol": "Follow a symbol",
+  "noSymbolFound": "Nothing found. Try the company name or its number.",
+  "stocks": "Stocks",
+  "gold": "Gold",
+  "goldGram": "Gold {karat}K, 1 gram",
+  "@goldGram": {
+    "placeholders": {
+      "karat": {
+        "type": "int"
+      }
+    }
+  },
+  "goldOunce": "Gold, 1 ounce",
   "investment": "Investment",
   "portfolio": "Portfolio",
   "language": "Language",

@@ -407,7 +407,7 @@ abstract class AppLocalizations {
   /// No description provided for @symbolHint.
   ///
   /// In en, this message translates to:
-  /// **'e.g. AAPL or 2222.SR - search by name or symbol'**
+  /// **'Search by company name or number, e.g. Aramco, 2222 or AAPL'**
   String get symbolHint;
 
   /// No description provided for @search.
@@ -739,6 +739,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Follow a symbol'**
   String get addSymbol;
+
+  /// No description provided for @noSymbolFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing found. Try the company name or its number.'**
+  String get noSymbolFound;
+
+  /// No description provided for @stocks.
+  ///
+  /// In en, this message translates to:
+  /// **'Stocks'**
+  String get stocks;
+
+  /// No description provided for @gold.
+  ///
+  /// In en, this message translates to:
+  /// **'Gold'**
+  String get gold;
+
+  /// No description provided for @goldGram.
+  ///
+  /// In en, this message translates to:
+  /// **'Gold {karat}K, 1 gram'**
+  String goldGram(int karat);
+
+  /// No description provided for @goldOunce.
+  ///
+  /// In en, this message translates to:
+  /// **'Gold, 1 ounce'**
+  String get goldOunce;
 
   /// No description provided for @investment.
   ///

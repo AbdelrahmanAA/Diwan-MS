@@ -315,7 +315,7 @@ class HoldingTile extends StatelessWidget {
     final f = Fmt(context);
     final h = holding;
     final subtitle = [
-      if (h.symbol != null) h.symbol!,
+      if (h.symbol != null) displaySymbol(h.symbol!),
       if (!h.isCash) '${f.number(h.quantity)} × ${f.money(h.priceLocal, h.currency)}',
       if (h.isCash) f.money(h.marketValueLocal, h.currency),
     ].join(' · ');

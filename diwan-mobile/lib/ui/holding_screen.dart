@@ -118,7 +118,7 @@ class _HoldingScreenState extends State<HoldingScreen> {
             Padding(
               padding: const EdgeInsets.all(16),
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text('${h.assetTypeLabel} · ${h.countryLabel}${h.symbol == null ? '' : ' · ${h.symbol}'}',
+                Text('${h.assetTypeLabel} · ${h.countryLabel}${h.symbol == null ? '' : ' · ${displaySymbol(h.symbol!)}'}',
                     style: Theme.of(context).textTheme.bodyMedium),
                 const SizedBox(height: 8),
                 Text(f.money(h.marketValueLocal, h.currency), style: Theme.of(context).textTheme.headlineMedium),

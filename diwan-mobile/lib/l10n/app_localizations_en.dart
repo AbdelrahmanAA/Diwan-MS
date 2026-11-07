@@ -175,7 +175,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get symbol => 'Market symbol';
 
   @override
-  String get symbolHint => 'e.g. AAPL or 2222.SR - search by name or symbol';
+  String get symbolHint =>
+      'Search by company name or number, e.g. Aramco, 2222 or AAPL';
 
   @override
   String get search => 'Search';
@@ -353,6 +354,24 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get addSymbol => 'Follow a symbol';
+
+  @override
+  String get noSymbolFound =>
+      'Nothing found. Try the company name or its number.';
+
+  @override
+  String get stocks => 'Stocks';
+
+  @override
+  String get gold => 'Gold';
+
+  @override
+  String goldGram(int karat) {
+    return 'Gold ${karat}K, 1 gram';
+  }
+
+  @override
+  String get goldOunce => 'Gold, 1 ounce';
 
   @override
   String get investment => 'Investment';

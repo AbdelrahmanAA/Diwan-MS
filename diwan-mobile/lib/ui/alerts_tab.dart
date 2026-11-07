@@ -5,6 +5,7 @@ import '../api/models.dart';
 import '../l10n/app_localizations.dart';
 import '../state/session.dart';
 import 'format.dart';
+import 'holding_form.dart';
 import 'widgets.dart';
 
 class AlertsTab extends StatelessWidget {
@@ -106,9 +107,10 @@ class _RulesState extends State<_Rules> {
             for (final r in rules)
               ListTile(
                 leading: Icon(r.active ? Icons.alarm_on : Icons.alarm_off),
-                title: Text('${r.typeLabel} ${f.number(r.threshold)}${r.type.contains('PERCENT') || r.type == 'ALLOCATION_DRIFT' ? '%' : ''}'),
+                title: Text('${r.typeLabel} ${r.currency != null ? f.money(r.threshold, r.currency!) : f.number(r.threshold)}'
+                    '${r.type.contains('PERCENT') || r.type == 'ALLOCATION_DRIFT' ? '%' : ''}'),
                 subtitle: Text([
-                  if (r.symbol != null) r.symbol!,
+                  if (r.symbol != null) displaySymbol(r.symbol!),
                   if (r.lastTriggeredAt != null) f.dateTime(r.lastTriggeredAt),
                 ].join(' · ')),
                 trailing: IconButton(
@@ -141,7 +143,8 @@ class _RuleForm extends StatefulWidget {
 class _RuleFormState extends State<_RuleForm> {
   final _form = GlobalKey<FormState>();
   String _type = 'PRICE_ABOVE';
-  final _symbol = TextEditingController();
+  SymbolMatch? _symbol;
+  String? _goldCurrency; // gold rules are in the preferred currency
   final _threshold = TextEditingController();
   int? _holdingId;
   int? _portfolioId;
@@ -158,6 +161,23 @@ class _RuleFormState extends State<_RuleForm> {
   bool get _needsSymbol => const {'PRICE_ABOVE', 'PRICE_BELOW', 'DAILY_MOVE_PERCENT'}.contains(_type);
   bool get _needsHolding => const {'GAIN_PERCENT', 'LOSS_PERCENT'}.contains(_type);
   bool get _needsPortfolio => _type == 'ALLOCATION_DRIFT';
+  bool get _isGoldPrice => _needsSymbol && _type != 'DAILY_MOVE_PERCENT' && isGold(_symbol?.symbol);
+
+  Future<void> _pickSymbol(FormFieldState<SymbolMatch> field) async {
+    final match = await showModalBottomSheet<SymbolMatch>(
+        context: context, isScrollControlled: true, builder: (_) => const SymbolSearch());
+    if (match == null || !mounted) return;
+    setState(() => _symbol = match);
+    field.didChange(match);
+    if (isGold(match.symbol) && _goldCurrency == null) {
+      try {
+        final currency = await context.read<Session>().api.preferredCurrency();
+        if (mounted) setState(() => _goldCurrency = currency);
+      } catch (e) {
+        if (mounted) showError(context, e);
+      }
+    }
+  }
 
   Future<void> _save() async {
     if (!_form.currentState!.validate()) return;
@@ -165,7 +185,7 @@ class _RuleFormState extends State<_RuleForm> {
     try {
       await context.read<Session>().api.createAlertRule({
         'type': _type,
-        if (_needsSymbol) 'symbol': _symbol.text.trim(),
+        if (_needsSymbol) 'symbol': _symbol!.symbol,
         if (_needsHolding) 'holdingId': _holdingId,
         if (_needsPortfolio || _needsHolding) 'portfolioId': _portfolioId,
         'threshold': normalizeNumber(_threshold.text),
@@ -203,12 +223,26 @@ class _RuleFormState extends State<_RuleForm> {
               ),
               const SizedBox(height: 12),
               if (_needsSymbol)
-                TextFormField(
-                  controller: _symbol,
-                  textDirection: TextDirection.ltr,
-                  textCapitalization: TextCapitalization.characters,
-                  decoration: InputDecoration(labelText: t.symbol, border: const OutlineInputBorder()),
-                  validator: (v) => v == null || v.trim().isEmpty ? t.required : null,
+                FormField<SymbolMatch>(
+                  initialValue: _symbol,
+                  validator: (v) => v == null ? t.required : null,
+                  builder: (field) => InkWell(
+                    onTap: () => _pickSymbol(field),
+                    child: InputDecorator(
+                      isEmpty: _symbol == null,
+                      decoration: InputDecoration(
+                        labelText: t.symbol,
+                        helperText: t.symbolHint,
+                        helperMaxLines: 2,
+                        errorText: field.errorText,
+                        border: const OutlineInputBorder(),
+                        suffixIcon: const Icon(Icons.search),
+                      ),
+                      child: _symbol == null
+                          ? null
+                          : Text('${displaySymbol(_symbol!.symbol)} · ${_symbol!.description}', overflow: TextOverflow.ellipsis),
+                    ),
+                  ),
                 ),
               if (_needsHolding || _needsPortfolio)
                 FutureBuilder<List<PortfolioOverview>>(
@@ -251,7 +285,8 @@ class _RuleFormState extends State<_RuleForm> {
                 controller: _threshold,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 decoration: InputDecoration(
-                    labelText: _needsSymbol && _type != 'DAILY_MOVE_PERCENT' ? t.threshold : t.thresholdPercent,
+                    labelText: _isGoldPrice ? t.pricePerGram : _needsSymbol && _type != 'DAILY_MOVE_PERCENT' ? t.threshold : t.thresholdPercent,
+                    suffixText: _isGoldPrice ? _goldCurrency : null,
                     border: const OutlineInputBorder()),
                 validator: (v) => v == null || v.trim().isEmpty ? t.required : normalizeNumber(v) == null ? t.invalidNumber : null,
               ),

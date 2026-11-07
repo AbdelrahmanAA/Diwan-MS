@@ -178,7 +178,8 @@ class AppLocalizationsAr extends AppLocalizations {
   String get symbol => 'رمز السوق';
 
   @override
-  String get symbolHint => 'مثل AAPL أو 2222.SR - ابحث بالاسم أو الرمز';
+  String get symbolHint =>
+      'ابحث باسم الشركة أو رقمها، مثل أرامكو أو 2222 أو AAPL';
 
   @override
   String get search => 'بحث';
@@ -356,6 +357,24 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get addSymbol => 'متابعة رمز';
+
+  @override
+  String get noSymbolFound =>
+      'لم يتم العثور على نتائج. جرّب اسم الشركة أو رقمها.';
+
+  @override
+  String get stocks => 'الأسهم';
+
+  @override
+  String get gold => 'الذهب';
+
+  @override
+  String goldGram(int karat) {
+    return 'ذهب عيار $karat، 1 جرام';
+  }
+
+  @override
+  String get goldOunce => 'ذهب، 1 أونصة';
 
   @override
   String get investment => 'الاستثمار';

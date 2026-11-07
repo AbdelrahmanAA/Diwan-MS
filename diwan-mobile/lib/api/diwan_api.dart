@@ -26,6 +26,8 @@ class DiwanApi {
   // ---- reference & preferences ----
   Future<Reference> reference() async => Reference.fromJson(await http.get('$_p/reference') as Map<String, dynamic>);
 
+  Future<String> preferredCurrency() async => (await http.get('$_p/preferences') as Map<String, dynamic>)['baseCurrency'] as String;
+
   Future<void> savePreferences({String? language, String? baseCurrency}) =>
       http.put('$_p/preferences', {'language': language, 'baseCurrency': baseCurrency});
 
@@ -99,8 +101,11 @@ class DiwanApi {
       .map((e) => SymbolMatch.fromJson(e as Map<String, dynamic>))
       .toList();
 
-  Future<Instrument> instrument(String symbol) async =>
-      Instrument.fromJson(await http.get('$_p/instruments/${Uri.encodeComponent(symbol)}') as Map<String, dynamic>);
+  Future<Instrument> instrument(String symbol, {String? currency}) async => Instrument.fromJson(await http
+      .get('$_p/instruments/${Uri.encodeComponent(symbol)}', query: {'currency': currency}) as Map<String, dynamic>);
+
+  Future<GoldPrices> goldPrices({String? currency}) async =>
+      GoldPrices.fromJson(await http.get('$_p/gold-prices', query: {'currency': currency}) as Map<String, dynamic>);
 
   Future<List<PricePoint>> history(String symbol, int days) async =>
       (await http.get('$_p/instruments/${Uri.encodeComponent(symbol)}/history', query: {'days': days}) as List)

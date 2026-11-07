@@ -387,7 +387,8 @@ class Instrument {
         countryCode = j['countryCode'] as String?,
         currency = j['currency'] as String?,
         assetType = j['assetType'] as String?,
-        quote = j['quote'] == null ? null : Quote.fromJson(j['quote'] as Map<String, dynamic>);
+        quote = j['quote'] == null ? null : Quote.fromJson(j['quote'] as Map<String, dynamic>),
+        priceInCurrency = _d(j['priceInCurrency']);
 
   final String symbol;
   final String? name;
@@ -396,6 +397,31 @@ class Instrument {
   final String? currency;
   final String? assetType;
   final Quote? quote;
+  final double? priceInCurrency; // the quote in the currency that was asked for
+}
+
+class GoldPrice {
+  GoldPrice.fromJson(Map<String, dynamic> j)
+      : karat = j['karat'] as int,
+        isOunce = j['unit'] == 'OUNCE',
+        price = _d(j['price']),
+        changePercent = _d(j['changePercent']);
+
+  final int karat;
+  final bool isOunce; // otherwise one gram
+  final double? price;
+  final double? changePercent;
+}
+
+class GoldPrices {
+  GoldPrices.fromJson(Map<String, dynamic> j)
+      : currency = j['currency'] as String,
+        time = _t(j['time']),
+        prices = _list(j['prices'], GoldPrice.fromJson);
+
+  final String currency;
+  final DateTime? time;
+  final List<GoldPrice> prices;
 }
 
 class SymbolMatch {
@@ -455,6 +481,7 @@ class AlertRule {
         holdingId = (j['holdingId'] as num?)?.toInt(),
         portfolioId = (j['portfolioId'] as num?)?.toInt(),
         threshold = _d(j['threshold']) ?? 0,
+        currency = j['currency'] as String?,
         active = j['active'] as bool? ?? true,
         lastTriggeredAt = _t(j['lastTriggeredAt']);
 
@@ -465,6 +492,7 @@ class AlertRule {
   final int? holdingId;
   final int? portfolioId;
   final double threshold;
+  final String? currency; // of the threshold, on price rules
   final bool active;
   final DateTime? lastTriggeredAt;
 }

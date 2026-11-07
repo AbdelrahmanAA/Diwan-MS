@@ -41,6 +41,7 @@ class _HoldingFormState extends State<HoldingForm> {
   late final _address = TextEditingController(text: widget.holding?.attributes['address']?.toString());
   final _quantity = TextEditingController();
   final _price = TextEditingController();
+  String? _suggestedPrice; // what _price holds until the user types over it
   final _fees = TextEditingController();
   DateTime _date = DateTime.now();
   bool _busy = false;
@@ -53,7 +54,7 @@ class _HoldingFormState extends State<HoldingForm> {
 
   Future<void> _pickSymbol() async {
     final match = await showModalBottomSheet<SymbolMatch>(
-        context: context, isScrollControlled: true, builder: (_) => const _SymbolSearch());
+        context: context, isScrollControlled: true, builder: (_) => const SymbolSearch());
     if (match == null || !mounted) return;
     await _useSymbol(match.symbol);
   }
@@ -63,9 +64,10 @@ class _HoldingFormState extends State<HoldingForm> {
       _symbol = symbol;
       _marketCurrency = null;
     });
+    final currency = isGold(symbol) ? _currency ?? widget.baseCurrency : null;
     try {
-      final i = await context.read<Session>().api.instrument(symbol);
-      if (!mounted) return;
+      final i = await context.read<Session>().api.instrument(symbol, currency: currency);
+      if (!mounted || symbol != _symbol || (currency != null && currency != (_currency ?? widget.baseCurrency))) return;
       setState(() {
         if (_name.text.trim().isEmpty) _name.text = name ?? i.name ?? i.symbol;
         if (isGold(symbol)) {
@@ -75,12 +77,19 @@ class _HoldingFormState extends State<HoldingForm> {
           _country = i.countryCode ?? _country;
           _currency = i.currency ?? _currency;
         }
-        // The quote is in the symbol's currency: a price in another currency would be wrong
-        if (_price.text.isEmpty && i.quote != null && i.currency == _currency) _price.text = i.quote!.price.toString();
+        _suggestPrice(i);
       });
     } catch (e) {
       if (mounted) showError(context, e);
     }
+  }
+
+  /// The quote is in the symbol's currency: a price in another currency would be wrong.
+  void _suggestPrice(Instrument i) {
+    if (_price.text.isNotEmpty && _price.text != _suggestedPrice) return;
+    final price = i.priceInCurrency ?? (i.currency == _currency ? i.quote?.price : null);
+    _suggestedPrice = price?.toString();
+    _price.text = _suggestedPrice ?? '';
   }
 
   Future<void> _pick(String title, List<CodeLabel> list, ValueChanged<String> set) async {
@@ -156,7 +165,7 @@ class _HoldingFormState extends State<HoldingForm> {
                 ListTile(
                   contentPadding: EdgeInsets.zero,
                   leading: const Icon(Icons.search),
-                  title: Text(_symbol ?? t.symbol),
+                  title: Text(_symbol == null ? t.symbol : displaySymbol(_symbol!)),
                   subtitle: Text(t.symbolHint),
                   trailing: _symbol == null ? null : IconButton(icon: const Icon(Icons.clear), onPressed: () => setState(() {
                     _symbol = null;
@@ -197,7 +206,10 @@ class _HoldingFormState extends State<HoldingForm> {
                 title: Text(t.currency),
                 subtitle: Text(_currency ?? '-'),
                 trailing: _currencyLocked ? const Icon(Icons.lock_outline) : const Icon(Icons.arrow_drop_down),
-                onTap: _currencyLocked ? null : () => _pick(t.currency, ref.currencies, (v) => _currency = v),
+                onTap: _currencyLocked ? null : () async {
+                  await _pick(t.currency, ref.currencies, (v) => _currency = v);
+                  if (!_editing && isGold(_symbol)) await _useSymbol(_symbol!);
+                },
               ),
               if (_isProperty)
                 TextFormField(
@@ -231,7 +243,8 @@ class _HoldingFormState extends State<HoldingForm> {
                         controller: _price,
                         keyboardType: const TextInputType.numberWithOptions(decimal: true),
                         decoration: InputDecoration(labelText: isGold(_symbol) ? t.pricePerGram : t.price, border: const OutlineInputBorder()),
-                        validator: number,
+                        // A quantity without a price would save nothing: the first transaction needs both
+                        validator: (v) => _quantity.text.trim().isNotEmpty && (v == null || v.trim().isEmpty) ? t.required : number(v),
                       ),
                     ),
                   ],
@@ -267,16 +280,20 @@ class _HoldingFormState extends State<HoldingForm> {
   }
 }
 
-class _SymbolSearch extends StatefulWidget {
-  const _SymbolSearch();
+/// Bottom sheet: finds a symbol by name or code and returns it. [hideGold] leaves the gold symbols out.
+class SymbolSearch extends StatefulWidget {
+  const SymbolSearch({super.key, this.hideGold = false});
+
+  final bool hideGold;
 
   @override
-  State<_SymbolSearch> createState() => _SymbolSearchState();
+  State<SymbolSearch> createState() => _SymbolSearchState();
 }
 
-class _SymbolSearchState extends State<_SymbolSearch> {
+class _SymbolSearchState extends State<SymbolSearch> {
   Timer? _debounce;
   List<SymbolMatch> _results = [];
+  String _searched = '';
   bool _loading = false;
   Object? _error;
 
@@ -286,11 +303,19 @@ class _SymbolSearchState extends State<_SymbolSearch> {
   }
 
   Future<void> _search(String q) async {
-    if (q.trim().isEmpty) return;
+    if (q.trim().isEmpty) {
+      setState(() { _results = []; _searched = ''; });
+      return;
+    }
     setState(() { _loading = true; _error = null; });
     try {
       final r = await context.read<Session>().api.search(q.trim());
-      if (mounted) setState(() => _results = r);
+      if (mounted) {
+        setState(() {
+          _results = widget.hideGold ? r.where((m) => !isGold(m.symbol)).toList() : r;
+          _searched = q.trim();
+        });
+      }
     } catch (e) {
       if (mounted) setState(() => _error = e);
     } finally {
@@ -323,12 +348,14 @@ class _SymbolSearchState extends State<_SymbolSearch> {
         ),
         if (_loading) const LinearProgressIndicator(),
         if (_error != null) Padding(padding: const EdgeInsets.all(16), child: Text(errorText(context, _error!))),
+        if (_error == null && !_loading && _searched.isNotEmpty && _results.isEmpty)
+          Padding(padding: const EdgeInsets.all(16), child: Text(t.noSymbolFound)),
         Expanded(
           child: ListView.builder(
             controller: scroll,
             itemCount: _results.length,
             itemBuilder: (c, i) => ListTile(
-              title: Text(_results[i].symbol, textDirection: TextDirection.ltr),
+              title: Text(displaySymbol(_results[i].symbol), textDirection: TextDirection.ltr),
               subtitle: Text(_results[i].description),
               onTap: () => Navigator.pop(context, _results[i]),
             ),
