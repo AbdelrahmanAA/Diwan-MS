@@ -62,6 +62,23 @@ class AlertRulesTest {
     }
 
     @Test
+    void aGoldPriceRuleComparesInItsOwnCurrency() {
+        Instrument gold = new Instrument("GOLD-24K");
+        gold.setCurrency("USD");
+        AlertRule r = new AlertRule();
+        r.setType(AlertType.PRICE_ABOVE);
+        r.setInstrument(gold);
+        r.setCurrency("SAR");
+        var rates = new FxService.Snapshot(Map.of("SAR", d("3.75")), LocalDate.now());
+
+        BigDecimal observed = AlertService.observed(r, quote("130", null), rates).orElseThrow();
+
+        assertThat(observed).isEqualByComparingTo("487.5"); // 130 USD
+        assertThat(AlertService.breached(AlertType.PRICE_ABOVE, observed, d("490"))).isFalse();
+        assertThat(AlertService.observed(r, quote("130", null), NO_RATES)).isEmpty(); // no rate, no false alarm
+    }
+
+    @Test
     void dailyMoveWatchesBothDirections() {
         AlertRule r = new AlertRule();
         r.setType(AlertType.DAILY_MOVE_PERCENT);

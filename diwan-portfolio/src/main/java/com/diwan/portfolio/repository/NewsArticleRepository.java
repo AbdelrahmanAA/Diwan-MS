@@ -17,7 +17,11 @@ public interface NewsArticleRepository extends JpaRepository<NewsArticle, Long> 
     boolean existsByInstrumentIdAndUrlHash(Long instrumentId, String urlHash);
 
     @EntityGraph(attributePaths = "instrument")
-    Page<NewsArticle> findByInstrumentIdInOrderByPublishedAtDesc(Collection<Long> instrumentIds, Pageable pageable);
+    @Query("""
+            select a from NewsArticle a where a.instrument.id in :ids and a.id = (
+              select min(b.id) from NewsArticle b where b.urlHash = a.urlHash and b.instrument.id in :ids)
+            order by a.publishedAt desc""")
+    Page<NewsArticle> findFeed(@Param("ids") Collection<Long> instrumentIds, Pageable pageable);
 
     @Modifying
     @Query("delete from NewsArticle n where n.publishedAt < :before")

@@ -107,9 +107,15 @@ public final class Responses {
 
     public record InstrumentResponse(String symbol, String name, String exchange, String countryCode,
                                      String countryLabel, String currency, AssetType assetType,
-                                     String assetTypeLabel, QuoteResponse quote) {}
+                                     String assetTypeLabel, QuoteResponse quote,
+                                     BigDecimal priceInCurrency) {}
 
     public record SymbolMatchResponse(String symbol, String description, String type) {}
+
+    /** @param unit GRAM or OUNCE @param price null when there is no quote or exchange rate */
+    public record GoldPriceResponse(int karat, String unit, BigDecimal price, BigDecimal changePercent) {}
+
+    public record GoldPricesResponse(String currency, Instant time, List<GoldPriceResponse> prices) {}
 
     public record PricePoint(LocalDate date, BigDecimal close) {}
 
@@ -119,8 +125,8 @@ public final class Responses {
                                String source, String url, String imageUrl, String language, Instant publishedAt) {}
 
     public record AlertRuleResponse(Long id, AlertType type, String typeLabel, String symbol, Long holdingId,
-                                    Long portfolioId, BigDecimal threshold, boolean active, String note,
-                                    Instant lastTriggeredAt, Instant createdAt) {}
+                                    Long portfolioId, BigDecimal threshold, String currency, boolean active,
+                                    String note, Instant lastTriggeredAt, Instant createdAt) {}
 
     public record AlertResponse(Long id, Long ruleId, AlertType type, String typeLabel, String symbol,
                                 Long holdingId, Long portfolioId, String title, String message,

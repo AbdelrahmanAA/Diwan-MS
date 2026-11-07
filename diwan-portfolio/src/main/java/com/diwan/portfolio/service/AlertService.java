@@ -10,6 +10,7 @@ import com.diwan.portfolio.entity.Portfolio;
 import com.diwan.portfolio.entity.PortfolioAlert;
 import com.diwan.portfolio.kafka.AlertPublisher;
 import com.diwan.portfolio.kafka.PortfolioAlertEvent;
+import com.diwan.portfolio.market.Gold;
 import com.diwan.portfolio.repository.AlertRuleRepository;
 import com.diwan.portfolio.repository.PortfolioAlertRepository;
 import com.diwan.portfolio.web.dto.Requests.AlertRuleRequest;
@@ -39,7 +40,8 @@ import java.util.Optional;
 /**
  * Alert rules, their evaluation (after each quote refresh, and daily for allocation drift) and the alert
  * inbox. A rule that fired stays quiet for the cooldown period (default 24 h) so a price hovering around
- * the threshold does not produce a stream of alerts.
+ * the threshold does not produce a stream of alerts. A price rule on gold is set in the user's preferred
+ * currency, which it keeps; any other price rule is in the currency of its instrument.
  */
 @Service
 public class AlertService {
@@ -144,8 +146,14 @@ public class AlertService {
             throw ApiException.badRequest("alert.threshold_too_large");
         }
         r.setThreshold(req.threshold());
+        boolean goldPrice = isPriceRule(type) && Gold.isGold(instrument.getSymbol());
+        r.setCurrency(!goldPrice ? null : r.getCurrency() != null ? r.getCurrency() : preferences.baseCurrencyOf(userId));
         r.setActive(req.active() == null || req.active());
         r.setNote(req.note());
+    }
+
+    private static boolean isPriceRule(AlertType type) {
+        return type == AlertType.PRICE_ABOVE || type == AlertType.PRICE_BELOW;
     }
 
     // ---- inbox ---------------------------------------------------------------------------------------
@@ -217,7 +225,8 @@ public class AlertService {
     /** The value a rule compares with its threshold, if it can be computed from this quote. */
     static Optional<BigDecimal> observed(AlertRule r, InstrumentQuote q, FxService.Snapshot rates) {
         return switch (r.getType()) {
-            case PRICE_ABOVE, PRICE_BELOW -> Optional.of(q.getPrice());
+            case PRICE_ABOVE, PRICE_BELOW -> r.getCurrency() == null ? Optional.of(q.getPrice())
+                    : rates.convert(q.getPrice(), r.getInstrument().getCurrency(), r.getCurrency());
             case DAILY_MOVE_PERCENT -> Optional.ofNullable(q.getChangePercent()).map(BigDecimal::abs);
             case GAIN_PERCENT, LOSS_PERCENT -> {
                 Holding h = r.getHolding();
@@ -286,7 +295,15 @@ public class AlertService {
                 r.getInstrument() == null ? null : r.getInstrument().getSymbol(),
                 r.getHolding() == null ? null : r.getHolding().getId(),
                 r.getPortfolio() == null ? null : r.getPortfolio().getId(),
-                r.getThreshold().stripTrailingZeros(), r.isActive(), r.getNote(), r.getLastTriggeredAt(), r.getCreatedAt());
+                r.getThreshold().stripTrailingZeros(), thresholdCurrency(r), r.isActive(), r.getNote(),
+                r.getLastTriggeredAt(), r.getCreatedAt());
+    }
+
+    private static String thresholdCurrency(AlertRule r) {
+        if (!isPriceRule(r.getType())) {
+            return null;
+        }
+        return r.getCurrency() != null ? r.getCurrency() : r.getInstrument().getCurrency();
     }
 
     AlertResponse view(PortfolioAlert a, Locale locale) {

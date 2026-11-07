@@ -40,6 +40,10 @@ public class AlertRule {
     @Column(nullable = false, precision = 24, scale = 8)
     private BigDecimal threshold;
 
+    /** Currency of a price threshold; null = the instrument's own currency */
+    @Column(length = 3)
+    private String currency;
+
     @Column(nullable = false)
     private boolean active = true;
 
@@ -71,6 +75,8 @@ public class AlertRule {
     public void setPortfolio(Portfolio portfolio) { this.portfolio = portfolio; }
     public BigDecimal getThreshold() { return threshold; }
     public void setThreshold(BigDecimal threshold) { this.threshold = threshold; }
+    public String getCurrency() { return currency; }
+    public void setCurrency(String currency) { this.currency = currency; }
     public boolean isActive() { return active; }
     public void setActive(boolean active) { this.active = active; }
     public String getNote() { return note; }

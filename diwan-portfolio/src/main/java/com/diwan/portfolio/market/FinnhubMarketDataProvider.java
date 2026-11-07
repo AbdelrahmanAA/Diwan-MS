@@ -12,10 +12,13 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 
 /**
  * <a href="https://finnhub.io/docs/api">Finnhub</a>: /quote, /search, /stock/profile2 and /company-news.
@@ -26,6 +29,7 @@ import java.util.function.Function;
 public class FinnhubMarketDataProvider implements MarketDataProvider {
 
     private static final Logger log = LoggerFactory.getLogger(FinnhubMarketDataProvider.class);
+    private static final Pattern ABOUT_GOLD = Pattern.compile("\\b(gold|bullion|xau)\\b", Pattern.CASE_INSENSITIVE);
 
     private final RestClient http;
     private final RateLimiter limiter;
@@ -85,10 +89,27 @@ public class FinnhubMarketDataProvider implements MarketDataProvider {
 
     @Override
     public List<NewsItem> news(String symbol, LocalDate from, LocalDate to) {
-        return call("news " + symbol, client -> client.get()
+        List<NewsItem> company = articles("news " + symbol, client -> client.get()
                 .uri(b -> b.path("/company-news").queryParam("symbol", symbol)
                         .queryParam("from", from.toString()).queryParam("to", to.toString()).build())
-                .retrieve().body(JsonNode.class))
+                .retrieve().body(JsonNode.class));
+        return Gold.NEWS_SYMBOL.equals(symbol) ? withGeneralGoldNews(company) : company;
+    }
+
+    /** The gold fund's own feed is thin: most gold stories are in the general market news. */
+    private List<NewsItem> withGeneralGoldNews(List<NewsItem> company) {
+        Map<String, NewsItem> byUrl = new LinkedHashMap<>();
+        company.forEach(a -> byUrl.put(a.url(), a));
+        articles("general news", client -> client.get()
+                .uri(b -> b.path("/news").queryParam("category", "general").build())
+                .retrieve().body(JsonNode.class)).stream()
+                .filter(a -> ABOUT_GOLD.matcher(a.headline() + " " + a.summary()).find())
+                .forEach(a -> byUrl.putIfAbsent(a.url(), a));
+        return List.copyOf(byUrl.values());
+    }
+
+    private List<NewsItem> articles(String what, Function<RestClient, JsonNode> request) {
+        return call(what, request)
                 .map(n -> {
                     List<NewsItem> out = new ArrayList<>();
                     for (JsonNode a : n) {

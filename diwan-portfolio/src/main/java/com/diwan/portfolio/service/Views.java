@@ -90,9 +90,13 @@ public class Views {
     }
 
     public InstrumentResponse instrument(Instrument i, InstrumentQuote q) {
+        return instrument(i, q, null);
+    }
+
+    public InstrumentResponse instrument(Instrument i, InstrumentQuote q, BigDecimal priceInCurrency) {
         return new InstrumentResponse(i.getSymbol(), i.getName(), i.getExchange(), i.getCountryCode(),
                 labels.country(i.getCountryCode()), i.getCurrency(), i.getAssetType(),
-                labels.enumLabel(i.getAssetType()), quote(i.getSymbol(), q));
+                labels.enumLabel(i.getAssetType()), quote(i.getSymbol(), q), priceInCurrency);
     }
 
     public String writeAttributes(Map<String, Object> attributes) {

@@ -15,7 +15,7 @@ public final class Gold {
     public static final List<Integer> KARATS = List.of(24, 22, 21, 18);
 
     private static final String PREFIX = "GOLD-";
-    private static final BigDecimal GRAMS_PER_TROY_OUNCE = new BigDecimal("31.1034768");
+    public static final BigDecimal GRAMS_PER_TROY_OUNCE = new BigDecimal("31.1034768");
     private static final BigDecimal PURE = BigDecimal.valueOf(24);
 
     private Gold() {}

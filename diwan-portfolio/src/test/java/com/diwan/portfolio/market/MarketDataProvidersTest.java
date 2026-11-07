@@ -93,6 +93,43 @@ class MarketDataProvidersTest {
     }
 
     @Test
+    void goldNewsAddsGoldStoriesFromTheGeneralNews() {
+        RestClient.Builder b = builder();
+        MockRestServiceServer server = MockRestServiceServer.bindTo(b).build();
+        server.expect(requestTo("https://finnhub.test/api/v1/company-news?symbol=GLD&from=2026-03-01&to=2026-03-03"))
+                .andRespond(withSuccess("""
+                        [{"datetime":1767000000,"headline":"GLD inflows","url":"https://n.example/1","summary":"s"}]""",
+                        MediaType.APPLICATION_JSON));
+        server.expect(requestTo("https://finnhub.test/api/v1/news?category=general"))
+                .andRespond(withSuccess("""
+                        [{"datetime":1767000000,"headline":"GLD inflows","url":"https://n.example/1","summary":"gold"},
+                         {"datetime":1767000000,"headline":"Gold hits a record","url":"https://n.example/2"},
+                         {"datetime":1767000000,"headline":"Markets","url":"https://n.example/3","summary":"Bullion fell"},
+                         {"datetime":1767000000,"headline":"Goldman Sachs earnings","url":"https://n.example/4","summary":"s"}]""",
+                        MediaType.APPLICATION_JSON));
+
+        var items = new FinnhubMarketDataProvider(b, "https://finnhub.test/api/v1", "k", 6000)
+                .news("GLD", LocalDate.parse("2026-03-01"), LocalDate.parse("2026-03-03"));
+
+        assertThat(items).extracting(MarketDataProvider.NewsItem::url)
+                .containsExactly("https://n.example/1", "https://n.example/2", "https://n.example/3");
+        server.verify();
+    }
+
+    @Test
+    void generalNewsIsOnlyAskedForGold() {
+        RestClient.Builder b = builder();
+        MockRestServiceServer server = MockRestServiceServer.bindTo(b).build();
+        server.expect(requestTo("https://finnhub.test/api/v1/company-news?symbol=AAPL&from=2026-03-01&to=2026-03-03"))
+                .andRespond(withSuccess("[]", MediaType.APPLICATION_JSON));
+
+        new FinnhubMarketDataProvider(b, "https://finnhub.test/api/v1", "k", 6000)
+                .news("AAPL", LocalDate.parse("2026-03-01"), LocalDate.parse("2026-03-03"));
+
+        server.verify();
+    }
+
+    @Test
     void openErApiRatesAreParsed() {
         RestClient.Builder b = builder();
         MockRestServiceServer server = MockRestServiceServer.bindTo(b).build();

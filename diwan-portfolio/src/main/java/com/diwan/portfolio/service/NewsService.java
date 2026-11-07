@@ -28,7 +28,10 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
-/** Company news for the symbols a user holds or watches ("My news"). */
+/**
+ * Company news for the symbols a user holds or watches ("My news"). An article is stored per instrument (every
+ * gold karat has the same news); the feed shows it once.
+ */
 @Service
 public class NewsService {
 
@@ -83,7 +86,7 @@ public class NewsService {
         if (ids.isEmpty()) {
             return new PageResponse<>(List.of(), pr.getPageNumber(), pr.getPageSize(), 0, 0);
         }
-        Page<NewsArticle> p = news.findByInstrumentIdInOrderByPublishedAtDesc(ids, pr);
+        Page<NewsArticle> p = news.findFeed(ids, pr);
         return new PageResponse<>(p.getContent().stream().map(NewsService::view).toList(),
                 p.getNumber(), p.getSize(), p.getTotalElements(), p.getTotalPages());
     }

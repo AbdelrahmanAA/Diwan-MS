@@ -8,6 +8,7 @@ import com.diwan.portfolio.web.dto.Requests.AlertRuleRequest;
 import com.diwan.portfolio.web.dto.Requests.WatchRequest;
 import com.diwan.portfolio.web.dto.Responses.AlertResponse;
 import com.diwan.portfolio.web.dto.Responses.AlertRuleResponse;
+import com.diwan.portfolio.web.dto.Responses.GoldPricesResponse;
 import com.diwan.portfolio.web.dto.Responses.InstrumentResponse;
 import com.diwan.portfolio.web.dto.Responses.NewsResponse;
 import com.diwan.portfolio.web.dto.Responses.PageResponse;
@@ -44,13 +45,20 @@ public class MarketController {
     }
 
     @GetMapping("/instruments/{symbol}")
-    public InstrumentResponse instrument(@PathVariable String symbol) {
-        return market.instrument(symbol);
+    public InstrumentResponse instrument(@PathVariable String symbol, @RequestParam(required = false) String currency) {
+        return market.instrument(symbol, currency);
     }
 
     @GetMapping("/instruments/{symbol}/history")
     public List<PricePoint> history(@PathVariable String symbol, @RequestParam(defaultValue = "365") int days) {
         return market.history(symbol, days);
+    }
+
+    /** Today's gold prices, in the user's preferred currency unless another one is asked for. */
+    @GetMapping("/gold-prices")
+    public GoldPricesResponse goldPrices(@RequestHeader("X-User-Id") Long userId,
+                                         @RequestParam(required = false) String currency) {
+        return market.goldPrices(userId, currency);
     }
 
     @GetMapping("/watchlist")

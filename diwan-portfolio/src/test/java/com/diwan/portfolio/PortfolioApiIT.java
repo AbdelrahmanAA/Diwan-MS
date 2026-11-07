@@ -8,6 +8,7 @@ import com.diwan.portfolio.market.MarketDataProvider;
 import com.diwan.portfolio.repository.InstrumentRepository;
 import com.diwan.portfolio.service.AlertService;
 import com.diwan.portfolio.service.FxRefreshService;
+import com.diwan.portfolio.service.NewsService;
 import com.diwan.portfolio.service.QuoteService;
 import com.diwan.portfolio.service.UserDataService;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -73,6 +74,7 @@ class PortfolioApiIT {
     @Autowired JdbcTemplate jdbc;
     @Autowired FxRefreshService fx;
     @Autowired QuoteService quotes;
+    @Autowired NewsService news;
     @Autowired AlertService alerts;
     @Autowired InstrumentRepository instruments;
     @Autowired UserDataService userData;
@@ -113,6 +115,51 @@ class PortfolioApiIT {
         return body(call(post("/api/portfolio/portfolios"),
                 java.util.Map.of("name", name, "baseCurrency", currency)).andExpect(status().isCreated()))
                 .get("id").asLong();
+    }
+
+    @Test
+    void goldCanBeWatchedAndItsNewsAppearsOnceForAllKarats() throws Exception {
+        long user = 7001;
+        call(post("/api/portfolio/watchlist"), java.util.Map.of("symbol", "GOLD-24K"), user, "en").andExpect(status().isOk());
+        call(post("/api/portfolio/watchlist"), java.util.Map.of("symbol", "GOLD-21K"), user, "en").andExpect(status().isOk());
+        news.fetch(instruments.findBySymbol("GOLD-24K").orElseThrow());
+        news.fetch(instruments.findBySymbol("GOLD-21K").orElseThrow());
+
+        JsonNode feed = body(call(get("/api/portfolio/news"), null, user, "en"));
+
+        assertThat(feed.get("totalItems").asInt()).isEqualTo(2);
+        assertThat(feed.get("items")).hasSize(2);
+    }
+
+    @Test
+    void goldPricesUseThePreferredCurrencyUnlessAnotherIsChosen() throws Exception {
+        long user = 7002;
+        fx.refresh();
+        call(put("/api/portfolio/preferences"), java.util.Map.of("baseCurrency", "SAR"), user, "en").andExpect(status().isOk());
+
+        JsonNode preferred = body(call(get("/api/portfolio/gold-prices"), null, user, "en"));
+        JsonNode chosen = body(call(get("/api/portfolio/gold-prices?currency=USD"), null, user, "en"));
+
+        assertThat(preferred.get("currency").asText()).isEqualTo("SAR");
+        assertThat(chosen.get("currency").asText()).isEqualTo("USD");
+        assertThat(preferred.get("prices")).hasSize(3);
+        assertThat(preferred.get("prices").get(0).get("price").asDouble())
+                .isGreaterThan(chosen.get("prices").get(0).get("price").asDouble());
+        call(get("/api/portfolio/gold-prices?currency=NOPE"), null, user, "en").andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void goldAlertsKeepThePreferredCurrencyOfTheirCreation() throws Exception {
+        long user = 7003;
+        call(put("/api/portfolio/preferences"), java.util.Map.of("baseCurrency", "SAR"), user, "en").andExpect(status().isOk());
+        var rule = java.util.Map.of("type", "PRICE_ABOVE", "symbol", "GOLD-24K", "threshold", 500);
+        JsonNode gold = body(call(post("/api/portfolio/alerts/rules"), rule, user, "en"));
+        call(put("/api/portfolio/preferences"), java.util.Map.of("baseCurrency", "EGP"), user, "en").andExpect(status().isOk());
+
+        JsonNode rules = body(call(get("/api/portfolio/alerts/rules"), null, user, "en"));
+
+        assertThat(gold.get("currency").asText()).isEqualTo("SAR");
+        assertThat(rules.get(0).get("currency").asText()).isEqualTo("SAR");
     }
 
     private static java.util.Map<String, Object> buy(String qty, String price) {
