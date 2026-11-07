@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../api/models.dart';
 import '../l10n/app_localizations.dart';
+import '../platform/contact_picker.dart';
 import '../state/session.dart';
 import 'format.dart';
 import 'medical_suggestions.dart';
@@ -664,6 +665,21 @@ class _RecordFormState extends State<_RecordForm> {
     }
   }
 
+  /// Fills the name (when still empty) and the number from the phone's contact picker.
+  Future<void> _pickContact() async {
+    try {
+      final c = await ContactPicker.pickPhone();
+      if (c == null || !mounted) return;
+      setState(() {
+        final name = _text['contactName'];
+        if (name != null && name.text.trim().isEmpty && c.name != null) name.text = c.name!;
+        _text['phone']!.text = c.phone;
+      });
+    } catch (e) {
+      if (mounted) showError(context, e);
+    }
+  }
+
   String? _validate(_Field field, String? v) {
     final t = AppLocalizations.of(context);
     final empty = v == null || v.trim().isEmpty;
@@ -720,6 +736,15 @@ class _RecordFormState extends State<_RecordForm> {
       body: Form(
         key: _form,
         child: ListView(padding: const EdgeInsets.all(16), children: [
+          if (ContactPicker.available && widget.category.fields.any((f) => f.kind == _Kind.phone))
+            Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: OutlinedButton.icon(
+                icon: const Icon(Icons.contacts_outlined),
+                label: Text(t.pickFromContacts),
+                onPressed: _pickContact,
+              ),
+            ),
           for (final field in widget.category.fields)
             switch (field.kind) {
               _Kind.bloodType => Padding(

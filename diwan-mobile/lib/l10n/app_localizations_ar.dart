@@ -568,6 +568,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get fPhone => 'الهاتف';
 
   @override
+  String get pickFromContacts => 'اختيار من جهات الاتصال';
+
+  @override
   String get invalidPhone => 'أدخل رقم هاتف صحيحًا';
 
   @override

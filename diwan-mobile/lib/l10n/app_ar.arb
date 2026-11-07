@@ -173,6 +173,7 @@
   "noMedicalRecords": "لا توجد سجلات في هذا القسم بعد.",
   "medEmergencyContacts": "جهات الاتصال للطوارئ",
   "fPhone": "الهاتف",
+  "pickFromContacts": "اختيار من جهات الاتصال",
   "invalidPhone": "أدخل رقم هاتف صحيحًا",
   "emergencyCard": "بطاقة الطوارئ",
   "medicalTimeline": "التاريخ الطبي",

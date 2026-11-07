@@ -566,6 +566,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fPhone => 'Phone';
 
   @override
+  String get pickFromContacts => 'Choose from contacts';
+
+  @override
   String get invalidPhone => 'Enter a valid phone number';
 
   @override

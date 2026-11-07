@@ -1,9 +1,11 @@
 import 'dart:convert';
 
 import 'package:diwan_mobile/l10n/app_localizations.dart';
+import 'package:diwan_mobile/platform/contact_picker.dart';
 import 'package:diwan_mobile/state/session.dart';
 import 'package:diwan_mobile/ui/medical_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -164,6 +166,41 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Enter a valid phone number'), findsOneWidget);
     expect(server.saved, isEmpty);
+  });
+
+  testWidgets('a contact can be chosen from the phone and is saved with a clean number', (tester) async {
+    ContactPicker.availableOverride = true;
+    addTearDown(() => ContactPicker.availableOverride = null);
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(
+        const MethodChannel('diwan/contacts'),
+        (call) async => {'name': 'Omar Ali', 'phone': '\u202A+966 50-123.4567\u202C'});
+    addTearDown(() => TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(const MethodChannel('diwan/contacts'), null));
+    final server = _Server();
+    await _open(tester, server);
+    await tester.tap(find.text('Emergency contacts'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(FloatingActionButton));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Choose from contacts'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    expect(server.saved.single['contactName'], 'Omar Ali');
+    expect(server.saved.single['phone'], '+966 50-1234567');
+  });
+
+  testWidgets('without a picker on the device the button is not shown', (tester) async {
+    ContactPicker.availableOverride = false;
+    addTearDown(() => ContactPicker.availableOverride = null);
+    await _open(tester, _Server());
+    await tester.tap(find.text('Emergency contacts'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(FloatingActionButton));
+    await tester.pumpAndSettle();
+    expect(find.text('Choose from contacts'), findsNothing);
   });
 
   testWidgets('the history lists records', (tester) async {

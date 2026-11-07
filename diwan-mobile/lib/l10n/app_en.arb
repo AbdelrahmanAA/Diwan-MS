@@ -250,6 +250,7 @@
   "noMedicalRecords": "No records in this section yet.",
   "medEmergencyContacts": "Emergency contacts",
   "fPhone": "Phone",
+  "pickFromContacts": "Choose from contacts",
   "invalidPhone": "Enter a valid phone number",
   "emergencyCard": "Emergency card",
   "medicalTimeline": "Medical history",

@@ -1136,6 +1136,12 @@ abstract class AppLocalizations {
   /// **'Phone'**
   String get fPhone;
 
+  /// No description provided for @pickFromContacts.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose from contacts'**
+  String get pickFromContacts;
+
   /// No description provided for @invalidPhone.
   ///
   /// In en, this message translates to:
