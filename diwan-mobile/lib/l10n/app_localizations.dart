@@ -1124,6 +1124,216 @@ abstract class AppLocalizations {
   /// **'No records in this section yet.'**
   String get noMedicalRecords;
 
+  /// No description provided for @medEmergencyContacts.
+  ///
+  /// In en, this message translates to:
+  /// **'Emergency contacts'**
+  String get medEmergencyContacts;
+
+  /// No description provided for @fPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone'**
+  String get fPhone;
+
+  /// No description provided for @invalidPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid phone number'**
+  String get invalidPhone;
+
+  /// No description provided for @emergencyCard.
+  ///
+  /// In en, this message translates to:
+  /// **'Emergency card'**
+  String get emergencyCard;
+
+  /// No description provided for @medicalTimeline.
+  ///
+  /// In en, this message translates to:
+  /// **'Medical history'**
+  String get medicalTimeline;
+
+  /// No description provided for @currentMedications.
+  ///
+  /// In en, this message translates to:
+  /// **'Current medications'**
+  String get currentMedications;
+
+  /// No description provided for @upcoming.
+  ///
+  /// In en, this message translates to:
+  /// **'Coming up'**
+  String get upcoming;
+
+  /// No description provided for @noneRecorded.
+  ///
+  /// In en, this message translates to:
+  /// **'None recorded'**
+  String get noneRecorded;
+
+  /// No description provided for @call.
+  ///
+  /// In en, this message translates to:
+  /// **'Call'**
+  String get call;
+
+  /// No description provided for @addPerson.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a person'**
+  String get addPerson;
+
+  /// No description provided for @editPerson.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit person'**
+  String get editPerson;
+
+  /// No description provided for @birthDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Date of birth'**
+  String get birthDate;
+
+  /// No description provided for @loadMore.
+  ///
+  /// In en, this message translates to:
+  /// **'Load more'**
+  String get loadMore;
+
+  /// No description provided for @confirmDeletePerson.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove this person and all their records? This cannot be undone.'**
+  String get confirmDeletePerson;
+
+  /// No description provided for @medicalDisclaimer.
+  ///
+  /// In en, this message translates to:
+  /// **'Diwan keeps your records. It is not a medical device and does not diagnose, treat or give medical advice.'**
+  String get medicalDisclaimer;
+
+  /// No description provided for @sevMild.
+  ///
+  /// In en, this message translates to:
+  /// **'Mild'**
+  String get sevMild;
+
+  /// No description provided for @sevModerate.
+  ///
+  /// In en, this message translates to:
+  /// **'Moderate'**
+  String get sevModerate;
+
+  /// No description provided for @sevSevere.
+  ///
+  /// In en, this message translates to:
+  /// **'Severe'**
+  String get sevSevere;
+
+  /// No description provided for @sevLifeThreatening.
+  ///
+  /// In en, this message translates to:
+  /// **'Life-threatening'**
+  String get sevLifeThreatening;
+
+  /// No description provided for @relSelf.
+  ///
+  /// In en, this message translates to:
+  /// **'Me'**
+  String get relSelf;
+
+  /// No description provided for @relSpouse.
+  ///
+  /// In en, this message translates to:
+  /// **'Spouse'**
+  String get relSpouse;
+
+  /// No description provided for @relChild.
+  ///
+  /// In en, this message translates to:
+  /// **'Child'**
+  String get relChild;
+
+  /// No description provided for @relParent.
+  ///
+  /// In en, this message translates to:
+  /// **'Parent'**
+  String get relParent;
+
+  /// No description provided for @relSibling.
+  ///
+  /// In en, this message translates to:
+  /// **'Brother or sister'**
+  String get relSibling;
+
+  /// No description provided for @relOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get relOther;
+
+  /// No description provided for @relFather.
+  ///
+  /// In en, this message translates to:
+  /// **'Father'**
+  String get relFather;
+
+  /// No description provided for @relMother.
+  ///
+  /// In en, this message translates to:
+  /// **'Mother'**
+  String get relMother;
+
+  /// No description provided for @relBrother.
+  ///
+  /// In en, this message translates to:
+  /// **'Brother'**
+  String get relBrother;
+
+  /// No description provided for @relSister.
+  ///
+  /// In en, this message translates to:
+  /// **'Sister'**
+  String get relSister;
+
+  /// No description provided for @relGrandparent.
+  ///
+  /// In en, this message translates to:
+  /// **'Grandparent'**
+  String get relGrandparent;
+
+  /// No description provided for @freqOnce.
+  ///
+  /// In en, this message translates to:
+  /// **'Once a day'**
+  String get freqOnce;
+
+  /// No description provided for @freqTwice.
+  ///
+  /// In en, this message translates to:
+  /// **'Twice a day'**
+  String get freqTwice;
+
+  /// No description provided for @freqThree.
+  ///
+  /// In en, this message translates to:
+  /// **'Three times a day'**
+  String get freqThree;
+
+  /// No description provided for @freqAsNeeded.
+  ///
+  /// In en, this message translates to:
+  /// **'When needed'**
+  String get freqAsNeeded;
+
+  /// No description provided for @offlineCopy.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved copy from {time}'**
+  String offlineCopy(String time);
+
   /// No description provided for @medMedications.
   ///
   /// In en, this message translates to:

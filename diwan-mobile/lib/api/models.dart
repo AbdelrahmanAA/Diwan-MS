@@ -619,12 +619,16 @@ class MedicalRecord {
       : id = (j['id'] as num).toInt(),
         category = j['category'] as String,
         notes = j['notes'] as String?,
+        title = j['title'] as String?,
+        eventDate = _t(j['eventDate']),
         recordedAt = _t(j['recordedAt'] ?? j['createdAt']),
         fields = j;
 
   final int id;
   final String category;
   final String? notes;
+  final String? title;
+  final DateTime? eventDate;
   final DateTime? recordedAt;
   final Map<String, dynamic> fields;
 
@@ -632,6 +636,53 @@ class MedicalRecord {
     final v = fields[key];
     return v == null || v.toString().isEmpty ? null : v.toString();
   }
+}
+
+/// A person whose records the account keeps: the account holder or a family member.
+class MedicalProfile {
+  MedicalProfile.fromJson(Map<String, dynamic> j)
+      : id = (j['id'] as num).toInt(),
+        name = j['name'] as String?,
+        relation = j['relation'] as String,
+        birthDate = _t(j['birthDate']),
+        self = j['self'] as bool? ?? false;
+
+  final int id;
+  final String? name;
+  final String relation;
+  final DateTime? birthDate;
+  final bool self;
+}
+
+/// The essentials of one person. [json] is what the phone keeps for the offline emergency card.
+class MedicalOverview {
+  MedicalOverview.fromJson(this.json)
+      : profile = MedicalProfile.fromJson(json['profile'] as Map<String, dynamic>),
+        bloodType = json['bloodType'] as String?,
+        allergies = _list(json['allergies'], MedicalRecord.fromJson),
+        currentMedications = _list(json['currentMedications'], MedicalRecord.fromJson),
+        conditions = _list(json['conditions'], MedicalRecord.fromJson),
+        emergencyContacts = _list(json['emergencyContacts'], MedicalRecord.fromJson),
+        upcoming = _list(json['upcoming'], MedicalRecord.fromJson),
+        counts = {for (final e in (json['counts'] as Map? ?? {}).entries) e.key as String: (e.value as num).toInt()};
+
+  final Map<String, dynamic> json;
+  final MedicalProfile profile;
+  final String? bloodType;
+  final List<MedicalRecord> allergies;
+  final List<MedicalRecord> currentMedications;
+  final List<MedicalRecord> conditions;
+  final List<MedicalRecord> emergencyContacts;
+  final List<MedicalRecord> upcoming;
+  final Map<String, int> counts;
+}
+
+/// An overview kept on the phone and when it was fetched.
+class SavedMedicalCard {
+  SavedMedicalCard(this.overview, this.savedAt);
+
+  final MedicalOverview overview;
+  final DateTime savedAt;
 }
 
 // ---- smart home (diwan-smarthome) ----

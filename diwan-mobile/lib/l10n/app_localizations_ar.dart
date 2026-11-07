@@ -562,6 +562,115 @@ class AppLocalizationsAr extends AppLocalizations {
   String get noMedicalRecords => 'لا توجد سجلات في هذا القسم بعد.';
 
   @override
+  String get medEmergencyContacts => 'جهات الاتصال للطوارئ';
+
+  @override
+  String get fPhone => 'الهاتف';
+
+  @override
+  String get invalidPhone => 'أدخل رقم هاتف صحيحًا';
+
+  @override
+  String get emergencyCard => 'بطاقة الطوارئ';
+
+  @override
+  String get medicalTimeline => 'التاريخ الطبي';
+
+  @override
+  String get currentMedications => 'الأدوية الحالية';
+
+  @override
+  String get upcoming => 'القادم';
+
+  @override
+  String get noneRecorded => 'لا يوجد';
+
+  @override
+  String get call => 'اتصال';
+
+  @override
+  String get addPerson => 'إضافة شخص';
+
+  @override
+  String get editPerson => 'تعديل بيانات الشخص';
+
+  @override
+  String get birthDate => 'تاريخ الميلاد';
+
+  @override
+  String get loadMore => 'عرض المزيد';
+
+  @override
+  String get confirmDeletePerson =>
+      'حذف هذا الشخص وجميع سجلاته؟ لا يمكن التراجع عن ذلك.';
+
+  @override
+  String get medicalDisclaimer =>
+      'ديوان يحفظ سجلاتك فقط. وهو ليس جهازًا طبيًا ولا يشخّص ولا يعالج ولا يقدم نصائح طبية.';
+
+  @override
+  String get sevMild => 'خفيفة';
+
+  @override
+  String get sevModerate => 'متوسطة';
+
+  @override
+  String get sevSevere => 'شديدة';
+
+  @override
+  String get sevLifeThreatening => 'مهددة للحياة';
+
+  @override
+  String get relSelf => 'أنا';
+
+  @override
+  String get relSpouse => 'الزوج أو الزوجة';
+
+  @override
+  String get relChild => 'ابن أو ابنة';
+
+  @override
+  String get relParent => 'أب أو أم';
+
+  @override
+  String get relSibling => 'أخ أو أخت';
+
+  @override
+  String get relOther => 'آخر';
+
+  @override
+  String get relFather => 'الأب';
+
+  @override
+  String get relMother => 'الأم';
+
+  @override
+  String get relBrother => 'الأخ';
+
+  @override
+  String get relSister => 'الأخت';
+
+  @override
+  String get relGrandparent => 'الجد أو الجدة';
+
+  @override
+  String get freqOnce => 'مرة يوميًا';
+
+  @override
+  String get freqTwice => 'مرتين يوميًا';
+
+  @override
+  String get freqThree => 'ثلاث مرات يوميًا';
+
+  @override
+  String get freqAsNeeded => 'عند الحاجة';
+
+  @override
+  String offlineCopy(String time) {
+    return 'نسخة محفوظة من $time';
+  }
+
+  @override
   String get medMedications => 'الأدوية';
 
   @override

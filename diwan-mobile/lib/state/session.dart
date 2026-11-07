@@ -28,6 +28,7 @@ class Session extends ChangeNotifier {
   static const userKey = 'diwan.user'; // also read by the background SMS sync
   static const _langKey = 'diwan.language';
   static const _biometricKey = 'diwan.biometric';
+  static const _medicalCardsKey = 'diwan.medical.cards';
 
   final FlutterSecureStorage _storage;
   final LocalAuthentication _localAuth;
@@ -111,11 +112,38 @@ class Session extends ChangeNotifier {
     // the next user of this phone must turn SMS logging on themselves
     if (sms?.enabled ?? false) await sms!.disable().catchError((_) {});
     await _storage.delete(key: userKey);
+    await _storage.delete(key: _medicalCardsKey);
     _user = null;
     _reference = null;
     locked = false;
     notifyListeners();
   }
+
+  /// The offline emergency cards, kept in the encrypted storage and removed at sign out.
+  Future<Map<String, dynamic>> _readMedicalCards() async {
+    try {
+      final raw = await _storage.read(key: _medicalCardsKey);
+      return raw == null ? {} : jsonDecode(raw) as Map<String, dynamic>;
+    } catch (_) {
+      return {};
+    }
+  }
+
+  Future<void> saveMedicalCard(MedicalOverview overview) async {
+    final cards = await _readMedicalCards();
+    cards['${overview.profile.id}'] = {'savedAt': DateTime.now().toIso8601String(), 'overview': overview.json};
+    await _storage.write(key: _medicalCardsKey, value: jsonEncode(cards));
+  }
+
+  Future<void> forgetMedicalCard(int profileId) async {
+    final cards = await _readMedicalCards();
+    if (cards.remove('$profileId') != null) await _storage.write(key: _medicalCardsKey, value: jsonEncode(cards));
+  }
+
+  Future<List<SavedMedicalCard>> savedMedicalCards() async => [
+        for (final c in (await _readMedicalCards()).values.cast<Map<String, dynamic>>())
+          SavedMedicalCard(MedicalOverview.fromJson(c['overview'] as Map<String, dynamic>), DateTime.parse(c['savedAt'] as String)),
+      ];
 
   Future<void> setLanguage(String languageCode) async {
     locale = Locale(languageCode);

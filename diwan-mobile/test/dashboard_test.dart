@@ -57,7 +57,8 @@ final _server = MockClient((req) async => switch (req.url.path) {
         }),
       '/api/transactions/summary' => _json({'success': true, 'data': {'EGP': {'income': 1000, 'expense': 250}}}),
       '/api/transactions' => _json({'success': true, 'count': 0, 'data': []}),
-      '/api/medical' => _json([]),
+      '/api/medical/profiles' => _json([{'id': 1, 'relation': 'SELF', 'self': true}]),
+      '/api/medical/overview' => _json({'profile': {'id': 1, 'relation': 'SELF', 'self': true}, 'counts': {}}),
       _ => _json({}),
     });
 
@@ -127,7 +128,7 @@ void main() {
 
     await tester.tap(find.text('Medical History'));
     await tester.pumpAndSettle();
-    expect(find.text('No records in this section yet.'), findsOneWidget);
+    expect(find.text('Emergency card'), findsOneWidget);
     await tester.pageBack();
     await tester.pumpAndSettle();
 

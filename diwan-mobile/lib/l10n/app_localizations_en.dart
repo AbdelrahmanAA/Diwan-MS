@@ -560,6 +560,115 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noMedicalRecords => 'No records in this section yet.';
 
   @override
+  String get medEmergencyContacts => 'Emergency contacts';
+
+  @override
+  String get fPhone => 'Phone';
+
+  @override
+  String get invalidPhone => 'Enter a valid phone number';
+
+  @override
+  String get emergencyCard => 'Emergency card';
+
+  @override
+  String get medicalTimeline => 'Medical history';
+
+  @override
+  String get currentMedications => 'Current medications';
+
+  @override
+  String get upcoming => 'Coming up';
+
+  @override
+  String get noneRecorded => 'None recorded';
+
+  @override
+  String get call => 'Call';
+
+  @override
+  String get addPerson => 'Add a person';
+
+  @override
+  String get editPerson => 'Edit person';
+
+  @override
+  String get birthDate => 'Date of birth';
+
+  @override
+  String get loadMore => 'Load more';
+
+  @override
+  String get confirmDeletePerson =>
+      'Remove this person and all their records? This cannot be undone.';
+
+  @override
+  String get medicalDisclaimer =>
+      'Diwan keeps your records. It is not a medical device and does not diagnose, treat or give medical advice.';
+
+  @override
+  String get sevMild => 'Mild';
+
+  @override
+  String get sevModerate => 'Moderate';
+
+  @override
+  String get sevSevere => 'Severe';
+
+  @override
+  String get sevLifeThreatening => 'Life-threatening';
+
+  @override
+  String get relSelf => 'Me';
+
+  @override
+  String get relSpouse => 'Spouse';
+
+  @override
+  String get relChild => 'Child';
+
+  @override
+  String get relParent => 'Parent';
+
+  @override
+  String get relSibling => 'Brother or sister';
+
+  @override
+  String get relOther => 'Other';
+
+  @override
+  String get relFather => 'Father';
+
+  @override
+  String get relMother => 'Mother';
+
+  @override
+  String get relBrother => 'Brother';
+
+  @override
+  String get relSister => 'Sister';
+
+  @override
+  String get relGrandparent => 'Grandparent';
+
+  @override
+  String get freqOnce => 'Once a day';
+
+  @override
+  String get freqTwice => 'Twice a day';
+
+  @override
+  String get freqThree => 'Three times a day';
+
+  @override
+  String get freqAsNeeded => 'When needed';
+
+  @override
+  String offlineCopy(String time) {
+    return 'Saved copy from $time';
+  }
+
+  @override
   String get medMedications => 'Medications';
 
   @override

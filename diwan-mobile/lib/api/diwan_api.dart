@@ -189,8 +189,32 @@ class DiwanApi {
   // ---- medical records (diwan-medical) ----
   static const _med = '/api/medical';
 
-  Future<List<MedicalRecord>> medicalRecords({String? category}) async =>
-      (await http.get(_med, query: {'category': category}) as List)
+  Future<List<MedicalProfile>> medicalProfiles() async => (await http.get('$_med/profiles') as List)
+      .map((e) => MedicalProfile.fromJson(e as Map<String, dynamic>))
+      .toList();
+
+  Future<void> saveMedicalProfile(int? id, Map<String, Object?> body) =>
+      id == null ? http.post('$_med/profiles', body) : http.put('$_med/profiles/$id', body);
+
+  Future<void> deleteMedicalProfile(int id) => http.delete('$_med/profiles/$id');
+
+  Future<MedicalOverview> medicalOverview({int? profileId}) async =>
+      MedicalOverview.fromJson(await http.get('$_med/overview', query: {'profileId': profileId}) as Map<String, dynamic>);
+
+  Future<ResultPage<MedicalRecord>> medicalTimeline(
+          {int? profileId, String? category, String? q, int page = 0, int size = 50}) async =>
+      ResultPage.fromJson(
+          await http.get('$_med/timeline', query: {
+            'profileId': profileId,
+            'category': category,
+            'q': q == null || q.isEmpty ? null : q,
+            'page': page,
+            'size': size,
+          }) as Map<String, dynamic>,
+          MedicalRecord.fromJson);
+
+  Future<List<MedicalRecord>> medicalRecords({String? category, int? profileId}) async =>
+      (await http.get(_med, query: {'category': category, 'profileId': profileId}) as List)
           .map((e) => MedicalRecord.fromJson(e as Map<String, dynamic>))
           .toList();
 

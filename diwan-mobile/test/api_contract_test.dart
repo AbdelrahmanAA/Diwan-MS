@@ -110,7 +110,7 @@ void main() {
       final meds = await api.medicalRecords(category: 'medications');
       expect(meds.single.text('name'), 'Aspirin');
       expect(meds.single.text('startDate'), '2026-01-15');
-      await api.saveMedicalRecord(meds.single.id, {'category': 'medications', 'dosage': '75mg'});
+      await api.saveMedicalRecord(meds.single.id, {'category': 'medications', 'name': 'Aspirin', 'dosage': '75mg'});
       expect((await api.medicalRecords(category: 'medications')).single.text('dosage'), '75mg');
       await api.deleteMedicalRecord(meds.single.id, 'medications');
       expect(await api.medicalRecords(category: 'medications'), isEmpty);
