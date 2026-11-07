@@ -1,225 +1,161 @@
 package com.diwan.medical.service;
 
+import com.diwan.common.web.ApiException;
+import com.diwan.medical.domain.Severity;
 import com.diwan.medical.dto.MedicalRecordRequest;
 import com.diwan.medical.dto.MedicalRecordResponse;
-import com.diwan.medical.entity.*;
-import com.diwan.medical.repository.*;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.http.HttpStatus;
+import com.diwan.medical.dto.OverviewResponse;
+import com.diwan.medical.dto.PageResponse;
+import com.diwan.medical.entity.MedicalEntry;
+import com.diwan.medical.entity.MedicalProfile;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.function.Function;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.stream.Stream;
+
+/**
+ * Records of the people of an account. It keeps and shows what the user entered and makes no medical judgement:
+ * no interpretation of results, no advice (see SFDA MDS-G-027 on software that analyses medical data).
+ * Text is encrypted, so filtering and sorting happen here rather than in SQL; one person has few records.
+ */
 @Service
 public class MedicalRecordService {
 
-    private final MedicalMedicationRepository medications;
-    private final MedicalAllergyRepository allergies;
-    private final MedicalBloodTypeRepository bloodTypes;
-    private final MedicalSurgeryRepository surgeries;
-    private final MedicalChronicDiseaseRepository chronicDiseases;
-    private final MedicalLabResultRepository labResults;
-    private final MedicalVaccineRepository vaccines;
-    private final MedicalFamilyHistoryRepository familyHistory;
+    private static final int MAX_PAGE = 100;
 
-    public MedicalRecordService(
-            MedicalMedicationRepository medications, MedicalAllergyRepository allergies,
-            MedicalBloodTypeRepository bloodTypes, MedicalSurgeryRepository surgeries,
-            MedicalChronicDiseaseRepository chronicDiseases, MedicalLabResultRepository labResults,
-            MedicalVaccineRepository vaccines, MedicalFamilyHistoryRepository familyHistory) {
-        this.medications=medications; this.allergies=allergies; this.bloodTypes=bloodTypes;
-        this.surgeries=surgeries; this.chronicDiseases=chronicDiseases; this.labResults=labResults;
-        this.vaccines=vaccines; this.familyHistory=familyHistory;
+    private final RecordCategories categories;
+    private final ProfileService profiles;
+    private final AuditService audit;
+    private final Clock clock;
+
+    public MedicalRecordService(RecordCategories categories, ProfileService profiles, AuditService audit, Clock clock) {
+        this.categories = categories;
+        this.profiles = profiles;
+        this.audit = audit;
+        this.clock = clock;
     }
 
-    public MedicalRecordResponse create(MedicalRecordRequest req) {
-        String cat = req.getCategory();
-        if ("medications".equals(cat)) {
-            MedicalMedication e = new MedicalMedication();
-            e.setUserId(req.getUserId()); e.setName(req.getName()); e.setDosage(req.getDosage());
-            e.setFrequency(req.getFrequency()); e.setStartDate(req.getStartDate()); e.setEndDate(req.getEndDate());
-            e.setNotes(req.getNotes()); e.setRecordedAt(req.getRecordedAt());
-            return toResponse(medications.save(e));
-        } else if ("allergies".equals(cat)) {
-            MedicalAllergy e = new MedicalAllergy();
-            e.setUserId(req.getUserId()); e.setAllergen(req.getAllergen()); e.setSeverity(req.getSeverity());
-            e.setReaction(req.getReaction()); e.setNotes(req.getNotes()); e.setRecordedAt(req.getRecordedAt());
-            return toResponse(allergies.save(e));
-        } else if ("bloodType".equals(cat)) {
-            MedicalBloodType e = new MedicalBloodType();
-            e.setUserId(req.getUserId()); e.setBloodType(req.getBloodType());
-            e.setNotes(req.getNotes()); e.setRecordedAt(req.getRecordedAt());
-            return toResponse(bloodTypes.save(e));
-        } else if ("surgeries".equals(cat)) {
-            MedicalSurgery e = new MedicalSurgery();
-            e.setUserId(req.getUserId()); e.setSurgeryName(req.getSurgeryName()); e.setSurgeryDate(req.getSurgeryDate());
-            e.setHospital(req.getHospital()); e.setSurgeon(req.getSurgeon());
-            e.setNotes(req.getNotes()); e.setRecordedAt(req.getRecordedAt());
-            return toResponse(surgeries.save(e));
-        } else if ("chronicDiseases".equals(cat)) {
-            MedicalChronicDisease e = new MedicalChronicDisease();
-            e.setUserId(req.getUserId()); e.setDiseaseName(req.getDiseaseName()); e.setDiagnosedAt(req.getDiagnosedAt());
-            e.setCurrentTreatment(req.getCurrentTreatment()); e.setNotes(req.getNotes()); e.setRecordedAt(req.getRecordedAt());
-            return toResponse(chronicDiseases.save(e));
-        } else if ("labResults".equals(cat)) {
-            MedicalLabResult e = new MedicalLabResult();
-            e.setUserId(req.getUserId()); e.setTestName(req.getTestName()); e.setResult(req.getResult());
-            e.setUnit(req.getUnit()); e.setReferenceRange(req.getReferenceRange()); e.setTestDate(req.getTestDate());
-            e.setNotes(req.getNotes()); e.setRecordedAt(req.getRecordedAt());
-            return toResponse(labResults.save(e));
-        } else if ("vaccines".equals(cat)) {
-            MedicalVaccine e = new MedicalVaccine();
-            e.setUserId(req.getUserId()); e.setVaccineName(req.getVaccineName()); e.setDoseNumber(req.getDoseNumber());
-            e.setVaccinationDate(req.getVaccinationDate()); e.setNextDoseDate(req.getNextDoseDate());
-            e.setNotes(req.getNotes()); e.setRecordedAt(req.getRecordedAt());
-            return toResponse(vaccines.save(e));
-        } else if ("familyHistory".equals(cat)) {
-            MedicalFamilyHistory e = new MedicalFamilyHistory();
-            e.setUserId(req.getUserId()); e.setCondition(req.getCondition()); e.setRelation(req.getRelation());
-            e.setNotes(req.getNotes()); e.setRecordedAt(req.getRecordedAt());
-            return toResponse(familyHistory.save(e));
+    @Transactional
+    public MedicalRecordResponse create(Long userId, MedicalRecordRequest req) {
+        return create(categories.require(req.getCategory()), userId, req);
+    }
+
+    private <E extends MedicalEntry> MedicalRecordResponse create(RecordCategory<E> c, Long userId, MedicalRecordRequest req) {
+        c.validator().accept(req);
+        MedicalProfile profile = profiles.require(userId, req.getProfileId());
+        E e = c.single() ? c.repository().findFirstByProfileIdOrderByIdDesc(profile.getId()).orElseGet(c.factory())
+                : c.factory().get();
+        String action = e.getId() == null ? "CREATE" : "UPDATE";
+        e.setUserId(userId);
+        e.setProfile(profile);
+        return save(c, e, req, action);
+    }
+
+    /** Replaces the record: a field left out is cleared. */
+    @Transactional
+    public MedicalRecordResponse update(Long id, Long userId, MedicalRecordRequest req) {
+        return update(categories.require(req.getCategory()), id, userId, req);
+    }
+
+    private <E extends MedicalEntry> MedicalRecordResponse update(RecordCategory<E> c, Long id, Long userId, MedicalRecordRequest req) {
+        c.validator().accept(req);
+        return save(c, owned(c, id, userId), req, "UPDATE");
+    }
+
+    private <E extends MedicalEntry> MedicalRecordResponse save(RecordCategory<E> c, E e, MedicalRecordRequest req, String action) {
+        c.writer().accept(req, e);
+        e.setNotes(req.getNotes() == null || req.getNotes().isBlank() ? null : req.getNotes().trim());
+        if (req.getRecordedAt() != null) {
+            e.setRecordedAt(req.getRecordedAt());
         }
-        throw new IllegalArgumentException("Unknown category: " + cat);
+        E saved = c.repository().saveAndFlush(e);
+        audit.record(e.getUserId(), e.getProfile().getId(), action, c.code(), saved.getId());
+        return c.view(saved);
     }
 
-    public List<MedicalRecordResponse> getByUserAndCategory(Long userId, String category) {
-        List<MedicalRecordResponse> list = new ArrayList<>();
-        if (category == null) {
-            medications.findByUserId(userId).forEach(e -> list.add(toResponse(e)));
-            allergies.findByUserId(userId).forEach(e -> list.add(toResponse(e)));
-            bloodTypes.findByUserId(userId).forEach(e -> list.add(toResponse(e)));
-            surgeries.findByUserId(userId).forEach(e -> list.add(toResponse(e)));
-            chronicDiseases.findByUserId(userId).forEach(e -> list.add(toResponse(e)));
-            labResults.findByUserId(userId).forEach(e -> list.add(toResponse(e)));
-            vaccines.findByUserId(userId).forEach(e -> list.add(toResponse(e)));
-            familyHistory.findByUserId(userId).forEach(e -> list.add(toResponse(e)));
-        } else {
-            switch (category) {
-                case "medications": medications.findByUserId(userId).forEach(e -> list.add(toResponse(e))); break;
-                case "allergies": allergies.findByUserId(userId).forEach(e -> list.add(toResponse(e))); break;
-                case "bloodType": bloodTypes.findByUserId(userId).forEach(e -> list.add(toResponse(e))); break;
-                case "surgeries": surgeries.findByUserId(userId).forEach(e -> list.add(toResponse(e))); break;
-                case "chronicDiseases": chronicDiseases.findByUserId(userId).forEach(e -> list.add(toResponse(e))); break;
-                case "labResults": labResults.findByUserId(userId).forEach(e -> list.add(toResponse(e))); break;
-                case "vaccines": vaccines.findByUserId(userId).forEach(e -> list.add(toResponse(e))); break;
-                case "familyHistory": familyHistory.findByUserId(userId).forEach(e -> list.add(toResponse(e))); break;
-            }
-        }
-        return list;
-    }
-
-    /**
-     * A record can only be read for change by its owner. A foreign or missing id gives the same 404, so the
-     * response does not reveal whether someone else's record exists.
-     */
-    private <T> T owned(JpaRepository<T, Long> repo, Long id, Long userId, Function<T, Long> ownerOf) {
-        return repo.findById(id)
-                .filter(e -> userId != null && userId.equals(ownerOf.apply(e)))
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Record not found"));
-    }
-
-    public MedicalRecordResponse update(Long id, Long userId, String category, MedicalRecordRequest req) {
-        if ("medications".equals(category)) {
-            MedicalMedication e = owned(medications, id, userId, MedicalMedication::getUserId);
-            if(req.getName()!=null) e.setName(req.getName()); if(req.getDosage()!=null) e.setDosage(req.getDosage());
-            if(req.getFrequency()!=null) e.setFrequency(req.getFrequency()); if(req.getStartDate()!=null) e.setStartDate(req.getStartDate());
-            if(req.getEndDate()!=null) e.setEndDate(req.getEndDate()); if(req.getNotes()!=null) e.setNotes(req.getNotes());
-            return toResponse(medications.save(e));
-        } else if ("allergies".equals(category)) {
-            MedicalAllergy e = owned(allergies, id, userId, MedicalAllergy::getUserId);
-            if(req.getAllergen()!=null) e.setAllergen(req.getAllergen()); if(req.getSeverity()!=null) e.setSeverity(req.getSeverity());
-            if(req.getReaction()!=null) e.setReaction(req.getReaction()); if(req.getNotes()!=null) e.setNotes(req.getNotes());
-            return toResponse(allergies.save(e));
-        } else if ("bloodType".equals(category)) {
-            MedicalBloodType e = owned(bloodTypes, id, userId, MedicalBloodType::getUserId);
-            if(req.getBloodType()!=null) e.setBloodType(req.getBloodType()); if(req.getNotes()!=null) e.setNotes(req.getNotes());
-            return toResponse(bloodTypes.save(e));
-        } else if ("surgeries".equals(category)) {
-            MedicalSurgery e = owned(surgeries, id, userId, MedicalSurgery::getUserId);
-            if(req.getSurgeryName()!=null) e.setSurgeryName(req.getSurgeryName()); if(req.getSurgeryDate()!=null) e.setSurgeryDate(req.getSurgeryDate());
-            if(req.getHospital()!=null) e.setHospital(req.getHospital()); if(req.getSurgeon()!=null) e.setSurgeon(req.getSurgeon());
-            if(req.getNotes()!=null) e.setNotes(req.getNotes());
-            return toResponse(surgeries.save(e));
-        } else if ("chronicDiseases".equals(category)) {
-            MedicalChronicDisease e = owned(chronicDiseases, id, userId, MedicalChronicDisease::getUserId);
-            if(req.getDiseaseName()!=null) e.setDiseaseName(req.getDiseaseName()); if(req.getDiagnosedAt()!=null) e.setDiagnosedAt(req.getDiagnosedAt());
-            if(req.getCurrentTreatment()!=null) e.setCurrentTreatment(req.getCurrentTreatment()); if(req.getNotes()!=null) e.setNotes(req.getNotes());
-            return toResponse(chronicDiseases.save(e));
-        } else if ("labResults".equals(category)) {
-            MedicalLabResult e = owned(labResults, id, userId, MedicalLabResult::getUserId);
-            if(req.getTestName()!=null) e.setTestName(req.getTestName()); if(req.getResult()!=null) e.setResult(req.getResult());
-            if(req.getUnit()!=null) e.setUnit(req.getUnit()); if(req.getReferenceRange()!=null) e.setReferenceRange(req.getReferenceRange());
-            if(req.getTestDate()!=null) e.setTestDate(req.getTestDate()); if(req.getNotes()!=null) e.setNotes(req.getNotes());
-            return toResponse(labResults.save(e));
-        } else if ("vaccines".equals(category)) {
-            MedicalVaccine e = owned(vaccines, id, userId, MedicalVaccine::getUserId);
-            if(req.getVaccineName()!=null) e.setVaccineName(req.getVaccineName()); if(req.getDoseNumber()!=null) e.setDoseNumber(req.getDoseNumber());
-            if(req.getVaccinationDate()!=null) e.setVaccinationDate(req.getVaccinationDate()); if(req.getNextDoseDate()!=null) e.setNextDoseDate(req.getNextDoseDate());
-            if(req.getNotes()!=null) e.setNotes(req.getNotes());
-            return toResponse(vaccines.save(e));
-        } else if ("familyHistory".equals(category)) {
-            MedicalFamilyHistory e = owned(familyHistory, id, userId, MedicalFamilyHistory::getUserId);
-            if(req.getCondition()!=null) e.setCondition(req.getCondition()); if(req.getRelation()!=null) e.setRelation(req.getRelation());
-            if(req.getNotes()!=null) e.setNotes(req.getNotes());
-            return toResponse(familyHistory.save(e));
-        }
-        throw new IllegalArgumentException("Unknown category: " + category);
-    }
-
+    @Transactional
     public void delete(Long id, Long userId, String category) {
-        switch (category) {
-            case "medications": medications.delete(owned(medications, id, userId, MedicalMedication::getUserId)); break;
-            case "allergies": allergies.delete(owned(allergies, id, userId, MedicalAllergy::getUserId)); break;
-            case "bloodType": bloodTypes.delete(owned(bloodTypes, id, userId, MedicalBloodType::getUserId)); break;
-            case "surgeries": surgeries.delete(owned(surgeries, id, userId, MedicalSurgery::getUserId)); break;
-            case "chronicDiseases": chronicDiseases.delete(owned(chronicDiseases, id, userId, MedicalChronicDisease::getUserId)); break;
-            case "labResults": labResults.delete(owned(labResults, id, userId, MedicalLabResult::getUserId)); break;
-            case "vaccines": vaccines.delete(owned(vaccines, id, userId, MedicalVaccine::getUserId)); break;
-            case "familyHistory": familyHistory.delete(owned(familyHistory, id, userId, MedicalFamilyHistory::getUserId)); break;
-            default: throw new IllegalArgumentException("Unknown category: " + category);
-        }
+        delete(categories.require(category), id, userId);
     }
 
-    // ── toResponse overloads ──────────────────────────────────────────────────
-    private MedicalRecordResponse toResponse(MedicalMedication e) {
-        MedicalRecordResponse r = base(e.getId(), e.getUserId(), "medications", e.getNotes(), e.getRecordedAt(), e.getCreatedAt(), e.getUpdatedAt());
-        r.setName(e.getName()); r.setDosage(e.getDosage()); r.setFrequency(e.getFrequency());
-        r.setStartDate(e.getStartDate()); r.setEndDate(e.getEndDate()); return r;
+    private <E extends MedicalEntry> void delete(RecordCategory<E> c, Long id, Long userId) {
+        E e = owned(c, id, userId);
+        c.repository().delete(e);
+        audit.record(userId, e.getProfile().getId(), "DELETE", c.code(), id);
     }
-    private MedicalRecordResponse toResponse(MedicalAllergy e) {
-        MedicalRecordResponse r = base(e.getId(), e.getUserId(), "allergies", e.getNotes(), e.getRecordedAt(), e.getCreatedAt(), e.getUpdatedAt());
-        r.setAllergen(e.getAllergen()); r.setSeverity(e.getSeverity()); r.setReaction(e.getReaction()); return r;
+
+    /** A foreign or missing id gives the same 404, so the response does not reveal that a record exists. */
+    private <E extends MedicalEntry> E owned(RecordCategory<E> c, Long id, Long userId) {
+        return c.repository().findByIdAndUserId(id, userId)
+                .orElseThrow(() -> ApiException.notFound("medical.record.not_found"));
     }
-    private MedicalRecordResponse toResponse(MedicalBloodType e) {
-        MedicalRecordResponse r = base(e.getId(), e.getUserId(), "bloodType", e.getNotes(), e.getRecordedAt(), e.getCreatedAt(), e.getUpdatedAt());
-        r.setBloodType(e.getBloodType()); return r;
+
+    @Transactional
+    public List<MedicalRecordResponse> list(Long userId, Long profileId, String category) {
+        MedicalProfile profile = profiles.require(userId, profileId);
+        if (category != null && !category.isBlank()) {
+            return records(categories.require(category), profile).toList();
+        }
+        return categories.all().stream().flatMap(c -> records(c, profile)).toList();
     }
-    private MedicalRecordResponse toResponse(MedicalSurgery e) {
-        MedicalRecordResponse r = base(e.getId(), e.getUserId(), "surgeries", e.getNotes(), e.getRecordedAt(), e.getCreatedAt(), e.getUpdatedAt());
-        r.setSurgeryName(e.getSurgeryName()); r.setSurgeryDate(e.getSurgeryDate()); r.setHospital(e.getHospital()); r.setSurgeon(e.getSurgeon()); return r;
+
+    private <E extends MedicalEntry> Stream<MedicalRecordResponse> records(RecordCategory<E> c, MedicalProfile profile) {
+        return c.repository().findByProfileIdOrderByIdDesc(profile.getId()).stream().map(c::view);
     }
-    private MedicalRecordResponse toResponse(MedicalChronicDisease e) {
-        MedicalRecordResponse r = base(e.getId(), e.getUserId(), "chronicDiseases", e.getNotes(), e.getRecordedAt(), e.getCreatedAt(), e.getUpdatedAt());
-        r.setDiseaseName(e.getDiseaseName()); r.setDiagnosedAt(e.getDiagnosedAt()); r.setCurrentTreatment(e.getCurrentTreatment()); return r;
+
+    /** The person's history, newest first. */
+    @Transactional
+    public PageResponse<MedicalRecordResponse> timeline(Long userId, Long profileId, String category, String query,
+                                                        int page, int size) {
+        MedicalProfile profile = profiles.require(userId, profileId);
+        Stream<RecordCategory<?>> shown = category == null || category.isBlank()
+                ? categories.all().stream().filter(RecordCategory::onTimeline) : Stream.of(categories.require(category));
+        String q = query == null ? "" : query.trim().toLowerCase(Locale.ROOT);
+        List<MedicalRecordResponse> all = shown.flatMap(c -> records(c, profile))
+                .filter(r -> q.isEmpty() || contains(r.getTitle(), q) || contains(r.getNotes(), q))
+                .sorted(Comparator.comparing(MedicalRecordResponse::getEventDate, Comparator.nullsLast(Comparator.reverseOrder()))
+                        .thenComparing(MedicalRecordResponse::getId, Comparator.reverseOrder()))
+                .toList();
+        int pageSize = Math.min(Math.max(1, size), MAX_PAGE);
+        int number = Math.max(0, page);
+        int from = (int) Math.min((long) number * pageSize, all.size());
+        return new PageResponse<>(new ArrayList<>(all.subList(from, Math.min(from + pageSize, all.size()))), number, pageSize,
+                all.size(), (all.size() + pageSize - 1) / pageSize);
     }
-    private MedicalRecordResponse toResponse(MedicalLabResult e) {
-        MedicalRecordResponse r = base(e.getId(), e.getUserId(), "labResults", e.getNotes(), e.getRecordedAt(), e.getCreatedAt(), e.getUpdatedAt());
-        r.setTestName(e.getTestName()); r.setResult(e.getResult()); r.setUnit(e.getUnit()); r.setReferenceRange(e.getReferenceRange()); r.setTestDate(e.getTestDate()); return r;
+
+    private static boolean contains(String text, String lowerCaseQuery) {
+        return text != null && text.toLowerCase(Locale.ROOT).contains(lowerCaseQuery);
     }
-    private MedicalRecordResponse toResponse(MedicalVaccine e) {
-        MedicalRecordResponse r = base(e.getId(), e.getUserId(), "vaccines", e.getNotes(), e.getRecordedAt(), e.getCreatedAt(), e.getUpdatedAt());
-        r.setVaccineName(e.getVaccineName()); r.setDoseNumber(e.getDoseNumber()); r.setVaccinationDate(e.getVaccinationDate()); r.setNextDoseDate(e.getNextDoseDate()); return r;
+
+    @Transactional
+    public OverviewResponse overview(Long userId, Long profileId) {
+        MedicalProfile profile = profiles.require(userId, profileId);
+        LocalDate today = LocalDate.now(clock);
+        Map<String, Long> counts = new LinkedHashMap<>();
+        categories.all().forEach(c -> counts.put(c.code(), c.repository().countByProfileId(profile.getId())));
+        return new OverviewResponse(ProfileService.view(profile),
+                of(RecordCategories.BLOOD_TYPE, profile).stream().findFirst().map(MedicalRecordResponse::getBloodType).orElse(null),
+                of(RecordCategories.ALLERGIES, profile).stream()
+                        .sorted(Comparator.comparingInt(r -> Severity.rank(r.getSeverity()))).toList(),
+                of(RecordCategories.MEDICATIONS, profile).stream()
+                        .filter(r -> r.getEndDate() == null || !r.getEndDate().isBefore(today)).toList(),
+                of(RecordCategories.CHRONIC_DISEASES, profile),
+                of(RecordCategories.EMERGENCY_CONTACTS, profile),
+                of(RecordCategories.VACCINES, profile).stream()
+                        .filter(r -> r.getNextDoseDate() != null && !r.getNextDoseDate().isBefore(today))
+                        .sorted(Comparator.comparing(MedicalRecordResponse::getNextDoseDate)).toList(),
+                counts);
     }
-    private MedicalRecordResponse toResponse(MedicalFamilyHistory e) {
-        MedicalRecordResponse r = base(e.getId(), e.getUserId(), "familyHistory", e.getNotes(), e.getRecordedAt(), e.getCreatedAt(), e.getUpdatedAt());
-        r.setCondition(e.getCondition()); r.setRelation(e.getRelation()); return r;
-    }
-    private MedicalRecordResponse base(Long id, Long userId, String cat, String notes, java.time.LocalDateTime recordedAt, java.time.LocalDateTime createdAt, java.time.LocalDateTime updatedAt) {
-        MedicalRecordResponse r = new MedicalRecordResponse();
-        r.setId(id); r.setUserId(userId); r.setCategory(cat); r.setNotes(notes);
-        r.setRecordedAt(recordedAt); r.setCreatedAt(createdAt); r.setUpdatedAt(updatedAt);
-        return r;
+
+    private List<MedicalRecordResponse> of(String category, MedicalProfile profile) {
+        return records(categories.require(category), profile).toList();
     }
 }

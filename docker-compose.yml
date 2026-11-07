@@ -194,6 +194,7 @@ services:
       REDIS_PORT: 6379
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env (min 32 chars)}
+      DATA_ENCRYPTION_KEYS: ${DATA_ENCRYPTION_KEYS:?Set DATA_ENCRYPTION_KEYS in .env}
       USERS_SERVICE_URL: http://diwan-users:8080
       JPA_DDL_AUTO: ${JPA_DDL_AUTO:-validate}
     depends_on:

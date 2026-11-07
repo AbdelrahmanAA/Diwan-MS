@@ -7,7 +7,7 @@
 // Jenkins credentials required (see README/CLAUDE.md):
 //   diwan-jwt-secret, diwan-alexa-secret, diwan-mqtt-broker-url  (Secret text)
 //   diwan-db                                                       (Username with password)
-//   diwan-data-key        (Secret text, portfolio only) column encryption key "v1:<base64 32 bytes>" - keep a copy!
+//   diwan-data-key        (Secret text, portfolio and medical) column encryption key "v1:<base64 32 bytes>" - keep a copy!
 //   diwan-market-data-key (Secret text, portfolio only, optional) Finnhub API key; without it: demo prices
 //   diwan-sahmk-key (Secret text, portfolio only, optional) SAHMK API key for Saudi stock prices
 
@@ -219,8 +219,10 @@ def deployService(String module, String tag) {
         string(credentialsId: 'diwan-mqtt-broker-url', variable: 'MQTT_BROKER_URL'),
         usernamePassword(credentialsId: 'diwan-db', usernameVariable: 'DB_USERNAME', passwordVariable: 'DB_PASSWORD')
     ]
-    if (module == 'diwan-portfolio') {
+    if (module == 'diwan-portfolio' || module == 'diwan-medical') {
         credentials << string(credentialsId: 'diwan-data-key', variable: 'DATA_ENCRYPTION_KEYS')
+    }
+    if (module == 'diwan-portfolio') {
         credentials += optionalSecret('diwan-market-data-key', 'FINNHUB_API_KEY')
         credentials += optionalSecret('diwan-sahmk-key', 'SAHMK_API_KEY')
     }
@@ -271,6 +273,8 @@ def runContainer(String module, String name, String image) {
               ${image}"""
     } else if (module == 'diwan-portfolio') {
         sh "${common} -e DATA_ENCRYPTION_KEYS -e FINNHUB_API_KEY -e SAHMK_API_KEY ${image}"
+    } else if (module == 'diwan-medical') {
+        sh "${common} -e DATA_ENCRYPTION_KEYS -e ALEXA_LAMBDA_SHARED_SECRET -e MQTT_BROKER_URL ${image}"
     } else {
         sh "${common} -e ALEXA_LAMBDA_SHARED_SECRET -e MQTT_BROKER_URL ${image}"
     }

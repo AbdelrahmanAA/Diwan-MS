@@ -1922,7 +1922,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"category\": \"allergies\",\n  \"notes\": \"QA allergies\",\n  \"allergen\": \"Peanuts\",\n  \"severity\": \"High\",\n  \"reaction\": \"Hives\"\n}",
+              "raw": "{\n  \"category\": \"allergies\",\n  \"notes\": \"QA allergies\",\n  \"allergen\": \"Peanuts\",\n  \"severity\": \"SEVERE\",\n  \"reaction\": \"Hives\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -2431,7 +2431,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"category\": \"medications\",\n  \"dosage\": \"1000mg\"\n}",
+              "raw": "{\n  \"category\": \"medications\",\n  \"name\": \"Metformin\",\n  \"dosage\": \"1000mg\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -2485,7 +2485,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"category\": \"medications\",\n  \"dosage\": \"HACKED\"\n}",
+              "raw": "{\n  \"category\": \"medications\",\n  \"name\": \"Metformin\",\n  \"dosage\": \"HACKED\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -2600,6 +2600,274 @@
                 "exec": [
                   "pm.test('status is 200', () => pm.response.to.have.status(200));",
                   "pm.test('still there, not tampered with', () => { const r = pm.response.json().find(x => x.id === Number(pm.collectionVariables.get('med_medications'))); pm.expect(r).to.exist; pm.expect(r.dosage).to.eql('1000mg'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Overview of the account holder",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/medical/overview",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "medical",
+                "overview"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenA}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('blood type and counts', () => { const o = pm.response.json(); pm.expect(o.bloodType).to.eql('O+'); pm.expect(o.counts.medications).to.eql(1); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Timeline",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/medical/timeline?q=hba1c",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "medical",
+                "timeline"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "hba1c"
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenA}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('search finds the lab result', () => pm.expect(pm.response.json().items[0].title).to.eql('HbA1c'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Add a family member",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/medical/profiles",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "medical",
+                "profiles"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenA}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"QA Child\",\n  \"relation\": \"CHILD\",\n  \"birthDate\": \"2015-03-01\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 201', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('med_person', pm.response.json().id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "User B cannot read A's family member",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/medical/overview?profileId={{med_person}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "medical",
+                "overview"
+              ],
+              "query": [
+                {
+                  "key": "profileId",
+                  "value": "{{med_person}}"
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenB}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 404', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Severity outside the list is refused",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/medical",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "medical"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenA}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"category\": \"allergies\",\n  \"allergen\": \"Dust\",\n  \"severity\": \"Terrible\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 400', () => pm.response.to.have.status(400));",
+                  "pm.test('code', () => pm.expect(pm.response.json().code).to.eql('medical.severity.invalid'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Remove the family member",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/medical/profiles/{{med_person}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "medical",
+                "profiles",
+                "{{med_person}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenA}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 204', () => pm.response.to.have.status(204));"
                 ]
               }
             }
